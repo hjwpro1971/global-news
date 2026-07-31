@@ -1974,7 +1974,7 @@ body {
     color: var(--text-dim);
 }
 
-/* --- Additional Component Styles (Mobile Drawer & Quick Stock Chips) --- */
+.header-actions { display: flex; gap: 10px; align-items: center; }\n.btn-macro { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(0, 210, 255, 0.4); background: rgba(0, 210, 255, 0.05); color: #00d2ff; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }\n.btn-macro .update-clock { font-size: 0.75rem; opacity: 0.8; margin-left: 2px; }\n.btn-macro:hover { background: rgba(0, 210, 255, 0.15); border-color: #00d2ff; }\n\n/* --- Additional Component Styles (Mobile Drawer & Quick Stock Chips) --- */
 
 .panel-header-actions {
     display: flex;
@@ -2253,7 +2253,7 @@ body {
         font-size: 0.9rem;
     }
 
-    .header-actions .btn-primary {
+    .header-actions .btn-primary,\n    .header-actions .btn-macro {
         flex: 1;
         height: 44px;
         justify-content: center;
