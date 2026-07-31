@@ -581,7 +581,15 @@ async function fetchLiveRssNews() {
         updateConsoleProgress(10, "[SYSTEM] DB Л≈╟К▐≥ Л╨░Л▀° М≥∙Л²╦ Л╓▒...");
         
         try {
-            const dbCheckRes = await fetch('/api/get-today-news');
+            const dbHeaders = {};
+            const localSupaUrl = localStorage.getItem('supabase_url_override');
+            const localSupaKey = localStorage.getItem('supabase_key_override');
+            if (localSupaUrl && localSupaKey) {
+                dbHeaders['x-supabase-url'] = localSupaUrl;
+                dbHeaders['x-supabase-key'] = localSupaKey;
+            }
+
+            const dbCheckRes = await fetch('/api/get-today-news', { headers: dbHeaders });
             if (dbCheckRes.ok) {
                 const dbData = await dbCheckRes.json();
                 if (dbData.success && dbData.hasNews && dbData.data.length > 0) {
@@ -1263,7 +1271,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Cache clearing function
 window.clearCacheAndReload = function() {
-    if (confirm('╥ндц дЁ╫ц╦╕ цй╠Бх╜го╟М ╣╔юлем╦╕ ╩У╥н ╨р╥╞©ю╫ц╟з╫ю╢о╠Н?')) {
+    if (confirm('К║°Л╩╛ Л╨░Л▀°К╔╪ Л╢┬Й╦╟М≥■М∙≤ЙЁ═ К█╟Л²╢М└╟К╔╪ Л┐┬К║° К╤┬К÷╛Л≤╓Л▀°Й╡═Л┼╣К▀┬Й╧▄?')) {
         localStorage.clear();
         location.reload();
     }
