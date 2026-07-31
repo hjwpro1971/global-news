@@ -1739,7 +1739,7 @@ function renderTossMacroTickerBar(macroList, isLive) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await fetchLiveRssNews(); // Fetch live Google News RSS feeds and bind real article links
+    // await fetchLiveRssNews(); // Disabled to prevent mismatch between real random RSS titles and static AI analysis mockup data
     fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
     startGlobalMarketClocks();
     initEventListeners();
