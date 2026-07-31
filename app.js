@@ -1437,10 +1437,15 @@ function findTossIndicatorItem(indexMap, code) {
  * Fetches real-time Toss Macro Indicators and updates the header ticker bar.
  * 100% Real-time Toss API values - FALLBACK_MACRO_DATA completely removed.
  */
+/**
+ * Fetches real-time Toss Macro Indicators (Triggered on site load & modal click).
+ * 100% Real-time Toss API values - FALLBACK_MACRO_DATA completely removed.
+ * No 15-second auto-polling interval per user request.
+ */
 async function fetchTossMacroIndicators() {
-    const tickerContainer = document.getElementById('toss-macro-ticker-container');
     const updateTimeEl = document.getElementById('toss-macro-update-time');
-    if (!tickerContainer) return;
+    const modalUpdateTimeEl = document.getElementById('toss-modal-update-time');
+    if (updateTimeEl) updateTimeEl.textContent = '수집 중...';
 
     let indexMap = null;
     let isLive = false;
@@ -1531,17 +1536,17 @@ async function fetchTossMacroIndicators() {
 
     renderTossMacroTickerBar(macroList, isLive);
 
-    if (updateTimeEl) {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
-        updateTimeEl.textContent = `${timeStr} LIVE`;
-    }
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
+    if (updateTimeEl) updateTimeEl.textContent = `${timeStr} 수신`;
+    if (modalUpdateTimeEl) modalUpdateTimeEl.textContent = `${timeStr} 수신`;
 }
 
 /**
  * Opens and closes Toss Macro Fullscreen Modal
  */
 function openTossMacroModal() {
+    fetchTossMacroIndicators(); // Fetch latest data on click
     const modal = document.getElementById('toss-macro-modal');
     if (modal) {
         modal.classList.remove('hidden');
@@ -1623,8 +1628,7 @@ function renderTossMacroTickerBar(macroList, isLive) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchTossMacroIndicators();
-    setInterval(fetchTossMacroIndicators, 15000);
+    fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
     startGlobalMarketClocks();
     initEventListeners();
     renderApp();
