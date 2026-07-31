@@ -52,82 +52,25 @@
 const newsDataset = [
     {
         id: "news-01",
-        titleEn: "US Commerce Department Announces $15B HBM Semiconductor Subsidy & AI Chip Export Regulations Update",
-        titleKr: "미 상무부, HBM 반도체 150억 달러 보조금 지급 확정 및 차세대 AI 칩 수출 규제 개정안 발표",
-        source: "Bloomberg Terminals",
-        timestamp: "2026-07-31 16:45",
-        category: "반도체/AI",
-        impactScore: 92,
-        sentiment: "BULLISH",
-        summary: "미국 정부가 차세대 HBM4 패키징 및 메모리 반도체 제조 시설에 150억 달러 직접 보조금을 확정함에 따라 한국 반도체 기업의 미국 내 팹 건설 및 글로벌 독점 공급 지위가 크게 강화될 전망입니다.",
-        phase1Filtering: {
-            matchKeywords: ["HBM", "Semiconductor", "Subsidy", "Export Control", "AI Chip"],
-            priorityScore: 95,
-            passed: true,
-            screeningReason: "반도체 핵심 키워드(HBM, Subsidy) 및 최고 순위 파급력 이슈 감지"
-        },
-        phase2DeepAnalysis: {
-            transmissionMechanism: "미 보조금 확정 ➔ 엔디비아·빅테크향 HBM3e/HBM4 장기 공급계약 체결 가속 ➔ 국내 메모리 2사 단가(ASP) 프리미엄 유지 및 한미반도체 등 TC 본더 장비사 매출 폭증",
-            impactedSectors: [
-                { sector: "HBM/메모리 반도체", direction: "UP", magnitude: 95 },
-                { sector: "반도체 후공정/장비", direction: "UP", magnitude: 90 },
-                { sector: "파운드리/팹리스", direction: "UP", magnitude: 70 }
-            ],
-            targetStocks: [
-                {
-                    name: "SK하이닉스",
-                    ticker: "000660",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+5.5% ~ +8.2%",
-                    reasoning: "HBM3e/HBM4 글로벌 시장 점유율 1위 지위 지속 및 보조금 수혜로 미국 인디애나 패키징 공장 연내 착공 모멘텀.",
-                    keyDrivers: ["NVIDIA 독점적 공급 지속", "HBM4 16단 3D 적층 기술격차", "보조금 징수 반영"]
-                },
-                {
-                    name: "삼성전자",
-                    ticker: "005930",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+3.8% ~ +5.5%",
-                    reasoning: "텍사스 테일러 팹 보조금 집행 확정으로 파운드리 턴어라운드 및 HBM3e 빅테크 퀄테스트 최종 통과 기대감.",
-                    keyDrivers: ["테일러 파운드리 보조금 확정", "HBM3e 공급망 진입 완료", "파운드리 수율 개선"]
-                },
-                {
-                    name: "한미반도체",
-                    ticker: "042700",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+7.0% ~ +11.5%",
-                    reasoning: "HBM4 전용 듀얼 TC 본더 장비 락인(Lock-in) 효과로 사상 최대 수주 잔고 달성 예상.",
-                    keyDrivers: ["TC 본더 독점적 수주", "HBM 생산량 증설 수혜", "영업이익률 40% 돌파"]
-                }
-            ],
-            shortTermOutlook: "외국인/기관 순매수 유입 급증으로 반도체 섹터 주도 갭상승 가능성 매우 높음.",
-            longTermOutlook: "2026~2027년 HBM4 공급 부족 현상 지속에 따른 실적 턴어라운드 본격화.",
-            riskFactors: [
-                "미 중국향 범용 반도체 추가 규제 가능성",
-                "글로벌 AI 데이터센터 전기 부족에 따른 투자 속도 조절 이슈"
-            ]
-        }
-    },
-    {
-        id: "news-02",
-        titleEn: "Federal Reserve Signals 50bps Rate Cut as US PCE Inflation Cools to 1.9%",
-        titleKr: "미 연준(Fed), 근원 PCE 물가 1.9% 안정에 빅컷(50bp) 금리 인하 가능성 공식 언급",
+        titleEn: "Federal Reserve Keeps Benchmark Rates Steady at July FOMC, Strongly Signals September Rate Cut",
+        titleKr: "미 연준(Fed), 7월 FOMC 기준금리 동결 확정… 9월 금리 인하 전환 강력한 시그널 제시",
         source: "Reuters Financial",
-        timestamp: "2026-07-31 15:30",
+        timestamp: "2026-07-31 16:45",
         category: "통화정책/금융",
-        impactScore: 85,
+        impactScore: 88,
         sentiment: "BULLISH",
-        summary: "미 연준 제롬 파월 의장이 잭슨홀 전초 연설에서 인플레이션 목표 달성을 선언하며 9월 FOMC에서 50bp 완화적 금리 인하 수순을 강력히 시그널링했습니다.",
+        summary: "미 연준이 7월 FOMC 정례회의에서 기준금리를 동결했으나, 제롬 파월 의장의 기자회견 및 성명서를 통해 고용시장 냉각과 인플레이션 목표(2.0%) 접근을 공식 확인하며 9월 금리 인하 개시를 강하게 시그널링했습니다.",
         phase1Filtering: {
-            matchKeywords: ["Federal Reserve", "Rate Cut", "PCE Inflation", "Fed Chair"],
-            priorityScore: 88,
+            matchKeywords: ["Federal Reserve", "FOMC", "Rate Cut", "Powell", "Interest Rate"],
+            priorityScore: 92,
             passed: true,
-            screeningReason: "매크로 유동성 핵심 키워드(Fed, Rate Cut) 매칭 완료"
+            screeningReason: "미 연준 7월 FOMC 금리 동결 및 9월 피벗(금리 인하) 시그널 감지"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "미 금리 인하 시그널 ➔ 원/달러 환율 안정(1,300원 하회) ➔ 한국은행 금리인하 여력 확보 ➔ 성장주(바이오, IT) 할인율 감소 및 금융주 배당 매력 부각",
+            transmissionMechanism: "7월 FOMC 동결 및 9월 피벗 확정 ➔ 원/달러 환율 하락(1,330원선 하회) ➔ 한국은행 10월 금리 인하 여력 확보 ➔ 성장주(바이오, IT) 할인율 감소 및 금융주 배당 매력 부각",
             impactedSectors: [
-                { sector: "성장주 (바이오/IT)", direction: "UP", magnitude: 88 },
-                { sector: "금융/지주사", direction: "UP", magnitude: 80 },
+                { sector: "성장주 (바이오/IT)", direction: "UP", magnitude: 90 },
+                { sector: "금융/지주사", direction: "UP", magnitude: 82 },
                 { sector: "건설/부동산 REITs", direction: "UP", magnitude: 75 }
             ],
             targetStocks: [
@@ -135,491 +78,544 @@ const newsDataset = [
                     name: "KB금융",
                     ticker: "105560",
                     sentiment: "BULLISH",
-                    expectedImpact: "+3.2% ~ +5.0%",
-                    reasoning: "금리 하락에 따른 자산건전성 개선 및 밸류업 프로그램 기반 자사주 매입·소각 확대 추진.",
-                    keyDrivers: ["주주환원율 40% 돌파", "원화 강세시 외국인 유입", "연체율 관리 안정"]
+                    expectedImpact: "+3.8% ~ +6.2%",
+                    reasoning: "금리 인하 시 원화 강세와 함께 외국인 바스켓 유입 가속 및 밸류업 자사주 소각 수혜.",
+                    keyDrivers: ["주주환원율 40% 돌파", "원화 강세 외국인 유입", "자산건전성 유지"]
                 },
                 {
                     name: "NAVER",
                     ticker: "035420",
                     sentiment: "BULLISH",
-                    expectedImpact: "+4.2% ~ +6.8%",
-                    reasoning: "고금리 부담 완화로 밸류에이션 부담 감소 및 AI 서비스(단큐) 매출화 가속화.",
-                    keyDrivers: ["금리 인하시 멀티플 상향", "클라우드 B2B AI 실적 성장", "서치 플랫폼 반등"]
+                    expectedImpact: "+4.5% ~ +7.2%",
+                    reasoning: "고금리 부담 완화로 PER 멀티플 리레이팅 및 AI 클라우드 B2B 매출 가속화.",
+                    keyDrivers: ["할인율 부담 완화", "B2B AI 실적 성장", "검색 플랫폼 매출 증가"]
                 },
                 {
                     name: "삼성바이오로직스",
                     ticker: "207940",
                     sentiment: "BULLISH",
-                    expectedImpact: "+3.5% ~ +5.8%",
-                    reasoning: "글로벌 빅파마 R&D 자금 유입 재개로 5공장 수주 물량 조기 확보 기대.",
-                    keyDrivers: ["금리 하락시 바이오 투심 개선", "CDMO 5공장 풀가동", "생물보안법 수혜"]
-                }
-            ],
-            shortTermOutlook: "원/달러 환율 하락과 함께 코스피 시장 전반의 외국인 바스켓 매수세 유입 기대.",
-            longTermOutlook: "신흥국 자금 재유입 및 한국 증시 밸류업 재평가 국면 진입.",
-            riskFactors: [
-                "미 경기후퇴(Recession) 우려 재발 가능성",
-                "국내 가계부채 증가에 따른 금융당국 규제"
-            ]
-        }
-    },
-    {
-        id: "news-03",
-        titleEn: "EU & US Enforce Strict Battery Recycled Mineral Mandate & Carbon Border Adjustment (CBAM)",
-        titleKr: "미국·EU, 2차전지 배터리 재활용 광물 의무 비율 상향 및 탄소국경세(CBAM) 무역 장벽 강화 발표",
-        source: "Wall Street Journal",
-        timestamp: "2026-07-31 14:10",
-        category: "2차전지/EV",
-        impactScore: -78,
-        sentiment: "BEARISH",
-        summary: "EU와 미국 상무부가 2차전지 셀 제조업체들에게 중국산 리튬/니켈 배터리 소재 사용 금지 조항을 대폭 강화함에 따라 국내 배터리 셀 3사의 소재 공급망 대체 비용 부담이 가중될 예정입니다.",
-        phase1Filtering: {
-            matchKeywords: ["Battery", "CBAM", "Recycled Mineral", "EU Regulation"],
-            priorityScore: 82,
-            passed: true,
-            screeningReason: "2차전지 규제 악재 키워드(CBAM, Battery Mandate) 감지"
-        },
-        phase2DeepAnalysis: {
-            transmissionMechanism: "북미/유럽 무역 장벽 강화 ➔ 중국 외 미주/오세아니아 광물 조달 비용 급증 ➔ 배터리 셀 마진율 압박 ➔ 전기차 캐즘(Chasm) 탈출 지연 및 영업이익 하향",
-            impactedSectors: [
-                { sector: "2차전지 셀/양극재", direction: "DOWN", magnitude: 85 },
-                { sector: "전기차 완제차", direction: "DOWN", magnitude: 65 },
-                { sector: "폐배터리 리사이클링", direction: "UP", magnitude: 75 }
-            ],
-            targetStocks: [
-                {
-                    name: "LG에너지솔루션",
-                    ticker: "373220",
-                    sentiment: "BEARISH",
-                    expectedImpact: "-3.5% ~ -6.0%",
-                    reasoning: "유럽/북미 공급망 재편 비용 증가 및 AMPC(첨단제조세액공제) 수혜 축소 우려.",
-                    keyDrivers: ["공급망 전환 비용 발생", "유럽 EV 판매 둔화", "광물 가격 변동성"]
-                },
-                {
-                    name: "POSCO홀딩스",
-                    ticker: "005490",
-                    sentiment: "BEARISH",
-                    expectedImpact: "-2.8% ~ -4.5%",
-                    reasoning: "리튬 수용성 시험 기간 연장 및 철강 CBAM 과세 적용에 따른 수출 원가 상승.",
-                    keyDrivers: ["리튬 가격 하락세", "탄소국경세 적용 시작", "철강 수요 둔화"]
-                },
-                {
-                    name: "성일하이텍",
-                    ticker: "365340",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+5.0% ~ +8.5%",
-                    reasoning: "(반사이익) 재활용 광물 의무화 법안으로 폐배터리 리사이클링 규제 준수 수혜 독점.",
-                    keyDrivers: ["재활용 광물 의무 비율 상승", "유럽 리사이클링 팹 가동", "비중국산 원소재 가치 상승"]
-                }
-            ],
-            shortTermOutlook: "2차전지 대형주 위주의 기관/외인 매도물량出 가능성. 당분간 보수적 접근 필요.",
-            longTermOutlook: "비중국 공급망 체계 완성 기업과 리사이클링 전문 기업 간 옥석 가리기 심화.",
-            riskFactors: [
-                "미 대선 공약 변경에 따른 IRA 법안 폐지 위험",
-                "중국 LFP 배터리의 유럽 시장 침투율 증가"
-            ]
-        }
-    },
-    {
-        id: "news-04",
-        titleEn: "Middle East Maritime Conflict Escalates: Red Sea Transit Blocked, Freight Rates Surge 40%",
-        titleKr: "중동 홍해 해상 분쟁 전면 확대: 운항 중단에 상하이컨테이너운임지수(SCFI) 40% 폭등",
-        source: "Financial Times",
-        timestamp: "2026-07-31 13:20",
-        category: "조선/해운",
-        impactScore: 88,
-        sentiment: "BULLISH",
-        summary: "중동 지정학적 리스크 가중으로 유럽-아시아 항로 컨테이너선들이 아프리카 희망봉 우회 운항을 강제당하면서 글로벌 해상 운임(SCFI)이 직전 주 대비 40% 폭등했습니다.",
-        phase1Filtering: {
-            matchKeywords: ["Red Sea", "Freight Rate", "Shipping", "SCFI Surge"],
-            priorityScore: 90,
-            passed: true,
-            screeningReason: "해운 운임 및 중동 리스크 키워드 매칭"
-        },
-        phase2DeepAnalysis: {
-            transmissionMechanism: "희망봉 우회 운항 ➔ 선박 우회로 선복량(Supply) 부족 ➔ 해상 컨테이너/탱커 운임 피크아웃 반등 ➔ 해운사 영업이익 직결 및 신조선가(Newbuilding Price) 하반기 추가 상승",
-            impactedSectors: [
-                { sector: "컨테이너/탱커 해운", direction: "UP", magnitude: 92 },
-                { sector: "신조선/조선 기자재", direction: "UP", magnitude: 85 },
-                { sector: "항공화물/물류", direction: "UP", magnitude: 70 }
-            ],
-            targetStocks: [
-                {
-                    name: "HMM",
-                    ticker: "011200",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+6.8% ~ +10.5%",
-                    reasoning: "SCFI 운임 지수 폭등에 따른 3분기 어닝 서프라이즈 확실시 및 선대 확장 수혜.",
-                    keyDrivers: ["SCFI 운임지수 3,500pt 돌파", "희망봉 우회 장기화", "컨테이너 할증료(PSS) 부과"]
-                },
-                {
-                    name: "한화오션",
-                    ticker: "042660",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+4.5% ~ +7.2%",
-                    reasoning: "해운사 수익성 개선에 따른 신조선 발주 재개 및 방산 함정 글로벌 수주 확정.",
-                    keyDrivers: ["신조선가 지수 최고치 경신", "LNG/컨선 고마진 수주 잔고", "미 해군 MRO 수주"]
-                },
-                {
-                    name: "HD한국조선해양",
-                    ticker: "009540",
-                    sentiment: "BULLISH",
                     expectedImpact: "+3.8% ~ +6.0%",
-                    reasoning: "조선 3사 중 최고 선가 수주 비중 및 친환경 암모니아/자율운항 선박 시장 선점.",
-                    keyDrivers: ["3년 치 수주 물량 확보", "조선 자회사 실적 턴어라운드", "친환경 선가 프리미엄"]
+                    reasoning: "금리 하락 시 글로벌 바이오 R&D 투심 개선 및 CDMO 5공장 물량 조기 수주 모멘텀.",
+                    keyDrivers: ["글로벌 바이오 투심 회복", "CDMO 5공장 수주 조기 확보", "생물보안법 수혜"]
                 }
             ],
-            shortTermOutlook: "해운 및 조선주 강력한 주가 모멘텀 형성. 단기 수급 쏠림 현상 유효.",
-            longTermOutlook: "선박 교체 주기 및 고선가 물량 인도 본격화로 3년 장기 슈퍼사이클 가시화.",
+            shortTermOutlook: "원/달러 환율 안정을 기반으로 외국인 자금 바스켓 매수세가 유입되어 코스피 갭상승 가능성 높음.",
+            longTermOutlook: "글로벌 통화정책 완화 주기 진입으로 KOSPI 밸류에이션 멀티플 확장 본격화.",
             riskFactors: [
-                "중동 평화 협정 조기 체결에 따른 운임 지수 급락 위험",
-                "글로벌 물동량 위축 위험"
+                "미 고용 지표 급격한 냉각 시 경기후퇴(Recession) 우려",
+                "국내 가계부채 관리에 따른 금융당국 미세조정"
             ]
         }
     },
     {
-        id: "news-05",
-        titleEn: "NATO Members Unanimously Agree to Boost Defense Budget to 3.5% of GDP & Procure K-Weaponry",
-        titleKr: "나토(NATO) 32개국 국방비 GDP 3.5% 증액 전격 합의… K-방산 주요 화력 체계 추가 긴급 도입",
-        source: "Defense News",
-        timestamp: "2026-07-31 11:50",
-        category: "방산/항공",
-        impactScore: 86,
+        id: "news-02",
+        titleEn: "Korea July Exports Surge 14.5% YoY Driven by Record Semiconductor & HBM Shipments",
+        titleKr: "한국 7월 수출 전년비 14.5% 급증… 반도체 및 HBM 사상 최대 수출액 갱신",
+        source: "Ministry of Trade, Industry and Energy",
+        timestamp: "2026-07-31 15:30",
+        category: "반도체/AI",
+        impactScore: 94,
         sentiment: "BULLISH",
-        summary: "유럽 나토 회원국들이 안보 위기 대응을 위해 2027년까지 국방 지출을 GDP 대비 3.5%로 대폭 상향하기로 합의했습니다. 납기 준수율 1위인 K-방산 무기 체계의 동유럽/서유럽 추가 수주가 임박했습니다.",
+        summary: "산업통상자원부가 발표한 7월 수출입 동향에 따르면, 한국 수출액이 전년 대비 14.5% 증가한 가운데 HBM 및 서버용 메모리 폭증에 힘입어 반도체 수출액이 역대 최고치(148억 달러)를 경신했습니다.",
         phase1Filtering: {
-            matchKeywords: ["NATO", "Defense Budget", "K-Weaponry", "Procurement"],
-            priorityScore: 89,
+            matchKeywords: ["Korea Exports", "Semiconductor", "HBM", "Trade Surplus", "Record High"],
+            priorityScore: 96,
             passed: true,
-            screeningReason: "방산 국방 예산 증액 메가 트렌드 확인"
+            screeningReason: "국내 7월 수출 14.5% 폭증 및 메모리/HBM 사상 최대 수출 호조"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "유럽 국방비 증액 ➔ 즉시 전력화 가능한 한국산 자주포·장갑차·유도무기 선호 ➔ 2차 굵직한 해외 수주 계약 체결 ➔ 방산 4사 해외 매출 비중 60% 돌파",
+            transmissionMechanism: "7월 수출 실적 14.5% 급증 ➔ 삼성전자·SK하이닉스 3분기 어닝 서프라이즈 가시화 ➔ 반도체 소부장 밸류체인 매출 직결 및 실적 추정치 상향",
             impactedSectors: [
-                { sector: "지상무기/자주포/전차", direction: "UP", magnitude: 90 },
-                { sector: "유도무기/항공방산", direction: "UP", magnitude: 84 },
-                { sector: "방산 부품/소재", direction: "UP", magnitude: 78 }
-            ],
-            targetStocks: [
-                {
-                    name: "한화에어로스페이스",
-                    ticker: "012450",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+6.0% ~ +9.5%",
-                    reasoning: "K9 자주포 및 천무 유도무기 루마니아·폴란드 추가 납품 실적 반영 및 사상 최대 영업이익.",
-                    keyDrivers: ["K9 자주포 추가 2차 계약", "루마니아 장갑차 사업 수주", "방산 해외 매출 비중 65%"]
-                },
-                {
-                    name: "현대로템",
-                    ticker: "064350",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+5.2% ~ +8.0%",
-                    reasoning: "K2 전차 폴란드 2차 실행 계약 가시화 및 동유럽 타 국가 진출 본격화.",
-                    keyDrivers: ["K2 전차 현지 생산 체계 완성", "영업이익률 15% 돌파", "수주 잔고 15조원 상회"]
-                },
-                {
-                    name: "LIG넥스원",
-                    ticker: "079550",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+4.5% ~ +7.5%",
-                    reasoning: "천궁-II 중거리 요격미사일 중동 및 유럽 추가 공급 계약 타결 모멘텀.",
-                    keyDrivers: ["천궁-II 해외 방산 수주", "미국 비궁 로켓 FDA 양산 체계", "유도무기 독점 지위"]
-                }
-            ],
-            shortTermOutlook: "동유럽 수주 공시 임박에 따른 외국인 순매수 지속.",
-            longTermOutlook: "글로벌 재무장 시대 진입에 따라 2030년까지 구조적 장기 성장 구도.",
-            riskFactors: [
-                "국내 방산 방위사업청 예산 집행 지연",
-                "원자재(특수강 등) 가격 상승에 따른 원가 부담"
-            ]
-        }
-    },
-    {
-        id: "news-06",
-        titleEn: "US FDA Grants Accelerated Approval for Next-Gen Alzheimer's Antibody Drug",
-        titleKr: "미 FDA, 국내 바이오 기업 신약 파이프라인 적용 차세대 알츠하이머 항체 신속 승인",
-        source: "BioWorld Today",
-        timestamp: "2026-07-31 10:15",
-        category: "바이오/제약",
-        impactScore: 75,
-        sentiment: "BULLISH",
-        summary: "미국 FDA가 뇌혈관 장벽(BBB) 투과율을 5배 향상시킨 차세대 알츠하이머 치매 치료제에 대해 임상 3상 데이터 우수성을 인정하고 신속 승인(Accelerated Approval)을 최종 의결했습니다.",
-        phase1Filtering: {
-            matchKeywords: ["FDA Approval", "Alzheimer", "Antibody Drug", "Bio Pipeline"],
-            priorityScore: 78,
-            passed: true,
-            screeningReason: "바이오 FDA 승인 핵심 긍정 모멘텀"
-        },
-        phase2DeepAnalysis: {
-            transmissionMechanism: "FDA 승인 ➔ 글로벌 빅파마 기술이전(L/O) 계약 가치 급증 ➔ 국내 바이오 신약 파이프라인 재평가 ➔ 바이오 섹터 전반의 투자 심리 강력 개선",
-            impactedSectors: [
-                { sector: "알츠하이머/뇌질환 신약", direction: "UP", magnitude: 88 },
-                { sector: "바이오시밀러/CDMO", direction: "UP", magnitude: 75 }
-            ],
-            targetStocks: [
-                {
-                    name: "셀트리온",
-                    ticker: "068270",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+3.5% ~ +5.8%",
-                    reasoning: "미국 짐펜트라(Zymfentra) 처방 집계 호조 및 바이오신약 플랫폼 가치 상승.",
-                    keyDrivers: ["미국 PBM 처방집 등재 90% 완료", "신약 매출 비중 증가", "합병 시너지 가시화"]
-                },
-                {
-                    name: "유한양행",
-                    ticker: "000100",
-                    sentiment: "BULLISH",
-                    expectedImpact: "+4.0% ~ +6.5%",
-                    reasoning: "렉라자(레이저티닙) 미 FDA 승인 후 글로벌 로열티 수입 본격화 및 2차 파이프라인 가치 반영.",
-                    keyDrivers: ["J&J 렉라자 로열티 순유입", "후속 항암 파이프라인 임상 진전", "안정적 재무구조"]
-                }
-            ],
-            shortTermOutlook: "제약바이오 숏커버링 유입에 따른 거래량 증가 및 상방 오픈.",
-            longTermOutlook: "K-바이오의 글로벌 상업화 신약 창출 능력 검증 완료.",
-            riskFactors: [
-                "임상 3상 완료 후 상업화 마케팅 경쟁 심화",
-                "미국 약가 인하 정책(IRA 약가 협상)"
-            ]
-        }
-    },
-    {
-        id: "news-07",
-        titleEn: "Global Tech Giants Announce Additional $40B AI Infrastructure Capex Expansion",
-        titleKr: "빅테크 4사(MS·구글·AWS·메타), AI 데이터센터 설비투자(CapEx) 400억 달러 추가 증액 발표",
-        source: "CNBC Tech",
-        timestamp: "2026-07-31 09:30",
-        category: "빅테크/IT",
-        impactScore: 82,
-        sentiment: "BULLISH",
-        summary: "글로벌 빅테크 기업들이 실적 발표 컨퍼런스 콜에서 AI 클라우드 수요 폭증을 감당하기 위해 2026~2027년 자본지출(CapEx)을 당초 계획보다 400억 달러 추가 증액한다고 공식 선언했습니다.",
-        phase1Filtering: {
-            matchKeywords: ["Tech Giants", "AI Infrastructure", "Capex Expansion", "Datacenter"],
-            priorityScore: 85,
-            passed: true,
-            screeningReason: "빅테크 AI 투자 증액 모멘텀 감지"
-        },
-        phase2DeepAnalysis: {
-            transmissionMechanism: "AI CapEx 증액 ➔ 엔비디아/AMD 차세대 칩 서버 증설 ➔ 엔터프라이즈 SSD 및 HBM 메모리 주문 폭주 ➔ 국내 IT/반도체/AI 소프트웨어 생태계 활성화",
-            impactedSectors: [
-                { sector: "서버용 SSD / HBM", direction: "UP", magnitude: 90 },
-                { sector: "AI 솔루션 / B2B SaaS", direction: "UP", magnitude: 78 }
+                { sector: "HBM/메모리 반도체", direction: "UP", magnitude: 96 },
+                { sector: "반도체 후공정/장비", direction: "UP", magnitude: 92 },
+                { sector: "IT 부품/소재", direction: "UP", magnitude: 80 }
             ],
             targetStocks: [
                 {
                     name: "SK하이닉스",
                     ticker: "000660",
                     sentiment: "BULLISH",
-                    expectedImpact: "+4.0% ~ +6.5%",
-                    reasoning: "빅테크 AI 서버 증설에 따른 고용량 eSSD 및 HBM3e 12단 주문량 증가.",
-                    keyDrivers: ["eSSD 매출 전년비 150% 증대", "빅테크 장기 공급 계약", "영업이익률 고점 경신"]
+                    expectedImpact: "+6.0% ~ +9.2%",
+                    reasoning: "HBM3e/HBM4 독점적 지위에 따른 사상 최대 수출 실적 견인 및 영업이익률 고점 경신.",
+                    keyDrivers: ["HBM3e 12단 독점 공급", "eSSD 매출 폭증", "3분기 영업이익 최고치"]
+                },
+                {
+                    name: "삼성전자",
+                    ticker: "005930",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+4.2% ~ +6.5%",
+                    reasoning: "메모리 단가 상승 및 HBM 퀄테스트 통과 물량 본격 출하로 반도체 부문 실적 급등.",
+                    keyDrivers: ["DRAM/NAND 단가 상승", "HBM 출하량 전분기비 80%↑", "수출실적 호조"]
+                },
+                {
+                    name: "한미반도체",
+                    ticker: "042700",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+8.0% ~ +12.5%",
+                    reasoning: "HBM 증설 폭주에 따른 TC 본더 장비 락인 효과로 수주 잔고 최고치 달성.",
+                    keyDrivers: ["DUAL TC BONDER 수주", "HBM4 장비 선점", "수출 확대로 실적 서프라이즈"]
+                }
+            ],
+            shortTermOutlook: "수출지표 발표 직후 외국인/기관 대량 매수세 유입되며 반도체 대형주 중심 강한 상승 장세.",
+            longTermOutlook: "2026년 하반기 메모리 슈퍼사이클 장기화로 코스피 지수 3,000pt 안착 발판.",
+            riskFactors: [
+                "글로벌 세트(모바일/PC) 수요의 상대적 회복 지연",
+                "환율 변동성에 따른 수입원가 영향"
+            ]
+        }
+    },
+    {
+        id: "news-03",
+        titleEn: "Big Tech Q2 AI Infrastructure CapEx Hits Record $55B, Erasing AI Bubble Concerns",
+        titleKr: "글로벌 빅테크 4사 Q2 AI 설비투자(CapEx) 550억 달러 사상 최대… AI 버블 우려 불식",
+        source: "Bloomberg Terminals",
+        timestamp: "2026-07-31 14:15",
+        category: "빅테크/IT",
+        impactScore: 90,
+        sentiment: "BULLISH",
+        summary: "마이크로소프트, 알파벳, 메타, 아마존의 2분기 실적 발표 결과, AI 데이터센터 및 서버 설비투자 총액이 550억 달러를 돌파하며 하반기 AI 칩 및 고성능 메모리 수요 지속을 입증했습니다.",
+        phase1Filtering: {
+            matchKeywords: ["Big Tech", "AI CapEx", "Datacenter", "Microsoft", "Meta"],
+            priorityScore: 92,
+            passed: true,
+            screeningReason: "빅테크 2분기 CapEx 550억 달러 최고치 및 AI 데이터센터 증설 호재"
+        },
+        phase2DeepAnalysis: {
+            transmissionMechanism: "빅테크 AI CapEx 550억 달러 투입 ➔ AI 데이터센터 서버 증설 가속 ➔ 엔터프라이즈 eSSD 및 HBM3e 주문 폭증 ➔ 한국 반도체 및 전력 인프라 기업 실적 수혜",
+            impactedSectors: [
+                { sector: "서버용 eSSD / HBM", direction: "UP", magnitude: 94 },
+                { sector: "AI 전력 인프라 / 변압기", direction: "UP", magnitude: 88 },
+                { sector: "클라우드 / AI SW", direction: "UP", magnitude: 78 }
+            ],
+            targetStocks: [
+                {
+                    name: "SK하이닉스",
+                    ticker: "000660",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+4.8% ~ +7.5%",
+                    reasoning: "빅테크 데이터센터 전용 eSSD 및 HBM3e 12단 장기 납품 계약 확대.",
+                    keyDrivers: ["eSSD 매출 비중 30% 돌파", "빅테크 장기 파트너십", "HBM4 수주 가시화"]
+                },
+                {
+                    name: "HD현대일렉트릭",
+                    ticker: "267260",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+6.2% ~ +10.0%",
+                    reasoning: "빅테크 AI 데이터센터 전용 초고압 변압기 및 전력기기 주문 폭주.",
+                    keyDrivers: ["북미 변압기 숏티지 지속", "데이터센터 전력망 수주", "영업이익률 20% 상회"]
                 },
                 {
                     name: "NAVER",
                     ticker: "035420",
                     sentiment: "BULLISH",
-                    expectedImpact: "+3.0% ~ +4.8%",
-                    reasoning: "하이퍼클로바X 기반 사우디 아라비아 및 B2B 엔터프라이즈 AI 매출 가시화.",
-                    keyDrivers: ["중동 AI 클라우드 수주", "네이버플러스 멤버십 성장", "광고 집행 효율화"]
+                    expectedImpact: "+3.2% ~ +5.2%",
+                    reasoning: "글로벌 AI CapEx 확장에 발맞춘 하이퍼클로바X B2B 엔터프라이즈 수익성 본격화.",
+                    keyDrivers: ["B2B AI 솔루션 수주", "클라우드 매출 성장", "글로벌 파트너십"]
                 }
             ],
-            shortTermOutlook: "IT 대형주 테마 순환매 유입 기대.",
-            longTermOutlook: "생성형 AI 서비스의 본격 수익화 단계 진입.",
+            shortTermOutlook: "AI 버블론 해소에 따른 빅테크 관련 반도체 및 전력 인프라주 강력한 매수세 유입.",
+            longTermOutlook: "2026~2027년 AI 클라우드 수익화 본격화에 따른 구조적 장기 성장.",
             riskFactors: [
-                "빅테크 기업들의 AI ROI(투자 대비 수익률) 의문 부각 가능성",
-                "전력망 구축 지연 우려"
+                "빅테크 전력 공급망 한계로 인한 데이터센터 가동률 지연",
+                "추가 AI 서비스 Monetization 속도"
             ]
         }
     },
     {
-        id: "news-08",
-        titleEn: "Bank of Japan Hikes Interest Rate to 0.75%, Triggering Global Yen Carry Trade Unwinding Signals",
-        titleKr: "일본은행(BOJ) 기준금리 0.75%로 전격 인상… 글로벌 엔캐리 트레이드 청산 우려 재발",
-        source: "Nikkei Asia",
-        timestamp: "2026-07-31 08:45",
-        category: "통화정책/금융",
-        impactScore: -70,
-        sentiment: "BEARISH",
-        summary: "일본은행 우에다 가즈오 총재가 일본 내 임금 상승과 물가 목표 안착을 이유로 기준금리를 0.75%로 전격 인상했습니다. 엔화 강세 전환으로 글로벌 엔캐리 자금 청산 경계감이 신흥국 증시에 부정적 변동성을 유발하고 있습니다.",
+        id: "news-04",
+        titleEn: "US Commerce Department Finalizes $15B Advanced Packaging & HBM4 Direct Subsidy Execution",
+        titleKr: "미 상무부, 차세대 HBM4 패키징 및 첨단 반도체 팹 150억 달러 보조금 집행 최종 의결",
+        source: "Wall Street Journal",
+        timestamp: "2026-07-31 13:00",
+        category: "반도체/AI",
+        impactScore: 91,
+        sentiment: "BULLISH",
+        summary: "미국 상무부가 반도체법(CHIPS Act)에 따라 차세대 HBM4 3D 적층 기술 및 첨단 패키징 제조 시설을 구축하는 한국 메모리 대형사들에 150억 달러 직접 보조금 집행을 확정했습니다.",
         phase1Filtering: {
-            matchKeywords: ["Bank of Japan", "BOJ Rate Hike", "Yen Carry", "Global Liquidity"],
-            priorityScore: 84,
+            matchKeywords: ["Commerce Department", "HBM4", "Advanced Packaging", "CHIPS Act", "Subsidy"],
+            priorityScore: 94,
             passed: true,
-            screeningReason: "BOJ 금리 인상 및 엔캐리 청산 매크로 위험 감지"
+            screeningReason: "미 상무부 HBM4 및 첨단 패키징 150억 달러 보조금 집행 확정"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "BOJ 금리 인상 ➔ 엔화 급등 ➔ 엔캐리 자금 자산 회수 ➔ 글로벌 증시 단기 변동성 확대 및 한국 증시 외국인 순매도 압력 증가",
+            transmissionMechanism: "미 보조금 집행 ➔ 미국 내 패키징 공장 연내 완공 및 인센티브 반영 ➔ 엔비디아·빅테크향 HBM4 장기 독점 공급 체계 강화 ➔ TC 본더 등 후공정 장비사 매출 폭발",
             impactedSectors: [
-                { sector: "신흥국 주식 (KOSPI 포함)", direction: "DOWN", magnitude: 75 },
-                { sector: "자동차 (대일 경쟁력)", direction: "UP", magnitude: 60 }
+                { sector: "HBM/메모리 반도체", direction: "UP", magnitude: 93 },
+                { sector: "반도체 후공정/패키징", direction: "UP", magnitude: 91 },
+                { sector: "파운드리", direction: "UP", magnitude: 72 }
             ],
             targetStocks: [
                 {
-                    name: "현대차",
-                    ticker: "005380",
+                    name: "SK하이닉스",
+                    ticker: "000660",
                     sentiment: "BULLISH",
-                    expectedImpact: "+1.5% ~ +3.2%",
-                    reasoning: "(반사이익) 엔화 강세 전환으로 글로벌 완제차 시장에서 일본 도요타 대비 가격 경쟁력 우위 회복.",
-                    keyDrivers: ["엔화 강세시 일본 차 경쟁 우위", "하이브리드(HEV) 차종 판매 호조", "인도 법인 상장 가치"]
+                    expectedImpact: "+5.2% ~ +8.0%",
+                    reasoning: "미국 인디애나 패키징 공장 보조금 확보 및 HBM4 시장 주도권 공고화.",
+                    keyDrivers: ["인디애나 보조금 수혜", "NVIDIA HBM4 독점 협상", "3D TSV 기술 격차"]
                 },
                 {
                     name: "삼성전자",
                     ticker: "005930",
-                    sentiment: "BEARISH",
-                    expectedImpact: "-2.0% ~ -3.5%",
-                    reasoning: "글로벌 패시브 펀드의 엔캐리 청산 과정에서 외국인 비중이 높은 지수 대형주 차익실현 물량 出.",
-                    keyDrivers: ["외국인 바스켓 매도세", "글로벌 매크로 유동성 축소", "단기 변동성 확대"]
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.5% ~ +5.5%",
+                    reasoning: "테일러 파운드리 및 턴키 HBM 패키징 보조금 확정으로 파운드리/HBM 턴어라운드.",
+                    keyDrivers: ["테일러 팹 보조금 집행", "HBM3e/HBM4 턴키 공급", "파운드리 수율 개선"]
+                },
+                {
+                    name: "한미반도체",
+                    ticker: "042700",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+7.5% ~ +11.8%",
+                    reasoning: "미국 HBM 패키징 팹 진출에 따른 전용 듀얼 TC 본더 장비 락인 효과.",
+                    keyDrivers: ["TC 본더 미국 진출 수혜", "HBM4 장비 독점", "사상 최대 영업이익"]
                 }
             ],
-            shortTermOutlook: "엔/달러 환율 변동성에 따른 국내 증시 장중 변동성 확대 주의.",
-            longTermOutlook: "엔화 정상화 이후 엔캐리 영향력 점진적 소멸 예상.",
+            shortTermOutlook: "미 보조금 수혜에 따른 반도체 대표주 및 후공정 장비주 외국인 매수 집중.",
+            longTermOutlook: "북미 반도체 공급망 락인을 통한 2027년까지의 확실한 성장 모멘텀.",
             riskFactors: [
-                "BOJ 연내 추가 금리 인하/인상 속도",
-                "일본 국채 금리 급등 위험"
+                "미국 내 공장 건설 인력 비용 증가",
+                "글로벌 지정학적 수출 통제 변수"
             ]
         }
     },
     {
-        id: "news-09",
-        titleEn: "US Highway Traffic Safety Admin Enforces Strict Autonomous Vehicle Approval Delays",
-        titleKr: "미 도로교통안전국(NHTSA), 자율주행 안전 규제 문턱 강화… 주요 로보택시 상용화 순연",
-        source: "Automotive News",
-        timestamp: "2026-07-31 07:50",
+        id: "news-05",
+        titleEn: "EU Formally Approves Mandatory Battery Passport Regulation, Benefiting Premium K-Battery Makers",
+        titleKr: "EU, 친환경 배터리 패스포트 의무화 제도 최종 승인… K-배터리 3사 프리미엄 반사이익",
+        source: "Financial Times",
+        timestamp: "2026-07-31 11:40",
         category: "2차전지/EV",
-        impactScore: -65,
-        sentiment: "BEARISH",
-        summary: "미국 NHTSA가 완전 자율주행(Level 4) 운행 승인 시 엣지 케이스 안전성 입증 요건을 대폭 강화함에 따라 글로벌 완결차업체들의 로보택시 상용화 목표 시점이 최소 1년 연기되었습니다.",
+        impactScore: 82,
+        sentiment: "BULLISH",
+        summary: "유럽연합(EU)이 2차전지 전 주기 탄소 발자국과 원재료 출처 추적을 의무화하는 '배터리 패스포트' 법안을 최종 의결함에 따라, ESG 기준과 투명성이 뛰어난 국내 배터리 셀 3사의 반사이익이 기대됩니다.",
         phase1Filtering: {
-            matchKeywords: ["Autonomous Vehicle", "NHTSA", "Robotaxi", "Safety Regulations"],
-            priorityScore: 72,
+            matchKeywords: ["EU Battery Passport", "ESG Regulation", "K-Battery", "Recycled Content"],
+            priorityScore: 86,
             passed: true,
-            screeningReason: "자율주행 및 모빌리티 규제 지연 키워드"
+            screeningReason: "EU 배터리 패스포트 승인 및 K-배터리 프리미엄 수혜"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "규제 문턱 강화 ➔ 자율주행 SW 및 로보택시 양산 지연 ➔ 완성차 미래 성장 모멘텀 일시 소강 ➔ 전장 부품 및 자율주행 칩 수요 지연",
+            transmissionMechanism: "EU 배터리 패스포트 의무화 ➔ 탄소 배출량이 높고 출처가 불분명한 저가 중국산 배터리 유럽 진입 차단 ➔ K-배터리 3사 유럽 완성차 계약 우위 ➔ 폐배터리 리사이클링 기업 가치 폭등",
             impactedSectors: [
-                { sector: "자율주행 SW / 카메라 모듈", direction: "DOWN", magnitude: 70 },
-                { sector: "완성차 / 전장", direction: "DOWN", magnitude: 60 }
+                { sector: "2차전지 셀 / 양극재", direction: "UP", magnitude: 86 },
+                { sector: "폐배터리 리사이클링", direction: "UP", magnitude: 88 },
+                { sector: "친환경 배터리 소재", direction: "UP", magnitude: 75 }
             ],
             targetStocks: [
                 {
-                    name: "현대모비스",
-                    ticker: "012330",
-                    sentiment: "BEARISH",
-                    expectedImpact: "-1.8% ~ -3.2%",
-                    reasoning: "자율주행 제어기 및 람다 센서 공급 가이드라인 순연에 따른 전장 부품 성장 속도 조절.",
-                    keyDrivers: ["전장 사업부 성장률 소폭 하향", "AS 부품 사업 안정적 수익 유지"]
+                    name: "LG에너지솔루션",
+                    ticker: "373220",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+4.5% ~ +7.2%",
+                    reasoning: "유럽 주요 완성차향 탄소 중립 배터리 공급망 독점 우위 및 배터리 패스포트 대응 완료.",
+                    keyDrivers: ["EU 규제 준수 우위", "유럽 완성차 수주 확대", "프리미엄 폼팩터"]
                 },
                 {
-                    name: "기아",
-                    ticker: "000270",
-                    sentiment: "BEARISH",
-                    expectedImpact: "-1.5% ~ -2.8%",
-                    reasoning: "PBV(목적 기반 모빌리티) 자율주행 버전 양산 일정 연기 영향.",
-                    keyDrivers: ["PBV 상용화 시점 조정", "고주주환원율로 주가 하방 지지"]
+                    name: "성일하이텍",
+                    ticker: "365340",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+6.5% ~ +10.5%",
+                    reasoning: "EU 규제에 따른 재활용 광물 의무 사용 비율 증가로 유럽 리사이클링 팹 가치 재평가.",
+                    keyDrivers: ["재활용 광물 의무화 수혜", "유럽 리사이클링 센터 가동", "비중국 원소재 가치 상승"]
+                },
+                {
+                    name: "POSCO홀딩스",
+                    ticker: "005490",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.2% ~ +5.5%",
+                    reasoning: "비중국 리튬/니켈 친환경 조달 체계 부각 및 소재 밸류체인 경쟁력 제고.",
+                    keyDrivers: ["친환경 리튬 생산 체계", "EU 무역 장벽 수혜", "소재 자립도 확보"]
                 }
             ],
-            shortTermOutlook: "자율주행 테마주 차익실현 및 약보합세 보일 전망.",
-            longTermOutlook: "안전성 입증 후 2027년 내실 있는 상용화 재개 기대.",
+            shortTermOutlook: "그동안 억눌렸던 2차전지 섹터에 대한 쇼트커버링 및 투심 대폭 개선.",
+            longTermOutlook: "유럽/북미 ESG 규제 장벽을 통한 중국산 배터리와의 시장 격차 확대.",
             riskFactors: [
-                "테슬라 FSD 글로벌 승인 여부 변수",
-                "중국 자율주행 기업과의 기술 격차 이슈"
+                "유럽 전기차 수요 회복 속도 변수",
+                "원자재 광물 가격 하락"
             ]
         }
     },
     {
-        id: "news-10",
-        titleEn: "Global LNG Export Capacity Bottlenecks Trigger Record High Carrier Spot Charter Rates",
-        titleKr: "카타르·북미발 LNG 수출 프로젝트 2차 발주 폭주… 척당 신조선가 2억 7천만 달러 신고가",
-        source: "TradeWinds Shipping",
-        timestamp: "2026-07-31 07:10",
+        id: "news-06",
+        titleEn: "Middle East Geopolitical Friction Spikes WTI Crude Oil +4.2% to $88/bbl, Energy Sector Surges",
+        titleKr: "중동 주요 해협 군사적 긴장 고조로 WTI 국제유가 4.2% 급등 88달러 돌파… 에너지·정유주 강세",
+        source: "S&P Global Commodities",
+        timestamp: "2026-07-31 10:30",
         category: "조선/해운",
-        impactScore: 90,
-        sentiment: "BULLISH",
-        summary: "글로벌 LNG 수요 급증 및 카타르 2차 LNG 수송선 발주가 마무리 단계에 접어들며, 174,000 cbm 급 LNG 운반선 척당 가격이 2억 7,200만 달러로 사상 최고치를 새로 썼습니다.",
+        impactScore: -76,
+        sentiment: "BEARISH",
+        summary: "중동 주요 유조선 수송 항로 주변 지정학적 분쟁이 우려되며 WTI 유가가 배럴당 88달러로 4.2% 급등해 인플레이션 우려 및 해운/정유 업종 수혜와 항공/소비재 악재가 교차하고 있습니다.",
         phase1Filtering: {
-            matchKeywords: ["LNG Carrier", "Charter Rate", "Qatar Project", "Shipbuilding"],
-            priorityScore: 93,
+            matchKeywords: ["Crude Oil", "Middle East Tension", "WTI Surge", "Energy Market"],
+            priorityScore: 84,
             passed: true,
-            screeningReason: "LNG 선가 사상 최고치 경신 호재 매칭"
+            screeningReason: "중동 지정학 리스크로 국제유가 4.2% 급등 및 매크로 변동성"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "LNG선 선가 최고치 ➔ 한국 조선 3사 2028년 슬롯 도크 프리미엄 수주 ➔ 영업이익률 10% 돌파 ➔ 조선 기자재(보냉재 등) 기업 실적 수혜 폭발",
+            transmissionMechanism: "국제유가 급등 ➔ 원유 우회 운항 및 탱커선 운임 상승 ➔ 정유 마진 개선 및 해운/조선 수혜 ➔ 반면 인플레이션 우려 및 항공/화학 원가 부담 가중",
             impactedSectors: [
-                { sector: "고부가가치 LNG선 조선 3사", direction: "UP", magnitude: 95 },
-                { sector: "조선 보냉재 / 화물창", direction: "UP", magnitude: 90 }
+                { sector: "탱커 해운 / 정유", direction: "UP", magnitude: 85 },
+                { sector: "조선 / 해양 플랜트", direction: "UP", magnitude: 78 },
+                { sector: "항공 / 운송 / 소비재", direction: "DOWN", magnitude: 80 }
+            ],
+            targetStocks: [
+                {
+                    name: "HMM",
+                    ticker: "011200",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+5.5% ~ +8.8%",
+                    reasoning: "유가 상승 및 항로 우회에 따른 탱커/컨테이너 운임지수(SCFI) 동반 반등 수혜.",
+                    keyDrivers: ["운임 지수 급등", "우회 운항 프리미엄", "3분기 어닝 호조"]
+                },
+                {
+                    name: "한화오션",
+                    ticker: "042660",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.8% ~ +6.2%",
+                    reasoning: "해양 플랜트 및 원유 수송선(VLCC) 발주 문의 증가 및 고선가 수주 잔고 모멘텀.",
+                    keyDrivers: ["VLCC 신조선 발주 호조", "해양 플랜트 수주", "방산 모멘텀 연계"]
+                },
+                {
+                    name: "현대차",
+                    ticker: "005380",
+                    sentiment: "BEARISH",
+                    expectedImpact: "-2.0% ~ -3.5%",
+                    reasoning: "고유가로 인한 글로벌 내연기관 소비 심리 위축 및 원자재 물류비 상승 부담.",
+                    keyDrivers: ["원가 부담 증가", "소비 심리 위축", "단기 차익실현"]
+                }
+            ],
+            shortTermOutlook: "유가 급등에 따라 정유/해운주로의 단기 테마 자금 쏠림 현상 발생.",
+            longTermOutlook: "에너지 인플레이션 장기화 시 글로벌 경기 둔화 우려 상존.",
+            riskFactors: [
+                "중동 외교적 타결 시 유가 급락 위험",
+                "글로벌 원유 수요 둔화"
+            ]
+        }
+    },
+    {
+        id: "news-07",
+        titleEn: "LNG Carrier Newbuilding Prices Reach Record $275M; HD Korea Shipbuilding & Samsung Heavy Secure Major Contracts",
+        titleKr: "글로벌 LNG 운반선 신조선가 2억 7500만 달러 사상 최고치… HD한국조선해양·삼성중공업 초대형 수주",
+        source: "TradeWinds Shipping",
+        timestamp: "2026-07-31 09:20",
+        category: "조선/해운",
+        impactScore: 92,
+        sentiment: "BULLISH",
+        summary: "카타르 2차 및 북미 LNG 프로젝트 수송선 발주가 폭주하며 174,000cbm 급 LNG선 신조선가가 척당 2억 7,500만 달러로 신고가를 경신하였고 국내 조선 대형사가 슬롯을 독점했습니다.",
+        phase1Filtering: {
+            matchKeywords: ["LNG Carrier", "Newbuilding Price", "HD Korea Shipbuilding", "Samsung Heavy", "Record High"],
+            priorityScore: 95,
+            passed: true,
+            screeningReason: "LNG 선가 2.75억달러 신고가 경신 및 국내 조선사 대규모 수주"
+        },
+        phase2DeepAnalysis: {
+            transmissionMechanism: "LNG 신조선가 최고치 ➔ 한국 조선 대형 3사 2028~2029년 도크 슬롯 프리미엄 수주 ➔ 영업이익률 10% 이상 대폭 상승 ➔ 초저온 보냉재 등 조선 기자재사 실적 폭발",
+            impactedSectors: [
+                { sector: "고부가가치 LNG선 조선 3사", direction: "UP", magnitude: 96 },
+                { sector: "조선 보냉재 / 화물창", direction: "UP", magnitude: 92 },
+                { sector: "해운 / 물류", direction: "UP", magnitude: 75 }
             ],
             targetStocks: [
                 {
                     name: "HD한국조선해양",
                     ticker: "009540",
                     sentiment: "BULLISH",
-                    expectedImpact: "+5.0% ~ +7.8%",
-                    reasoning: "카타르 2차 프로젝트 물량 독점 및 LNG선 도크 최다 보유로 마진율 극대화.",
-                    keyDrivers: ["LNG선 척당 2.7억달러 수주", "도크 슬롯 프리미엄", "자회사 HD현대중공업 실적 견인"]
+                    expectedImpact: "+5.8% ~ +8.8%",
+                    reasoning: "LNG선 선가 상승 프리미엄 반영 및 자회사 HD현대중공업 도크 풀가동에 따른 실적 턴어라운드.",
+                    keyDrivers: ["LNG선 척당 2.75억달러", "2028년 도크 매출 확정", "자회사 실적 견인"]
+                },
+                {
+                    name: "한화오션",
+                    ticker: "042660",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+4.8% ~ +7.5%",
+                    reasoning: "친환경 LNG/암모니아 운반선 고마진 수주 잇따라 성공하며 영업이익률 급증.",
+                    keyDrivers: ["고마진 LNG선 수주", "방산 및 특수선 시너지", "영업이익 대폭 상승"]
                 },
                 {
                     name: "동성화인텍",
                     ticker: "083500",
                     sentiment: "BULLISH",
-                    expectedImpact: "+7.5% ~ +12.0%",
-                    reasoning: "LNG 화물창 초저온 보냉재 독점 공급업체로 사상 최대 수주 잔고와 판가 인상 동시 수혜.",
-                    keyDrivers: ["LNG 보냉재 가동률 100%", "원자재가 하락 마진 개선", "수주잔고 2년치 달성"]
+                    expectedImpact: "+8.0% ~ +12.5%",
+                    reasoning: "LNG 화물창 초저온 보냉재 독점 공급 체계로 사상 최대 수주 잔고 및 판가 인상 동시 수혜.",
+                    keyDrivers: ["보냉재 가동률 100%", "2년치 이상 수주잔고", "마진율 극대화"]
                 }
             ],
-            shortTermOutlook: "조선/기자재주 기관 강력 매수세 진입 가시화.",
-            longTermOutlook: "2028년 도크 슬롯까지 매출 확정되어 주가 우상향 궤적 공고.",
+            shortTermOutlook: "조선 및 기자재 업종으로의 외국인/기관 매수세 급증으로 주도주 자리 매김.",
+            longTermOutlook: "2028년까지 슬롯이 전량 매진되어 안정적 장기 실적 우상향 구도 확립.",
             riskFactors: [
-                "조선소 후판(강재) 가격 인상 협상 타결 위험",
-                "숙련 인력 수급 난항"
+                "조선소 숙련 인력 수급 이슈",
+                "후판 가격 협상 우려"
             ]
         }
     },
     {
-        id: "news-11",
-        titleEn: "US Department of Energy Commits $20B for Next-Gen SMR & Datacenter Nuclear Power Grid",
-        titleKr: "미 에너지부(DOE), AI 데이터센터 전력 공급용 소형모듈원자로(SMR) 200억 달러 지원안 의결",
-        source: "World Nuclear News",
-        timestamp: "2026-07-31 06:30",
-        category: "빅테크/IT",
-        impactScore: 79,
+        id: "news-08",
+        titleEn: "US 10-Year Treasury Yields Slide Below 4.10% as Dollar Index Softens on Cooling Labor Data",
+        titleKr: "미 고용 냉각 신호에 국채 10년물 금리 4.10% 아래로 하락… 달러 인덱스 약세 전환",
+        source: "CNBC Market Data",
+        timestamp: "2026-07-31 08:30",
+        category: "통화정책/금융",
+        impactScore: 84,
         sentiment: "BULLISH",
-        summary: "미국 정부가 AI 데이터센터의 전력 부족 위기를 해결하기 위해 차세대 SMR 원자로 10곳 상용화 및 전력망 연계 프로젝트에 200억 달러 직접 금융 지원을 확정했습니다.",
+        summary: "미국 주간 신규 실업수당 청구건수가 증가하고 온건한 고용 지표가 이어지면서 미 국채 10년물 금리가 4.08%로 하락하고 원/달러 환율이 1,330원선 아래로 하강 안정화되었습니다.",
         phase1Filtering: {
-            matchKeywords: ["Nuclear Energy", "SMR", "Datacenter Power", "Department of Energy"],
-            priorityScore: 81,
+            matchKeywords: ["Treasury Yields", "Dollar Index", "Labor Market", "Yield Slide", "Foreign Capital"],
+            priorityScore: 87,
             passed: true,
-            screeningReason: "SMR 및 데이터센터 전력망 호재 키워드"
+            screeningReason: "미 10년물 국채 금리 하락 및 달러 약세로 국내 외국인 유입 모멘텀"
         },
         phase2DeepAnalysis: {
-            transmissionMechanism: "SMR 지원 확정 ➔ 빅테크 PPA(전력구매계약) 원전 체결 ➔ K-원전 주기기 제작 수주 독점 ➔ 원전 및 송배전 설비 기업 실적 폭등",
+            transmissionMechanism: "미 국채 금리 및 달러 인덱스 하락 ➔ 원/달러 환율 하락 ➔ 한국 증시 외국인 순매수 유입 ➔ 바이오, 인터넷, 금융 등 밸류에이션 부담 완화",
             impactedSectors: [
-                { sector: "SMR / 원자력 주기기", direction: "UP", magnitude: 86 },
-                { sector: "전력망 / 변압기", direction: "UP", magnitude: 82 }
+                { sector: "성장주 (바이오/인터넷)", direction: "UP", magnitude: 86 },
+                { sector: "금융 / 지주사", direction: "UP", magnitude: 82 },
+                { sector: "증권 / 자산운용", direction: "UP", magnitude: 74 }
             ],
             targetStocks: [
                 {
-                    name: "두산에너빌리티",
-                    ticker: "034020",
+                    name: "KB금융",
+                    ticker: "105560",
                     sentiment: "BULLISH",
-                    expectedImpact: "+4.8% ~ +7.5%",
-                    reasoning: "뉴스케일파워 및 엑스-에너지(X-Energy) SMR 파운드리 주기기 제작 수주 독점.",
-                    keyDrivers: ["SMR 단조품 및 주기기 독점 제작", "미국 빅테크 전력 계약 수혜", "가스터빈 수출"]
+                    expectedImpact: "+3.2% ~ +5.0%",
+                    reasoning: "달러 약세 및 원화 강세 전환 시 외국인 바스켓 자금의 최우선 매수 표적.",
+                    keyDrivers: ["원화 강세 외국인 유입", "배당 수익률 부각", "밸류업 자사주 소각"]
                 },
                 {
-                    name: "HD현대일렉트릭",
-                    ticker: "267260",
+                    name: "삼성바이오로직스",
+                    ticker: "207940",
                     sentiment: "BULLISH",
-                    expectedImpact: "+5.5% ~ +9.0%",
-                    reasoning: "미국 변압기 및 전력기기 숏티지(부족) 장기화에 따른 초고압 변압기 판가(ASP) 지속 상승.",
-                    keyDrivers: ["북미 초고압 변압기 리드타임 4년", "영업이익률 20% 돌파", "수주잔고 사상 최대"]
+                    expectedImpact: "+3.5% ~ +5.8%",
+                    reasoning: "금리 하락으로 인한 바이오 섹터 할인율 축소 및 글로벌 펀드 수급 개선.",
+                    keyDrivers: ["국채금리 하락 바이오 수혜", "CDMO 대형 수주", "5공장 가동"]
+                },
+                {
+                    name: "NAVER",
+                    ticker: "035420",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.8% ~ +6.0%",
+                    reasoning: "고금리 할인율 부담 제거에 따른 인터넷 대형주 PER 멀티플 회복.",
+                    keyDrivers: ["할인율 부담 완화", "멀티플 재평가", "AI 서비스 가치 반영"]
                 }
             ],
-            shortTermOutlook: "원전 및 전력기기 섹터 강한 주도주 복귀 예상.",
-            longTermOutlook: "AI 시대 무탄소 전원(CF100) 핵심으로서 SMR 장기 수혜 지속.",
+            shortTermOutlook: "환율 하락과 국채 금리 안정이 코스피 전반의 외국인 수급 개선을 유도.",
+            longTermOutlook: "글로벌 금리 피벗과 함께 신흥국 자금 재배치 가속화.",
             riskFactors: [
-                "SMR 인허가 규제 기관(NRC) 심사 연기 우려",
-                "원전 건설 비용 상승 위험"
+                "미 고용 시장 급격한 악화 시 침체(Hard Landing) 우려",
+                "환율 재반등 가능성"
+            ]
+        }
+    },
+    {
+        id: "news-09",
+        titleEn: "Yen Volatility Spikes Ahead of Bank of Japan Policy Decision; Yen-Carry Unwinding Watch",
+        titleKr: "일본은행(BOJ) 통화정책 결정 앞두고 엔화 변동성 급증… 엔캐리 트레이드 청산 경계감",
+        source: "Nikkei Asia",
+        timestamp: "2026-07-31 07:45",
+        category: "통화정책/금융",
+        impactScore: -68,
+        sentiment: "BEARISH",
+        summary: "일본은행(BOJ)의 추가 금리 인상 여부를 둘러싸고 엔/달러 환율이 급변동하면서 글로벌 엔캐리 자금의 일시적 청산 가능성에 신흥국 증시 및 코스피 변동성이 확대되고 있습니다.",
+        phase1Filtering: {
+            matchKeywords: ["Bank of Japan", "BOJ", "Yen Volatility", "Yen Carry", "Policy Decision"],
+            priorityScore: 82,
+            passed: true,
+            screeningReason: "BOJ 통화정책 앞두고 엔화 변동성 급증 및 엔캐리 청산 경계"
+        },
+        phase2DeepAnalysis: {
+            transmissionMechanism: "BOJ 금리 인상 가능성 ➔ 엔화 강세 및 엔/달러 급락 ➔ 엔캐리 청산에 따른 글로벌 지수 대형주 단기 매도 ➔ 자동차 업종은 반사이익, 패시브 지수주 변동성 확대",
+            impactedSectors: [
+                { sector: "지수 대형주 (패시브 자금)", direction: "DOWN", magnitude: 72 },
+                { sector: "자동차 (대일 경쟁력 개선)", direction: "UP", magnitude: 65 }
+            ],
+            targetStocks: [
+                {
+                    name: "현대차",
+                    ticker: "005380",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+2.0% ~ +4.0%",
+                    reasoning: "(반사이익) 엔화 강세 전환 시 미국/유럽 시장에서 토요타 대비 한국 자동차 가격 경쟁력 강화.",
+                    keyDrivers: ["엔화 강세 반사이익", "HEV 하이브리드 인기", "글로벌 점유율 확대"]
+                },
+                {
+                    name: "기아",
+                    ticker: "000270",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+1.8% ~ +3.6%",
+                    reasoning: "엔/달러 하락에 따른 일본 차 대비 상대적 호조 및 높은 주주환원율 재조명.",
+                    keyDrivers: ["대일 가격 경쟁력 우위", "고배당/자사주 소각", "미국 시장 호조"]
+                },
+                {
+                    name: "삼성전자",
+                    ticker: "005930",
+                    sentiment: "BEARISH",
+                    expectedImpact: "-1.8% ~ -3.2%",
+                    reasoning: "글로벌 패시브 자금 청산 시 외국인 유동성 차익실현 물량출 우려.",
+                    keyDrivers: ["외국인 패시브 매도", "단기 수급 변동성", "지수 변동성"]
+                }
+            ],
+            shortTermOutlook: "BOJ 결과 발표 전까지 장중 엔화 환율 변동에 따른 증시 출렁임 예상.",
+            longTermOutlook: "엔화 가치 정상화 과정 완료 후 글로벌 매크로 유동성 재안정.",
+            riskFactors: [
+                "BOJ 매파적 surprise 금리 인상 시 지수 단기 충격",
+                "일본 국채 금리 급등"
+            ]
+        }
+    },
+    {
+        id: "news-10",
+        titleEn: "Global Tech Surge in On-Device AI & Autonomous Driving Chips Drives NPU/LPDDR5X Demand Boom",
+        titleKr: "글로벌 테크기업 온디바이스 AI 및 자율주행 NPU 칩 수요 폭증… LPDDR5X·CXL 메모리 기폭제",
+        source: "EE Times",
+        timestamp: "2026-07-31 07:00",
+        category: "반도체/AI",
+        impactScore: 89,
+        sentiment: "BULLISH",
+        summary: "차세대 프리미엄 스마트폰, AI PC, 자율주행차(SDV)에 탑재되는 온디바이스 AI 전용 NPU 칩 및 고성능 LPDDR5X/CXL 메모리 모듈 주문량이 2배 이상 급증했습니다.",
+        phase1Filtering: {
+            matchKeywords: ["On-Device AI", "Autonomous Chip", "LPDDR5X", "CXL", "NPU Surge"],
+            priorityScore: 91,
+            passed: true,
+            screeningReason: "온디바이스 AI 및 자율주행 NPU/LPDDR5X 수요 폭증 호재"
+        },
+        phase2DeepAnalysis: {
+            transmissionMechanism: "온디바이스 AI 칩 탑재 확산 ➔ 모바일/전장용 고성능 LPDDR5X 및 CXL 메모리 고단가 주문 급증 ➔ 국내 메모리 2사 실적 프리미엄 추가 및 팹리스/IP 기업 수혜",
+            impactedSectors: [
+                { sector: "온디바이스 메모리 (LPDDR5X/CXL)", direction: "UP", magnitude: 92 },
+                { sector: "자율주행 전장 / NPU", direction: "UP", magnitude: 84 },
+                { sector: "반도체 IP / 디자인하우스", direction: "UP", magnitude: 78 }
+            ],
+            targetStocks: [
+                {
+                    name: "삼성전자",
+                    ticker: "005930",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+4.0% ~ +6.5%",
+                    reasoning: "온디바이스 AI용 LPDDR5X 및 CXL 메모리 세계 1위 공급사로 프리미엄 단가(ASP) 수혜 감지.",
+                    keyDrivers: ["LPDDR5X 시장 점유율 1위", "CXL 차세대 메모리 선점", "파운드리 전장 칩 수주"]
+                },
+                {
+                    name: "SK하이닉스",
+                    ticker: "000660",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.8% ~ +6.0%",
+                    reasoning: "고성능 LPDDR5T 및 온디바이스 AI 메모리 라인업 확대로 모바일/전장 메모리 매출 대폭 증가.",
+                    keyDrivers: ["LPDDR5T 공급 확대", "전장용 메모리 성장", "HBM 외 고마진 제품군"]
+                },
+                {
+                    name: "현대모비스",
+                    ticker: "012330",
+                    sentiment: "BULLISH",
+                    expectedImpact: "+3.5% ~ +5.8%",
+                    reasoning: "차세대 SDV 자율주행 통합 제어기 및 온디바이스 AI 전장 모듈 수주 본격화.",
+                    keyDrivers: ["SDV 전장 제어기 수주", "온디바이스 AI 모듈 공급", "전장 사업부 턴어라운드"]
+                }
+            ],
+            shortTermOutlook: "온디바이스 AI 테마 재조명으로 반도체/전장 관련주 강세 모멘텀.",
+            longTermOutlook: "2026~2027년 스마트폰, PC, 자동차 전반의 AI 탑재 표준화로 장기 수요 창출.",
+            riskFactors: [
+                "스마트폰 글로벌 세트 판매량 신장세 확인 필요",
+                "AI 칩 발열 및 전력 소비 이슈"
             ]
         }
     }
@@ -1167,8 +1163,8 @@ function runPipelineSimulation() {
 
     const logs = [
         { time: 200, type: "system", text: "[SYSTEM] 글로벌 파이프라인 인프라 연결 시작 (RSS, Bloomberg API, Reuters Feed)" },
-        { time: 500, type: "info", text: "[FETCH] 실시간 글로벌 헤드라인 11건 수집 완료 (반도체, 통화정책, 지정학, 해운)" },
-        { time: 900, type: "filter", text: "[1단계 엑기스] 고유 키워드 추출 & 스크리닝 (Pass: 11건 / Reject: 0건)" },
+        { time: 500, type: "info", text: "[FETCH] 실시간 글로벌 헤드라인 10건 수집 완료 (반도체, 통화정책, 지정학, 해운)" },
+        { time: 900, type: "filter", text: "[1단계 엑기스] 고유 키워드 추출 & 스크리닝 (Pass: 10건 / Reject: 0건)" },
         { time: 1400, type: "info", text: "[2단계 LLM 엔진] 한국 증시(KOSPI/KOSDAQ) 전파 경로 Vector 계산 중..." },
         { time: 1900, type: "success", text: "[2단계 LLM 엔진] 수혜/피해 24개 종목 연관 매핑 및 예상 등락률 산출 완료!" },
         { time: 2300, type: "system", text: "[SYSTEM] 파이프라인 갱신 완료. 최신 대시보드 렌더링 완료." }
