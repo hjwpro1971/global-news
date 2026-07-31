@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="글로벌 거시경제 및 지정학적 이슈가 한국 증시(KOSPI/KOSDAQ)와 주요 종목에 미치는 영향도를 실시간 AI 2단계 파이프라인으로 분석 및 모니터링합니다.">
+    <meta name="keywords" content="글로벌 경제, 한국 증시, 주식 영향 분석, KOSPI, KOSDAQ, 삼성전자, SK하이닉스, 주식 모니터링, 파이낸셜 터미널">
+    <meta property="og:title" content="Global Economics to KR Stock Impact Monitor">
+    <meta property="og:description" content="글로벌 주요 뉴스 기반 국내 증시 연관 영향도 및 종목 수혜/피해 심층 분석 시스템">
+    <meta property="og:type" content="website">
+    <title>Global Economics to KR Stock Impact Monitor</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Financial Terminal Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-chart-line-up"></i>
+                </div>
+                <div class="brand-text">
+                    <h1 class="app-title">GLOBAL MACRO <span class="highlight">→ KR STOCK</span> IMPACT MONITOR</h1>
+                    <p class="app-subtitle">AI 2단계 파이프라인 (1차 제목 스크리닝 ➔ 2차 본문 심층 분석 & 국내 증시 수혜/피해 매핑)</p>
+                </div>
+            </div>
+
+            <!-- Real-time Global Market Clocks -->
+            <div class="market-clocks-bar">
+                <div class="clock-card" id="clock-ny">
+                    <div class="clock-header">
+                        <span class="city-name"><i class="fa-solid fa-building-columns"></i> New York</span>
+                        <span class="market-status status-open" id="status-ny">OPEN</span>
+                    </div>
+                    <div class="clock-time" id="time-ny">--:--:-- EST</div>
+                </div>
+
+                <div class="clock-card" id="clock-london">
+                    <div class="clock-header">
+                        <span class="city-name"><i class="fa-solid fa-landmark"></i> London</span>
+                        <span class="market-status status-closed" id="status-london">CLOSED</span>
+                    </div>
+                    <div class="clock-time" id="time-london">--:--:-- GMT</div>
+                </div>
+
+                <div class="clock-card" id="clock-seoul">
+                    <div class="clock-header">
+                        <span class="city-name"><i class="fa-solid fa-city"></i> Seoul</span>
+                        <span class="market-status status-open" id="status-seoul">OPEN</span>
+                    </div>
+                    <div class="clock-time" id="time-seoul">--:--:-- KST</div>
+                </div>
+            </div>
+
+            <!-- Header Quick Control Actions -->
+            <div class="header-actions">
+                <button id="btn-run-simulation" class="btn btn-primary glow-btn" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
+                    <i class="fa-solid fa-arrows-rotate"></i> 파이프라인 분석 재실행
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Financial KPI Summary Ticker / Metrics Bar -->
+    <section class="metrics-bar-section">
+        <div class="metrics-container">
+            <div class="metric-item">
+                <span class="metric-label"><i class="fa-solid fa-newspaper"></i> 총 수집 뉴스</span>
+                <span class="metric-value" id="metric-total-news">11건</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-label"><i class="fa-solid fa-arrow-trend-up text-green"></i> 호재 (Bullish)</span>
+                <span class="metric-value text-green" id="metric-bull-count">7건 (63.6%)</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-label"><i class="fa-solid fa-arrow-trend-down text-red"></i> 악재 (Bearish)</span>
+                <span class="metric-value text-red" id="metric-bear-count">4건 (36.4%)</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-label"><i class="fa-solid fa-bolt text-gold"></i> 초고영향 이슈 (|Score|≥75)</span>
+                <span class="metric-value text-gold" id="metric-high-impact">5건</span>
+            </div>
+            <div class="metric-divider"></div>
+            <div class="metric-item">
+                <span class="metric-label"><i class="fa-solid fa-microchip"></i> 파이프라인 상태</span>
+                <span class="metric-value text-blue" id="metric-pipeline-status"><i class="fa-solid fa-circle-check"></i> 분석 완료 (2-Stage)</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Layout (Sidebar + News Content) -->
+    <div class="main-wrapper">
+        <div class="main-layout">
+            
+            <!-- Left Sidebar: Search, Filters & Pipeline Simulation Console -->
+            <aside class="sidebar">
+                
+                <!-- Search & Dynamic Filter Panel -->
+                <div class="sidebar-card filter-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-filter"></i> 스마트 심층 필터</h3>
+                        <button id="btn-reset-filters" class="btn-text-reset" title="필터 초기화">
+                            <i class="fa-solid fa-rotate-left"></i> 초기화
+                        </button>
+                    </div>
+
+                    <!-- Keyword Search -->
+                    <div class="filter-group">
+                        <label for="search-input" class="filter-label">검색어 (제목, 내용, 종목명)</label>
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="search-input" placeholder="예: 삼성전자, AI, 연준, 금리, HBM...">
+                            <button id="btn-clear-search" class="btn-clear hidden">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- Direction / Sentiment Radio Pills -->
+                    <div class="filter-group">
+                        <label class="filter-label">증시 영향 방향성 (Sentiment)</label>
+                        <div class="sentiment-pill-group">
+                            <button class="pill-btn active" data-sentiment="ALL">전체</button>
+                            <button class="pill-btn pill-bullish" data-sentiment="BULLISH">
+                                <i class="fa-solid fa-arrow-trend-up"></i> 호재 🟢
+                            </button>
+                            <button class="pill-btn pill-bearish" data-sentiment="BEARISH">
+                                <i class="fa-solid fa-arrow-trend-down"></i> 악재 🔴
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sector Category Filter -->
+                    <div class="filter-group">
+                        <label for="sector-select" class="filter-label">주요 관련 산업/섹터</label>
+                        <div class="select-wrapper">
+                            <select id="sector-select" class="custom-select">
+                                <option value="ALL">전체 섹터 보기 (All Sectors)</option>
+                                <option value="반도체/AI">반도체 / AI HBM</option>
+                                <option value="2차전지/EV">2차전지 / 전기차</option>
+                                <option value="통화정책/금융">거시경제 / 금리 / 금융</option>
+                                <option value="조선/해운">조선 / 해운 / 물류</option>
+                                <option value="방산/항공">방산 / 안보 / 항공</option>
+                                <option value="바이오/제약">바이오 / 헬스케어</option>
+                                <option value="빅테크/IT">빅테크 / 클라우드 / SW</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down select-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Impact Threshold Slider -->
+                    <div class="filter-group">
+                        <div class="slider-header">
+                            <label for="impact-range" class="filter-label">최소 영향도 점수 (|Score|)</label>
+                            <span id="impact-range-val" class="slider-val">0점 이상</span>
+                        </div>
+                        <input type="range" id="impact-range" class="custom-range" min="0" max="90" step="10" value="0">
+                        <div class="range-labels">
+                            <span>0 (전체)</span>
+                            <span>50</span>
+                            <span>70+ (고영향)</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stock Tag Filter -->
+                    <div class="filter-group">
+                        <label class="filter-label">국내 주요 관심 종목 퀵 필터</label>
+                        <div class="stock-tag-cloud" id="stock-tag-cloud">
+                            <span class="stock-pill" data-stock="삼성전자">#삼성전자</span>
+                            <span class="stock-pill" data-stock="SK하이닉스">#SK하이닉스</span>
+                            <span class="stock-pill" data-stock="LG에너지솔루션">#LG엔솔</span>
+                            <span class="stock-pill" data-stock="현대차">#현대차</span>
+                            <span class="stock-pill" data-stock="한화오션">#한화오션</span>
+                            <span class="stock-pill" data-stock="한화에어로스페이스">#한화에어로</span>
+                            <span class="stock-pill" data-stock="셀트리온">#셀트리온</span>
+                            <span class="stock-pill" data-stock="KB금융">#KB금융</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation & Pipeline Log Console Box -->
+                <div class="sidebar-card console-panel">
+                    <div class="console-header">
+                        <div class="console-title">
+                            <i class="fa-solid fa-terminal"></i> 파이프라인 수집/분석 콘솔
+                        </div>
+                        <span class="console-badge" id="console-status-badge">READY</span>
+                    </div>
+
+                    <!-- Simulated Pipeline Progress Bar -->
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="pipeline-progress-bar" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Console Terminal Output -->
+                    <div class="console-terminal" id="console-terminal">
+                        <div class="log-line system">[SYSTEM] 파이프라인 분석엔진 준비 완료.</div>
+                        <div class="log-line info">[1차 엑기스] 글로벌 RSS/뉴스 11건 수집 및 키워드 필터링 완료.</div>
+                        <div class="log-line success">[2차 LLM 분석] 한국 증시(KOSPI) 미치는 메커니즘 및 수혜/피해 종목 매핑 완료.</div>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Right Main Area: Hero Issue & News List Grid -->
+            <main class="content-area">
+                
+                <!-- Hero Section: Top #1 Highest Impact Issue Banner -->
+                <section class="hero-section">
+                    <div class="section-title-bar">
+                        <h2><i class="fa-solid fa-fire text-gold"></i> TOP IMPACT ISSUE (최고 영향도 이슈)</h2>
+                        <span class="hero-subtext">AI 파이프라인이 선정한 국내 증시 파급력 1위 뉴스</span>
+                    </div>
+                    <div id="hero-card-wrapper">
+                        <!-- Hero card dynamically injected by app.js -->
+                    </div>
+                </section>
+
+                <!-- News Grid Section: Top 2~10+ Impact News Cards -->
+                <section class="news-list-section">
+                    <div class="news-list-header">
+                        <div class="title-with-count">
+                            <h2><i class="fa-solid fa-list-check"></i> 글로벌 경제 이슈 영향도 리스트</h2>
+                            <span class="badge-count" id="news-count-badge">11개 분석 완료</span>
+                        </div>
+
+                        <!-- Sorting controls -->
+                        <div class="sort-controls">
+                            <label for="sort-select"><i class="fa-solid fa-arrow-down-short-wide"></i> 정렬:</label>
+                            <select id="sort-select" class="custom-select-sm">
+                                <option value="impact-desc">영향도 절대값 순 (높은순)</option>
+                                <option value="score-desc">긍정 영향도 순 (호재순)</option>
+                                <option value="score-asc">부정 영향도 순 (악재순)</option>
+                                <option value="latest">최신 수집 순</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Card Grid -->
+                    <div class="news-grid" id="news-grid">
+                        <!-- News cards dynamically injected by app.js -->
+                    </div>
+
+                    <!-- No Results Placeholder -->
+                    <div class="no-results hidden" id="no-results">
+                        <i class="fa-solid fa-folder-open no-results-icon"></i>
+                        <h3>조건에 부합하는 분석 뉴스가 없습니다.</h3>
+                        <p>검색어나 필터 조건을 변경하거나 [초기화] 버튼을 눌러주세요.</p>
+                        <button id="btn-reset-empty" class="btn btn-secondary mt-12">필터 전체 초기화</button>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-container">
+            <p>© 2026 Global Economics to KR Stock Impact Monitor. Designed for Quantitative Macro Analysis.</p>
+            <p class="footer-notice">본 시스템에서 제공하는 정보는 AI 2단계 파이프라인 분석 시뮬레이션 결과이며 투자 권유가 아닙니다. 모든 투자의 책임은 본인에게 있습니다.</p>
+        </div>
+    </footer>
+
+    <!-- Detailed Impact Analysis Modal -->
+    <div id="modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-card">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-meta-pills">
+                        <span class="badge-category" id="modal-category">반도체/AI</span>
+                        <span class="modal-source-time" id="modal-source-time">Bloomberg • 2026-07-31 16:30</span>
+                    </div>
+                    <h2 id="modal-title" class="modal-main-title">뉴스 제목이 여기에 표시됩니다</h2>
+                    <div id="modal-original-title" class="modal-sub-title">Original English Title</div>
+                </div>
+                <button id="modal-close-btn" class="modal-close-btn" aria-label="닫기">&times;</button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="modal-body">
+                
+                <!-- Score Indicator Banner -->
+                <div class="modal-impact-banner" id="modal-impact-banner">
+                    <div class="banner-score-box">
+                        <span class="score-label">종합 영향도 점수</span>
+                        <span class="score-number" id="modal-score-number">+85</span>
+                    </div>
+                    <div class="banner-sentiment-box">
+                        <span class="sentiment-badge" id="modal-sentiment-badge">강한 호재 (STRONG BULLISH)</span>
+                        <p class="sentiment-desc" id="modal-sentiment-desc">국내 관련 핵심 주식 상승 모멘텀 제공 예상</p>
+                    </div>
+                </div>
+
+                <!-- 2-Stage Pipeline Breakdown Section -->
+                <div class="modal-section pipeline-breakdown">
+                    <h3><i class="fa-solid fa-layer-group text-blue"></i> AI 2단계 파이프라인 검증 보고서</h3>
+                    <div class="pipeline-grid">
+                        <div class="pipeline-card stage-1">
+                            <div class="stage-tag"><i class="fa-solid fa-filter"></i> 1단계: 제목 엑기스 스크리닝</div>
+                            <ul class="stage-list" id="modal-stage1-list">
+                                <!-- Stage 1 items -->
+                            </ul>
+                        </div>
+                        <div class="pipeline-card stage-2">
+                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> 2단계: 본문 LLM 파급 메커니즘</div>
+                            <p class="transmission-text" id="modal-transmission-text">
+                                파급 메커니즘 내용이 여기에 출력됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart & Stock Impact Detail Section -->
+                <div class="modal-section stock-impact-section">
+                    <h3><i class="fa-solid fa-chart-simple text-green"></i> 국내 주식 영향도 및 등락 전망 (Target Stock Impact)</h3>
+                    
+                    <div class="modal-chart-layout">
+                        <!-- Chart Canvas Container -->
+                        <div class="chart-container">
+                            <canvas id="impactChart"></canvas>
+                        </div>
+
+                        <!-- Stock Detail Cards -->
+                        <div class="stock-impact-list" id="modal-stock-list">
+                            <!-- Injected stock cards -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outlook & Risks Section -->
+                <div class="modal-section outlook-section">
+                    <div class="outlook-grid">
+                        <div class="outlook-card short-term">
+                            <h4><i class="fa-solid fa-clock-rotate-left"></i> 단기 전망 (1 ~ 5일)</h4>
+                            <p id="modal-short-term">단기 전망 내용...</p>
+                        </div>
+                        <div class="outlook-card long-term">
+                            <h4><i class="fa-solid fa-chart-line"></i> 중장기 전망 (1~3개월)</h4>
+                            <p id="modal-long-term">중장기 전망 내용...</p>
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors -->
+                    <div class="risk-card">
+                        <h4><i class="fa-solid fa-triangle-exclamation text-gold"></i> 주요 체크포인트 및 리스크 요인</h4>
+                        <ul id="modal-risk-list">
+                            <!-- Risk items -->
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 매매 결정 전 반드시 공시 및 실적을 확인하세요.</span>
+                <button id="modal-footer-close" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
