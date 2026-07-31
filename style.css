@@ -1368,11 +1368,11 @@ body {
 
 .pipeline-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 16px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 850px) {
     .pipeline-grid {
         grid-template-columns: 1fr;
     }
@@ -1382,14 +1382,20 @@ body {
     background: rgba(15, 22, 36, 0.7);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .stage-tag {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--accent-blue);
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .stage-list {
@@ -1398,96 +1404,227 @@ body {
     color: var(--text-secondary);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 }
 
-.stage-list li::before {
-    content: "• ";
+.stage-list li {
+    line-height: 1.4;
+}
+
+.stage-list li strong {
+    color: var(--text-primary);
+}
+
+/* Stage 2 Analysis Sub Cards */
+.analysis-sub-card {
+    background: rgba(20, 28, 45, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+}
+
+.analysis-sub-card:last-child {
+    margin-bottom: 0;
+}
+
+.analysis-sub-card.summary-card {
+    background: rgba(41, 182, 246, 0.05);
+    border-color: rgba(41, 182, 246, 0.2);
+}
+
+.analysis-sub-card h4 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.article-context-text p {
+    font-size: 0.83rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Step-by-Step Transmission Path */
+.step-path-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.step-path-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid var(--accent-blue);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+}
+
+.step-badge {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
     color: var(--accent-blue);
+    background: rgba(41, 182, 246, 0.15);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+.step-desc {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+/* Impacted Sector Chips */
+.impacted-sectors-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sector-tag-chip {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-subtle);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sector-tag-chip.up {
+    color: var(--bull-green);
+    border-color: rgba(0, 230, 118, 0.3);
+    background: var(--bull-bg);
+}
+
+.sector-tag-chip.down {
+    color: var(--bear-red);
+    border-color: rgba(255, 82, 82, 0.3);
+    background: var(--bear-bg);
 }
 
 .transmission-text {
     font-size: 0.85rem;
     color: var(--text-primary);
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
-/* Modal Chart & Stock Impact */
-.modal-chart-layout {
+/* Stock Impact Grid Section */
+.stock-impact-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: center;
-}
-
-@media (max-width: 850px) {
-    .modal-chart-layout {
-        grid-template-columns: 1fr;
-    }
-}
-
-.chart-container {
-    background: rgba(10, 15, 26, 0.7);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    height: 260px;
-    position: relative;
-}
-
-.stock-impact-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 260px;
-    overflow-y: auto;
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 12px;
 }
 
 .stock-impact-card {
-    background: rgba(15, 22, 36, 0.8);
-    border: 1px solid var(--border-subtle);
+    background: rgba(15, 22, 36, 0.9);
+    border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);
-    padding: 10px 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .stock-impact-card.bull {
-    border-left: 3px solid var(--bull-green);
+    border-left: 4px solid var(--bull-green);
 }
 
 .stock-impact-card.bear {
-    border-left: 3px solid var(--bear-red);
+    border-left: 4px solid var(--bear-red);
 }
 
 .stock-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
-.stock-name-ticker {
-    font-size: 0.88rem;
+.stock-identity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stock-name {
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 
 .stock-ticker-code {
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    margin-left: 4px;
 }
 
-.stock-expected-change {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    font-weight: 800;
+.stock-direction-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stock-direction-badge.bullish {
+    background: var(--bull-bg);
+    color: var(--bull-green);
+    border: 1px solid rgba(0, 230, 118, 0.4);
+}
+
+.stock-direction-badge.bearish {
+    background: var(--bear-bg);
+    color: var(--bear-red);
+    border: 1px solid rgba(255, 82, 82, 0.4);
+}
+
+.stock-reasoning-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .stock-reasoning {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    line-height: 1.35;
+    line-height: 1.45;
+}
+
+.stock-reasoning strong {
+    color: var(--text-primary);
+}
+
+.stock-key-drivers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.driver-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    background: rgba(41, 182, 246, 0.1);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(41, 182, 246, 0.2);
 }
 
 /* Outlook & Risk Cards */

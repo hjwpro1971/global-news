@@ -18,9 +18,6 @@
     <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -269,7 +266,7 @@
                     <div class="news-list-header">
                         <div class="title-with-count">
                             <h2><i class="fa-solid fa-list-check"></i> 글로벌 경제 이슈 영향도 리스트</h2>
-                            <span class="badge-count" id="news-count-badge">11개 분석 완료</span>
+                            <span class="badge-count" id="news-count-badge">10개 분석 완료</span>
                         </div>
 
                         <!-- Sorting controls -->
@@ -346,28 +343,92 @@
                     <h3><i class="fa-solid fa-layer-group text-blue"></i> AI 2단계 파이프라인 검증 보고서</h3>
                     <div class="pipeline-grid">
                         <div class="pipeline-card stage-1">
-                            <div class="stage-tag"><i class="fa-solid fa-filter"></i> 1단계: 제목 엑기스 스크리닝</div>
+                            <div class="stage-tag"><i class="fa-solid fa-filter"></i> 1단계: 제목 엑기스 스크리닝 (Screening)</div>
                             <ul class="stage-list" id="modal-stage1-list">
                                 <!-- Stage 1 items -->
                             </ul>
                         </div>
                         <div class="pipeline-card stage-2">
-                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> 2단계: 본문 LLM 파급 메커니즘</div>
-                            <p class="transmission-text" id="modal-transmission-text">
-                                파급 메커니즘 내용이 여기에 출력됩니다.
-                            </p>
+                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> 2단계: 본문 LLM 파급 메커니즘 & 기사 심층 분석</div>
+                            
+                            <div class="analysis-sub-card">
+                                <h4><i class="fa-solid fa-newspaper text-blue"></i> 기사 핵심 배경 및 파급 심층 맥락</h4>
+                                <div class="article-context-text" id="modal-article-context">
+                                    <!-- Article context content -->
+                                </div>
+                            </div>
+
+                            <div class="analysis-sub-card">
+                                <h4><i class="fa-solid fa-diagram-next text-gold"></i> 단계별 증시 전달 경로 (Transmission Mechanism)</h4>
+                                <div class="step-path-container" id="modal-step-path">
+                                    <!-- Step path items -->
+                                </div>
+                            </div>
+
+                            <div class="analysis-sub-card">
+                                <h4><i class="fa-solid fa-square-poll-vertical text-green"></i> 주요 파급 영향 섹터</h4>
+                                <div class="impacted-sectors-tags" id="modal-impacted-sectors">
+                                    <!-- Sector tags -->
+                                </div>
+                            </div>
+
+                            <div class="analysis-sub-card summary-card">
+                                <h4><i class="fa-solid fa-align-left text-blue"></i> 파급 메커니즘 종합 요약</h4>
+                                <p class="transmission-text" id="modal-transmission-text">
+                                    파급 메커니즘 내용이 여기에 출력됩니다.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Chart & Stock Impact Detail Section -->
+                <!-- Target Stock Impact Section (Without Chart) -->
                 <div class="modal-section stock-impact-section">
-                    <h3><i class="fa-solid fa-chart-simple text-green"></i> 국내 주식 영향도 및 등락 전망 (Target Stock Impact)</h3>
+                    <h3><i class="fa-solid fa-chart-line text-green"></i> 국내 수혜/피해 주요 종목 심층 분석 (Target Stock Impact Analysis)</h3>
                     
-                    <div class="modal-chart-layout">
-                        <!-- Chart Canvas Container -->
-                        <div class="chart-container">
-                            <canvas id="impactChart"></canvas>
+                    <!-- Stock Detail Cards Grid -->
+                    <div class="stock-impact-grid" id="modal-stock-list">
+                        <!-- Injected stock cards -->
+                    </div>
+                </div>
+
+                <!-- Outlook & Risks Section -->
+                <div class="modal-section outlook-section">
+                    <div class="outlook-grid">
+                        <div class="outlook-card short-term">
+                            <h4><i class="fa-solid fa-clock-rotate-left"></i> 단기 전망 (Short-term Outlook: 1 ~ 5일)</h4>
+                            <p id="modal-short-term">단기 전망 내용...</p>
+                        </div>
+                        <div class="outlook-card long-term">
+                            <h4><i class="fa-solid fa-chart-line"></i> 중장기 전망 (Long-term Outlook: 1~3개월)</h4>
+                            <p id="modal-long-term">중장기 전망 내용...</p>
+                        </div>
+                    </div>
+
+                    <!-- Risk Factors -->
+                    <div class="risk-card">
+                        <h4><i class="fa-solid fa-triangle-exclamation text-gold"></i> 주요 체크포인트 및 리스크 요인 (Risk Factors)</h4>
+                        <ul id="modal-risk-list">
+                            <!-- Risk items -->
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 매매 결정 전 반드시 공시 및 실적을 확인하세요.</span>
+                <button id="modal-footer-close" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
+d="impactChart"></canvas>
                         </div>
 
                         <!-- Stock Detail Cards -->
