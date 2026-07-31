@@ -2099,10 +2099,10 @@ body {
 }
 
 .quick-chip.active {
-    background: linear-gradient(135deg, rgba(41, 182, 246, 0.25), rgba(0, 230, 118, 0.25));
-    color: #ffffff;
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 12px rgba(41, 182, 246, 0.3);
+    background: #e8f0fe;
+    color: #1a73e8;
+    border-color: #1a73e8;
+    box-shadow: none;
 }
 
 /* ==========================================================================
@@ -2289,16 +2289,17 @@ body {
         max-width: 380px;
         height: 100vh;
         z-index: 1100;
-        background: #0b0f19;
+        background: #ffffff;
         padding: 16px;
         overflow-y: auto;
         transform: translateX(-100%);
         transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
+        box-shadow: none;
     }
 
     .sidebar.mobile-open {
         transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(60, 64, 67, 0.2);
     }
 
     .sidebar-card {
