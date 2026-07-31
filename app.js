@@ -1546,12 +1546,12 @@ async function fetchTossMacroIndicators() {
  * Opens and closes Toss Macro Fullscreen Modal
  */
 function openTossMacroModal() {
-    fetchTossMacroIndicators(); // Fetch latest data on click
     const modal = document.getElementById('toss-macro-modal');
     if (modal) {
         modal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
+    fetchTossMacroIndicators().catch(err => console.error('[Toss Macro Fetch Error]', err));
 }
 
 function closeTossMacroModal() {
@@ -1561,6 +1561,10 @@ function closeTossMacroModal() {
         document.body.style.overflow = '';
     }
 }
+
+// Expose globally for inline onclick handlers
+window.openTossMacroModal = openTossMacroModal;
+window.closeTossMacroModal = closeTossMacroModal;
 
 /**
  * Renders macro indicators list to #toss-macro-grid-modal-container & #toss-macro-ticker-container.
