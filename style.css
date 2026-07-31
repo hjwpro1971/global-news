@@ -2217,12 +2217,9 @@ body {
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
-        overflow-x: auto !important;
-        white-space: nowrap;
+        display: flex;
+        gap: 6px;
         padding-bottom: 6px;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
     }
 
     .market-clocks-bar::-webkit-scrollbar {
@@ -2230,17 +2227,22 @@ body {
     }
 
     .clock-card {
-        scroll-snap-align: start;
-        flex-shrink: 0;
-        min-width: 120px;
+        flex: 1 1 0;
+        min-width: 0;
         max-width: 100%;
-        padding: 5px 8px;
+        padding: 5px 2px;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .clock-time {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         white-space: nowrap;
+        width: 100%;
+        text-align: center;
     }
 
     .header-actions {
