@@ -570,7 +570,7 @@ function updateConsoleProgress(percent, msg) {
         line.className = 'log-line info';
         line.textContent = msg;
         consoleTerminal.appendChild(line);
-        consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
+        if (consoleTerminal) consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
     }
 }
 
@@ -719,10 +719,10 @@ function runPipelineSimulation() {
         runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 분석 중...`;
     }
 
-    consoleBadge.textContent = "PROCESSING";
-    consoleBadge.className = "console-badge running";
-    progressBar.style.width = "0%";
-    consoleTerminal.innerHTML = '';
+    if (consoleBadge) consoleBadge.textContent = "PROCESSING";
+    if (consoleBadge) consoleBadge.className = "console-badge running";
+    if (progressBar) progressBar.style.width = "0%";
+    if (consoleTerminal) consoleTerminal.innerHTML = '';
 
     const logs = [
         { time: 200, type: "system", text: "[SYSTEM] 글로벌 파이프라인 인프라 연결 시작 (Google News RSS, Reuters, Bloomberg Feed)" },
@@ -737,7 +737,7 @@ function runPipelineSimulation() {
     const progressInterval = setInterval(() => {
         currentProgress += 4;
         if (currentProgress > 100) currentProgress = 100;
-        progressBar.style.width = `${currentProgress}%`;
+        if (progressBar) progressBar.style.width = `${currentProgress}%`;
     }, 80);
 
     logs.forEach(logItem => {
@@ -753,9 +753,9 @@ function runPipelineSimulation() {
     setTimeout(async () => {
         await fetchLiveRssNews();
         clearInterval(progressInterval);
-        progressBar.style.width = "100%";
-        consoleBadge.textContent = "READY";
-        consoleBadge.className = "console-badge";
+        if (progressBar) progressBar.style.width = "100%";
+        if (consoleBadge) consoleBadge.textContent = "READY";
+        if (consoleBadge) consoleBadge.className = "console-badge";
         
         if (runBtn) {
             runBtn.disabled = false;
