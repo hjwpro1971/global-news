@@ -122,11 +122,12 @@ function startGlobalMarketClocks() {
         const londonOptions = { timeZone: 'Europe/London', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
         const londonTimeStr = new Intl.DateTimeFormat('en-GB', londonOptions).format(now);
         const londonHour = parseInt(londonTimeStr.split(':')[0], 10);
-        document.getElementById('time-london').textContent = `${londonTimeStr} BST`;
+        const timeLondonEl = document.getElementById('time-london');
+        if (timeLondonEl) timeLondonEl.textContent = `${londonTimeStr} BST`;
         
         // London Stock Market Open: 08:00 - 16:30
         const isLondonOpen = londonHour >= 8 && londonHour < 16;
-        updateMarketStatusBadge('status-london', isLondonOpen);
+        if (document.getElementById('status-london')) updateMarketStatusBadge('status-london', isLondonOpen);
 
         // Seoul Time (KST / UTC+9)
         const seoulOptions = { timeZone: 'Asia/Seoul', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
