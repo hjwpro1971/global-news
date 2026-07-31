@@ -868,7 +868,6 @@ function updateMetricsUI(filteredData) {
     const highImpactCount = newsDataset.filter(d => Math.abs(d.impactScore) >= 75).length;
 
     document.getElementById('metric-total-news').textContent = `총 수집 뉴스 ${totalCount}건 | 호재 ${bullCount}건 | 악재 ${bearCount}건`;
-    document.getElementById('metric-high-impact').textContent = `${highImpactCount}건`;
     document.getElementById('news-count-badge').textContent = `${filteredData.length}개 분석 완료`;
 }
 
@@ -921,19 +920,6 @@ function renderHeroSection(filteredData) {
                     ${heroNews.titleKr}
                 </a>
             </h4>
-
-            <!-- Impact Gauge Bar -->
-            <div class="impact-gauge-box">
-                <div class="gauge-header">
-                    <span class="gauge-label"><i class="fa-solid fa-gauge-high"></i> AI 2단계 영향도 평가 점수</span>
-                    <span class="gauge-score-value ${isBull ? 'text-green' : 'text-red'}">
-                        ${heroNews.impactScore > 0 ? '+' : ''}${heroNews.impactScore}점 (${isBull ? '강한 호재 🟢' : '강한 악재 🔴'})
-                    </span>
-                </div>
-                <div class="gauge-track">
-                    <div class="gauge-fill ${isBull ? 'bullish' : 'bearish'}" style="width: ${gaugeWidth}%;"></div>
-                </div>
-            </div>
 
             <!-- Body Details & Stock Impact Preview -->
             <div class="hero-body-content">
