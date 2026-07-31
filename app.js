@@ -42,11 +42,10 @@
  * @property {string} phase1Filtering.screeningReason
  * @property {Object} phase2DeepAnalysis
  * @property {string} phase2DeepAnalysis.articleContext
- * @property {string[]} phase2DeepAnalysis.stepByStepPath
- * @property {string} phase2DeepAnalysis.transmissionMechanism
- * @property {Array<{sector: string, direction: 'UP'|'DOWN', magnitude: number}>} phase2DeepAnalysis.impactedSectors
- * @property {TargetStockImpact[]} phase2DeepAnalysis.targetStocks
  * @property {string} phase2DeepAnalysis.shortTermOutlook
+ * @property {string} phase2DeepAnalysis.longTermOutlook
+ * @property {string[]} phase2DeepAnalysis.riskFactors
+ */
 const SOURCE_URL_MAP = {
     "Reuters Financial": "https://www.reuters.com/markets/",
     "Ministry of Trade, Industry and Energy": "https://www.motie.go.kr/motie/ne/presse/pressview.jsp",
