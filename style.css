@@ -3,50 +3,50 @@
    Financial Terminal & Modern Glassmorphism Styling (Dark Mode Default)
    ========================================================================== */
 
-/* --- CSS Variables & Google Material 3 Color System --- */
+/* --- CSS Variables & Google Chrome Light Theme System --- */
 :root {
-    --bg-base: #202124;
-    --bg-header: #292a2d;
-    --bg-card: #2d2e31;
-    --bg-card-hover: #35363a;
-    --bg-panel: #292a2d;
-    --bg-input: #303134;
+    --bg-base: #f8f9fa;
+    --bg-header: #ffffff;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f3f4;
+    --bg-panel: #ffffff;
+    --bg-input: #f1f3f4;
     
-    /* Google Financial Sentiment Colors */
-    --bull-green: #81c995;
-    --bull-green-glow: rgba(129, 201, 149, 0.15);
-    --bull-bg: rgba(129, 201, 149, 0.12);
+    /* Google Financial Sentiment Colors (Light Mode) */
+    --bull-green: #137333;
+    --bull-green-glow: rgba(19, 115, 51, 0.15);
+    --bull-bg: #e6f4ea;
     
-    --bear-red: #f28b82;
-    --bear-red-glow: rgba(242, 139, 130, 0.15);
-    --bear-bg: rgba(242, 139, 130, 0.12);
+    --bear-red: #c5221f;
+    --bear-red-glow: rgba(197, 34, 31, 0.15);
+    --bear-bg: #fce8e6;
     
-    --neutral-gold: #fdd663;
-    --neutral-gold-glow: rgba(253, 214, 99, 0.15);
-    --neutral-bg: rgba(253, 214, 99, 0.12);
+    --neutral-gold: #b06000;
+    --neutral-gold-glow: rgba(176, 96, 0, 0.15);
+    --neutral-bg: #fef7e0;
     
-    --accent-blue: #8ab4f8;
-    --accent-purple: #c58af9;
+    --accent-blue: #1a73e8;
+    --accent-purple: #9334e6;
     
-    /* Google Material Typography Colors */
-    --text-primary: #e8eaed;
-    --text-secondary: #bdc1c6;
-    --text-muted: #9aa0a6;
-    --text-dim: #80868b;
+    /* Google Chrome Light Typography Colors */
+    --text-primary: #202124;
+    --text-secondary: #5f6368;
+    --text-muted: #70757a;
+    --text-dim: #9aa0a6;
     
-    /* Google Border & Radius Properties */
-    --border-subtle: #3c4043;
-    --border-medium: #5f6368;
+    /* Google Chrome Border & Radius Properties */
+    --border-subtle: #dadce0;
+    --border-medium: #bdc1c6;
     --glass-blur: none;
     --radius-sm: 8px;
     --radius-md: 16px;
     --radius-lg: 24px;
     --radius-full: 9999px;
     
-    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-glow-green: 0 0 8px rgba(129, 201, 149, 0.2);
-    --shadow-glow-red: 0 0 8px rgba(242, 139, 130, 0.2);
-    --shadow-glow-gold: 0 0 8px rgba(253, 214, 99, 0.2);
+    --shadow-card: 0 1px 2px 0 rgba(60, 64, 67, 0.15), 0 1px 3px 1px rgba(60, 64, 67, 0.08);
+    --shadow-glow-green: 0 0 8px rgba(19, 115, 51, 0.15);
+    --shadow-glow-red: 0 0 8px rgba(197, 34, 31, 0.15);
+    --shadow-glow-gold: 0 0 8px rgba(176, 96, 0, 0.15);
     
     /* Google Typography Stack */
     --font-heading: 'Google Sans', 'Roboto', 'Noto Sans KR', sans-serif;
@@ -55,6 +55,22 @@
     
     --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+    background: #dadce0;
+    border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #bdc1c6;
 }
 
 /* --- Base & Reset Styles --- */
