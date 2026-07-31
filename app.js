@@ -1186,8 +1186,45 @@ function closeModal() {
 }
 
 // ==========================================================================
-// 6. PIPELINE SIMULATION CONSOLE ENGINE
+// 6. PIPELINE SIMULATION CONSOLE ENGINE & LIVE RSS INTEGRATION
 // ==========================================================================
+
+async function fetchLiveRssNews() {
+    try {
+        const response = await fetch('/api/news-rss');
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.items && data.items.length > 0) {
+                data.items.forEach((rssItem, idx) => {
+                    if (newsDataset[idx]) {
+                        // Bind 100% REAL DIRECT ORIGINAL ARTICLE LINK from RSS feed
+                        newsDataset[idx].url = rssItem.link;
+                        if (rssItem.title && rssItem.title.length > 5) {
+                            newsDataset[idx].titleEn = rssItem.title;
+                        }
+                        if (rssItem.source) {
+                            newsDataset[idx].source = rssItem.source;
+                        }
+                        if (rssItem.pubDate) {
+                            const dateObj = new Date(rssItem.pubDate);
+                            if (!isNaN(dateObj.getTime())) {
+                                const yyyy = dateObj.getFullYear();
+                                const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                const dd = String(dateObj.getDate()).padStart(2, '0');
+                                const hh = String(dateObj.getHours()).padStart(2, '0');
+                                const min = String(dateObj.getMinutes()).padStart(2, '0');
+                                newsDataset[idx].timestamp = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+                            }
+                        }
+                    }
+                });
+                console.log('[Live RSS Integration Success]', data.items.length, 'real RSS news articles loaded with 100% direct article links!');
+            }
+        }
+    } catch (e) {
+        console.error('[Live RSS Integration Error]', e.message);
+    }
+}
 
 function runPipelineSimulation() {
     if (appState.isSimulating) return;
@@ -1209,8 +1246,8 @@ function runPipelineSimulation() {
     consoleTerminal.innerHTML = '';
 
     const logs = [
-        { time: 200, type: "system", text: "[SYSTEM] 글로벌 파이프라인 인프라 연결 시작 (RSS, Bloomberg API, Reuters Feed)" },
-        { time: 500, type: "info", text: "[FETCH] 실시간 글로벌 헤드라인 10건 수집 완료 (반도체, 통화정책, 지정학, 해운)" },
+        { time: 200, type: "system", text: "[SYSTEM] 글로벌 파이프라인 인프라 연결 시작 (Google News RSS, Reuters, Bloomberg Feed)" },
+        { time: 500, type: "info", text: "[FETCH] 실시간 글로벌 헤드라인 RSS 피드 수집 완료 (반도체, 통화정책, 지정학, 해운)" },
         { time: 900, type: "filter", text: "[1단계 엑기스] 고유 키워드 추출 & 스크리닝 (Pass: 10건 / Reject: 0건)" },
         { time: 1400, type: "info", text: "[2단계 LLM 엔진] 한국 증시(KOSPI/KOSDAQ) 전파 경로 Transmission Vector 분석 중..." },
         { time: 1900, type: "success", text: "[2단계 LLM 엔진] 수혜/피해 24개 주요 종목 연관 매핑 및 영향도 평가 완료!" },
@@ -1234,7 +1271,8 @@ function runPipelineSimulation() {
         }, logItem.time);
     });
 
-    setTimeout(() => {
+    setTimeout(async () => {
+        await fetchLiveRssNews();
         clearInterval(progressInterval);
         progressBar.style.width = "100%";
         consoleBadge.textContent = "READY";
@@ -1698,7 +1736,8 @@ function renderTossMacroTickerBar(macroList, isLive) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await fetchLiveRssNews(); // Fetch live Google News RSS feeds and bind real article links
     fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
     startGlobalMarketClocks();
     initEventListeners();
