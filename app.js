@@ -1359,9 +1359,25 @@ function initEventListeners() {
         });
     }
 
+    // Toss Macro Modal Event Listeners
+    const openTossBtn = document.getElementById('btn-open-toss-macro-modal');
+    const closeTossBtn = document.getElementById('toss-modal-close');
+    const closeTossFooterBtn = document.getElementById('toss-modal-footer-close');
+    const tossModal = document.getElementById('toss-macro-modal');
+
+    if (openTossBtn) openTossBtn.addEventListener('click', openTossMacroModal);
+    if (closeTossBtn) closeTossBtn.addEventListener('click', closeTossMacroModal);
+    if (closeTossFooterBtn) closeTossFooterBtn.addEventListener('click', closeTossMacroModal);
+    if (tossModal) {
+        tossModal.addEventListener('click', (e) => {
+            if (e.target === tossModal) closeTossMacroModal();
+        });
+    }
+
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
+            closeTossMacroModal();
             closeMobileDrawer();
         }
     });
@@ -1523,13 +1539,32 @@ async function fetchTossMacroIndicators() {
 }
 
 /**
- * Renders macro indicators list to #toss-macro-ticker-container.
+ * Opens and closes Toss Macro Fullscreen Modal
+ */
+function openTossMacroModal() {
+    const modal = document.getElementById('toss-macro-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeTossMacroModal() {
+    const modal = document.getElementById('toss-macro-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+/**
+ * Renders macro indicators list to #toss-macro-grid-modal-container & #toss-macro-ticker-container.
  */
 function renderTossMacroTickerBar(macroList, isLive) {
-    const container = document.getElementById('toss-macro-ticker-container');
-    if (!container) return;
+    const gridContainer = document.getElementById('toss-macro-grid-modal-container');
+    const tickerContainer = document.getElementById('toss-macro-ticker-container');
 
-    container.innerHTML = macroList.map(item => {
+    const htmlContent = macroList.map(item => {
         const isRise = item.changeType === 'RISE' || item.changeType === 'UP' || item.changeRate > 0;
         const isFall = item.changeType === 'FALL' || item.changeType === 'DOWN' || item.changeRate < 0;
         
@@ -1578,6 +1613,13 @@ function renderTossMacroTickerBar(macroList, isLive) {
             </div>
         `;
     }).join('');
+
+    if (gridContainer) {
+        gridContainer.innerHTML = htmlContent;
+    }
+    if (tickerContainer) {
+        tickerContainer.innerHTML = htmlContent;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

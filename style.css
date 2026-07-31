@@ -427,18 +427,46 @@ body {
     padding: 6px 12px;
 }
 
-/* Toss Macro Chip Card */
+/* Toss Macro Chip Card & Grid Modal */
+.clickable-macro-badge {
+    cursor: pointer;
+    transition: var(--transition-fast);
+    user-select: none;
+}
+
+.clickable-macro-badge:hover {
+    border-color: #1a73e8;
+    background: #f1f3f4;
+}
+
+.badge-open-btn {
+    margin-left: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1a73e8;
+    background: #e8f0fe;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    border: 1px solid #aecbfa;
+}
+
+.toss-macro-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    width: 100%;
+}
+
 .macro-chip {
-    background: var(--bg-card);
+    background: #ffffff;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    padding: 6px 12px;
-    min-width: 148px;
+    padding: 10px 14px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
     transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
-    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(60, 64, 67, 0.12);
     cursor: default;
     user-select: none;
 }
@@ -446,29 +474,25 @@ body {
 .macro-chip:hover {
     transform: translateY(-2px);
     border-color: var(--border-medium);
+    box-shadow: 0 4px 12px rgba(60, 64, 67, 0.15);
 }
 
 /* Emerald Green for Rising 🟢 */
 .macro-chip.is-rise {
-    border-left: 3px solid var(--bull-green);
-    background: linear-gradient(135deg, rgba(20, 26, 40, 0.85) 0%, rgba(0, 230, 118, 0.06) 100%);
-}
-.macro-chip.is-rise:hover {
-    box-shadow: 0 4px 16px rgba(0, 230, 118, 0.18);
+    border-left: 4px solid var(--bull-green);
+    background: #ffffff;
 }
 
 /* Crimson Red for Falling 🔴 */
 .macro-chip.is-fall {
-    border-left: 3px solid var(--bear-red);
-    background: linear-gradient(135deg, rgba(20, 26, 40, 0.85) 0%, rgba(255, 82, 82, 0.06) 100%);
-}
-.macro-chip.is-fall:hover {
-    box-shadow: 0 4px 16px rgba(255, 82, 82, 0.18);
+    border-left: 4px solid var(--bear-red);
+    background: #ffffff;
 }
 
 /* Flat / Even */
 .macro-chip.is-even {
-    border-left: 3px solid var(--text-muted);
+    border-left: 4px solid var(--text-muted);
+    background: #ffffff;
 }
 
 .chip-top {
