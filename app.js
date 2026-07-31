@@ -67,7 +67,12 @@ const GLOBAL_FINANCIAL_OUTLETS = {
 function getNewsUrl(news) {
     if (!news) return "https://www.reuters.com/markets/";
     
-    // Check direct mapped global financial outlet URL
+    // 1. If we have a specific direct article URL (from RSS or dataset), USE IT FIRST!
+    if (news.url && news.url.startsWith('http') && !news.url.includes('.jsp')) {
+        return news.url;
+    }
+
+    // 2. Otherwise, fallback to the official homepage of the source
     if (GLOBAL_FINANCIAL_OUTLETS[news.source]) {
         return GLOBAL_FINANCIAL_OUTLETS[news.source];
     }
@@ -84,11 +89,6 @@ function getNewsUrl(news) {
     if (sourceStr.includes('trade')) return "https://www.tradewindsnews.com/";
     if (sourceStr.includes('motie') || sourceStr.includes('ministry')) return "https://www.motie.go.kr";
     
-    // If news has a direct clean external article URL (not google search)
-    if (news.url && !news.url.includes('google.com') && !news.url.includes('.jsp')) {
-        return news.url;
-    }
-
     return "https://www.reuters.com/markets/";
 }
 
