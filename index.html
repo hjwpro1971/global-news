@@ -77,14 +77,13 @@
         </div>
     </header>
 
-    <!-- Real-time Toss 100% Live Macro Market Ticker Bar -->
+    <!-- Real-time Live Macro Market Ticker Bar -->
     <section class="toss-macro-ticker-section" id="toss-macro-ticker-bar" onclick="openTossMacroModal()" style="cursor: pointer;">
-        <div class="ticker-header-badge clickable-macro-badge" id="btn-open-toss-macro-modal" title="클릭하여 전체 실시간 매크로 지표 모달 열기">
-            <span class="live-beacon" title="Toss Live Macro Feed"></span>
+        <div class="ticker-header-badge clickable-macro-badge" id="btn-open-toss-macro-modal" title="클릭하여 실시간 매크로 지표 모달 열기">
+            <span class="live-beacon" title="Live Macro Feed"></span>
             <i class="fa-solid fa-bolt text-gold"></i>
-            <span class="badge-title">TOSS LIVE MACRO</span>
-            <span class="update-clock" id="toss-macro-update-time">수집 중...</span>
-            <span class="badge-open-btn"><i class="fa-solid fa-arrow-up-right-from-square"></i> 전체 지표 보기 (클릭)</span>
+            <span class="badge-title">LIVE MACRO</span>
+            <span class="update-clock" id="toss-macro-update-time">--시 --분</span>
         </div>
     </section>
 
@@ -442,10 +441,10 @@
                 <div class="modal-title-group">
                     <div class="modal-meta-pills">
                         <span class="live-beacon"></span>
-                        <span class="badge-category"><i class="fa-solid fa-bolt text-gold"></i> TOSS LIVE MACRO</span>
-                        <span class="modal-source-time" id="toss-modal-update-time">수집 시각 표시</span>
+                        <span class="badge-category"><i class="fa-solid fa-bolt text-gold"></i> LIVE MACRO</span>
+                        <span class="modal-source-time" id="toss-modal-update-time">--시 --분</span>
                     </div>
-                    <h2 class="modal-main-title">⚡ 토스증권 실시간 글로벌 거시경제 & 주요 시장 지표</h2>
+                    <h2 class="modal-main-title">⚡ 실시간 글로벌 거시경제 & 주요 시장 지표</h2>
                     <p class="modal-sub-title">코스피, 코스닥, 원/달러 환율, 원자재, 미 국채 금리, VIX, 글로벌 주요 선물지수 상하 그리드 뷰</p>
                 </div>
                 <button id="toss-modal-close" class="modal-close-btn" aria-label="Close modal">&times;</button>
@@ -453,12 +452,12 @@
             <div class="modal-body">
                 <div class="toss-macro-grid-container" id="toss-macro-grid-modal-container">
                     <div class="ticker-loading">
-                        <i class="fa-solid fa-spinner fa-spin text-blue"></i> 토스증권 실시간 매크로 지표 연결 중...
+                        <i class="fa-solid fa-spinner fa-spin text-blue"></i> 실시간 매크로 지표 연결 중...
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 토스증권 API 연동 100% 실시간 시세입니다.</span>
+                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 100% 실시간 주요 글로벌 거시경제 지표 시세입니다.</span>
                 <button id="toss-modal-footer-close" class="btn btn-secondary">닫기</button>
             </div>
         </div>

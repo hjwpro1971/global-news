@@ -1537,9 +1537,11 @@ async function fetchTossMacroIndicators() {
     renderTossMacroTickerBar(macroList, isLive);
 
     const now = new Date();
-    const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
-    if (updateTimeEl) updateTimeEl.textContent = `${timeStr} 수신`;
-    if (modalUpdateTimeEl) modalUpdateTimeEl.textContent = `${timeStr} 수신`;
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}시 ${minutes}분`;
+    if (updateTimeEl) updateTimeEl.textContent = timeStr;
+    if (modalUpdateTimeEl) modalUpdateTimeEl.textContent = timeStr;
 }
 
 /**
