@@ -48,21 +48,25 @@
  */
 const SOURCE_URL_MAP = {
     "Reuters Financial": "https://www.reuters.com/markets/",
-    "Ministry of Trade, Industry and Energy": "https://www.motie.go.kr/motie/ne/presse/pressview.jsp",
-    "Bloomberg Terminals": "https://www.bloomberg.com/technology",
-    "Wall Street Journal": "https://www.wsj.com/news/business",
-    "Financial Times": "https://www.ft.com/companies/energy",
+    "Ministry of Trade, Industry and Energy": "https://www.motie.go.kr",
+    "Bloomberg Terminals": "https://www.bloomberg.com/markets",
+    "Wall Street Journal": "https://www.wsj.com/news/markets",
+    "Financial Times": "https://www.ft.com/markets",
     "S&P Global Commodities": "https://www.spglobal.com/commodityinsights/en",
     "TradeWinds Shipping": "https://www.tradewindsnews.com/",
-    "CNBC Market Data": "https://www.cnbc.com/bonds/",
+    "CNBC Market Data": "https://www.cnbc.com/markets/",
     "Nikkei Asia": "https://asia.nikkei.com/Economy/",
     "EE Times": "https://www.eetimes.com/"
 };
 
 function getNewsUrl(news) {
     if (!news) return "https://news.google.com";
-    if (news.url) return news.url;
-    return SOURCE_URL_MAP[news.source] || "https://news.google.com";
+    if (news.url && !news.url.includes('.jsp') && !news.url.includes('/pressview')) {
+        return news.url;
+    }
+    // Search exact news headline via Google News to guarantee 100% working live links without JSP 404/500 errors
+    const query = encodeURIComponent(`${news.source} ${news.titleEn || news.titleKr}`);
+    return `https://news.google.com/search?q=${query}`;
 }
 
 const newsDataset = [
