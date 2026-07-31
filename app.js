@@ -270,19 +270,19 @@ function renderHeroSection(filteredData) {
                 </div>
                 <span class="hero-time-source">
                     <i class="fa-regular fa-clock"></i> 
-                    <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${heroNews.source} 원문 보도자료 바로가기">
+                    <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
                         ${heroNews.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </a> • ${heroNews.timestamp}
                 </span>
             </div>
 
             <h3 class="hero-title-en">
-                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
                     ${heroNews.titleEn} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
                 </a>
             </h3>
             <h4 class="hero-title-kr">
-                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
                     ${heroNews.titleKr}
                 </a>
             </h4>
@@ -341,12 +341,12 @@ function renderNewsGrid(filteredData) {
                         </span>
                     </div>
 
-                    <h3 class="card-title-kr" title="${news.titleKr}">
-                        <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                    <h3 class="card-title-kr" title="원문 보기">
+                        <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
                             ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
                         </a>
                     </h3>
-                    <p class="card-title-en" title="${news.titleEn}">${news.titleEn}</p>
+                    <p class="card-title-en" title="원문 보기">${news.titleEn}</p>
                     <p class="card-summary">${news.summary}</p>
                 </div>
 
@@ -357,7 +357,7 @@ function renderNewsGrid(filteredData) {
 
                     <div class="card-action-bar">
                         <span class="card-source-time">
-                            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${news.source} 원문 보도자료 바로가기">
+                            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
                                 ${news.source.split(' ')[0]} <i class="fa-solid fa-arrow-up-right-from-square"></i>
                             </a> • ${news.timestamp}
                         </span>
@@ -425,7 +425,7 @@ function renderApp() {
 // ==========================================================================
 
 function openModal(newsId) {
-    const news = newsDataset.find(n => n.id === newsId);
+    const news = newsDataset.find(n => n.id.toString() === newsId.toString());
     if (!news) return;
 
     appState.currentModalNewsId = newsId;
@@ -436,7 +436,7 @@ function openModal(newsId) {
     const modalSourceTimeEl = document.getElementById('modal-source-time');
     if (modalSourceTimeEl) {
         modalSourceTimeEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${news.source} 원문 보도자료 바로가기">
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
                 ${news.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
             </a> • ${news.timestamp}
         `;
@@ -444,7 +444,7 @@ function openModal(newsId) {
     const modalTitleEl = document.getElementById('modal-title');
     if (modalTitleEl) {
         modalTitleEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
                 ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
             </a>
         `;
@@ -452,7 +452,7 @@ function openModal(newsId) {
     const modalOrigTitleEl = document.getElementById('modal-original-title');
     if (modalOrigTitleEl) {
         modalOrigTitleEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
                 ${news.titleEn}
             </a>
         `;
@@ -1238,7 +1238,7 @@ function renderTossMacroTickerBar(macroList, isLive) {
         const formattedDiff = `${diffSign}${item.priceDiff.toFixed(2)}`;
 
         return `
-            <div class="macro-chip ${stateClass}" title="${item.name} (${item.code})">
+            <div class="macro-chip ${stateClass}" title="원문 보기">
                 <div class="chip-top">
                     <span class="chip-name">${item.name}</span>
                     <span class="chip-symbol">${item.symbol}</span>
