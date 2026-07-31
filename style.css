@@ -1975,7 +1975,7 @@ body {
 }
 
 .header-actions { display: flex; gap: 10px; align-items: center; width: 100%; }
-.header-actions .btn-macro, .header-actions .btn-primary { flex: 1 1 0 !important; width: 100%; }
+.header-actions .btn-secondary, .header-actions .btn-primary { flex: 1 1 0 !important; width: 100%; }
 .btn-macro { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 8px; border: 1px solid rgba(0, 210, 255, 0.4); background: rgba(0, 210, 255, 0.05); color: #00d2ff; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
 .btn-macro .update-clock { font-size: 0.75rem; opacity: 0.8; margin-left: 2px; }
 .btn-macro:hover { background: rgba(0, 210, 255, 0.15); border-color: #00d2ff; }
@@ -2260,7 +2260,7 @@ body {
     }
 
     .header-actions .btn-primary,
-    .header-actions .btn-macro {
+    .header-actions .btn-secondary {
         flex: 1;
         height: 44px;
         justify-content: center;
