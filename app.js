@@ -1260,3 +1260,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // For now, let's always fetch fresh data in background to keep it live, but UI doesn't block
     fetchLiveRssNews().then(() => renderApp());
 });
+
+// Cache clearing function
+window.clearCacheAndReload = function() {
+    if (confirm('로컬 캐시를 초기화하고 데이터를 새로 불러오시겠습니까?')) {
+        localStorage.clear();
+        location.reload();
+    }
+};
