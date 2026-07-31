@@ -655,6 +655,12 @@ async function fetchLiveRssNews() {
                 headers['x-gemini-api-key'] = localApiKey;
             }
 
+            const localSupaUrl = localStorage.getItem('supabase_url_override');
+            if (localSupaUrl) {
+                headers['x-supabase-url'] = localSupaUrl;
+                headers['x-supabase-key'] = localStorage.getItem('supabase_key_override');
+            }
+
             const analyzeResponse = await fetch('/api/analyze-news', {
                 method: 'POST',
                 headers: headers,
