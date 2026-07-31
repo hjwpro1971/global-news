@@ -64,11 +64,7 @@
 
             <!-- Header Quick Control Actions -->
             <div class="header-actions">
-                <button id="btn-mobile-filter" class="btn btn-mobile-filter" title="스마트 검색 및 필터 열기">
-                    <i class="fa-solid fa-sliders"></i>
-                    <span class="btn-text">검색/필터</span>
-                    <span class="mobile-filter-badge hidden" id="mobile-filter-badge">0</span>
-                </button>
+
                 <button id="btn-run-simulation" class="btn btn-primary glow-btn" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
                     <i class="fa-solid fa-arrows-rotate"></i>
                     <span class="btn-text">파이프라인 재실행</span>
@@ -104,34 +100,6 @@
     <div class="main-wrapper">
         <div class="main-layout">
             
-            <!-- Left Sidebar: Search, Filters & Pipeline Simulation Console -->
-            <aside class="sidebar" id="app-sidebar">
-                
-
-
-                <!-- Simulation & Pipeline Log Console Box -->
-                <div class="sidebar-card console-panel">
-                    <div class="console-header">
-                        <div class="console-title">
-                            <i class="fa-solid fa-terminal"></i> 파이프라인 수집/분석 콘솔
-                        </div>
-                        <span class="console-badge" id="console-status-badge">READY</span>
-                    </div>
-
-                    <!-- Simulated Pipeline Progress Bar -->
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" id="pipeline-progress-bar" style="width: 100%;"></div>
-                    </div>
-
-                    <!-- Console Terminal Output -->
-                    <div class="console-terminal" id="console-terminal">
-                        <div class="log-line system">[SYSTEM] 파이프라인 분석엔진 준비 완료.</div>
-                        <div class="log-line info">[1차 엑기스] 글로벌 RSS/뉴스 10건 수집 및 키워드 필터링 완료.</div>
-                        <div class="log-line success">[2차 LLM 분석] 한국 증시(KOSPI) 미치는 메커니즘 및 수혜/피해 종목 매핑 완료.</div>
-                    </div>
-                </div>
-
-            </aside>
 
             <!-- Right Main Area: Hero Issue & News List Grid -->
             <main class="content-area">
