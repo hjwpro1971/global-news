@@ -912,11 +912,60 @@ function renderNewsGrid(filteredData) {
 }
 
 /**
+ * Update mobile filter active count badge
+ */
+function updateActiveFilterCount() {
+    let count = 0;
+    if (appState.searchQuery.trim() !== "") count++;
+    if (appState.selectedSentiment !== "ALL") count++;
+    if (appState.selectedSector !== "ALL") count++;
+    if (appState.minImpactScore > 0) count++;
+    if (appState.selectedStock !== null) count++;
+
+    const badge = document.getElementById('mobile-filter-badge');
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+/**
+ * Synchronize stock pill selection across sidebar and mobile quick chip bar
+ */
+function syncStockPillSelection() {
+    // 1. Sidebar pills
+    document.querySelectorAll('.stock-tag-cloud .stock-pill').forEach(pill => {
+        const stockName = pill.getAttribute('data-stock');
+        if (appState.selectedStock === stockName) {
+            pill.classList.add('active');
+        } else {
+            pill.classList.remove('active');
+        }
+    });
+
+    // 2. Mobile top quick chips
+    document.querySelectorAll('#mobile-quick-stock-chips .quick-chip').forEach(chip => {
+        const stockName = chip.getAttribute('data-stock');
+        if ((stockName === 'ALL' && appState.selectedStock === null) || (stockName === appState.selectedStock)) {
+            chip.classList.add('active');
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+}
+
+/**
  * Main Render Trigger
  */
 function renderApp() {
     const filteredData = getFilteredDataset();
     updateMetricsUI(filteredData);
+    updateActiveFilterCount();
+    syncStockPillSelection();
     renderHeroSection(filteredData);
     renderNewsGrid(filteredData);
     attachDynamicEventListeners();
@@ -1173,6 +1222,48 @@ function attachDynamicEventListeners() {
 }
 
 function initEventListeners() {
+    // Mobile Sidebar Drawer Controls
+    const mobileFilterBtn = document.getElementById('btn-mobile-filter');
+    const closeSidebarBtn = document.getElementById('btn-close-sidebar');
+    const mobileDrawerBackdrop = document.getElementById('mobile-drawer-backdrop');
+    const sidebarEl = document.getElementById('app-sidebar');
+
+    function openMobileDrawer() {
+        if (sidebarEl) sidebarEl.classList.add('mobile-open');
+        if (mobileDrawerBackdrop) mobileDrawerBackdrop.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileDrawer() {
+        if (sidebarEl) sidebarEl.classList.remove('mobile-open');
+        if (mobileDrawerBackdrop) mobileDrawerBackdrop.classList.add('hidden');
+        // Only restore scroll if modal is not open
+        if (!document.getElementById('modal-backdrop') || document.getElementById('modal-backdrop').classList.contains('hidden')) {
+            document.body.style.overflow = '';
+        }
+    }
+
+    if (mobileFilterBtn) mobileFilterBtn.addEventListener('click', openMobileDrawer);
+    if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeMobileDrawer);
+    if (mobileDrawerBackdrop) mobileDrawerBackdrop.addEventListener('click', closeMobileDrawer);
+
+    // Mobile Main Quick Stock Chips
+    document.querySelectorAll('#mobile-quick-stock-chips .quick-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            const stockName = e.currentTarget.getAttribute('data-stock');
+            if (stockName === 'ALL') {
+                appState.selectedStock = null;
+            } else {
+                if (appState.selectedStock === stockName) {
+                    appState.selectedStock = null;
+                } else {
+                    appState.selectedStock = stockName;
+                }
+            }
+            renderApp();
+        });
+    });
+
     // Search Bar Input
     const searchInput = document.getElementById('search-input');
     const clearSearchBtn = document.getElementById('btn-clear-search');
@@ -1230,17 +1321,14 @@ function initEventListeners() {
         });
     }
 
-    // Quick Stock Tag Cloud Pills
+    // Quick Stock Tag Cloud Pills (Sidebar)
     document.querySelectorAll('.stock-tag-cloud .stock-pill').forEach(pill => {
         pill.addEventListener('click', (e) => {
             const stockName = e.currentTarget.getAttribute('data-stock');
             if (appState.selectedStock === stockName) {
                 appState.selectedStock = null;
-                e.currentTarget.classList.remove('active');
             } else {
-                document.querySelectorAll('.stock-tag-cloud .stock-pill').forEach(p => p.classList.remove('active'));
                 appState.selectedStock = stockName;
-                e.currentTarget.classList.add('active');
             }
             renderApp();
         });
@@ -1306,10 +1394,11 @@ function initEventListeners() {
         });
     }
 
-    // Keyboard ESC key to close modal
+    // Keyboard ESC key to close modal or mobile drawer
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
+            closeMobileDrawer();
         }
     });
 }
