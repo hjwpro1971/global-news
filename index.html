@@ -63,25 +63,20 @@
             </div>
 
             <!-- Header Quick Control Actions -->
-            <div class="header-actions">
-
-                <button id="btn-run-simulation" class="btn btn-primary glow-btn" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
+            <div class="header-actions" style="display: flex; gap: 10px; width: 100%;">
+                <button id="btn-open-toss-macro-modal" class="btn btn-secondary glow-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #00d2ff; background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openTossMacroModal()">
+                    <span class="live-beacon"></span>
+                    <i class="fa-solid fa-globe"></i>
+                    <span class="btn-text" style="font-weight: bold;">경제 지표</span>
+                    <span class="update-clock" id="toss-macro-update-time" style="font-size: 0.75rem; opacity: 0.8; margin-left: 4px;">--시 --분</span>
+                </button>
+                <button id="btn-run-simulation" class="btn btn-primary glow-btn" style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #00d2ff; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
                     <i class="fa-solid fa-arrows-rotate"></i>
-                    <span class="btn-text">파이프라인 재실행</span>
+                    <span class="btn-text" style="font-weight: bold;">뉴스분석</span>
                 </button>
             </div>
         </div>
     </header>
-
-    <!-- Real-time Live Macro Market Ticker Bar -->
-    <section class="toss-macro-ticker-section" id="toss-macro-ticker-bar" onclick="openTossMacroModal()" style="cursor: pointer;">
-        <div class="ticker-header-badge clickable-macro-badge" id="btn-open-toss-macro-modal" title="클릭하여 실시간 매크로 지표 모달 열기">
-            <span class="live-beacon" title="Live Macro Feed"></span>
-            <i class="fa-solid fa-globe text-blue"></i>
-            <span class="badge-title">글로벌 거시경제 & 주요 시장 지표</span>
-            <span class="update-clock" id="toss-macro-update-time">--시 --분</span>
-        </div>
-    </section>
 
     <!-- Financial KPI Summary Ticker / Metrics Bar -->
     <section class="metrics-bar-section">

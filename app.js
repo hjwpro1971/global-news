@@ -759,7 +759,7 @@ function runPipelineSimulation() {
         
         if (runBtn) {
             runBtn.disabled = false;
-            runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> 파이프라인 분석 재실행`;
+            runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">뉴스분석</span>`;
         }
 
         appState.isSimulating = false;
