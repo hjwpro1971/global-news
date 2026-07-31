@@ -1093,7 +1093,7 @@ function renderTossMacroTickerBar(macroList, isLive) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await fetchLiveRssNews(); between real random RSS titles and static AI analysis mockup data
+    await fetchLiveRssNews();
     fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
     startGlobalMarketClocks();
     initEventListeners();
