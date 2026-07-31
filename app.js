@@ -46,32 +46,50 @@
  * @property {string} phase2DeepAnalysis.longTermOutlook
  * @property {string[]} phase2DeepAnalysis.riskFactors
  */
-const SOURCE_URL_MAP = {
+const GLOBAL_FINANCIAL_OUTLETS = {
     "Reuters Financial": "https://www.reuters.com/markets/",
+    "Reuters": "https://www.reuters.com/markets/",
     "Ministry of Trade, Industry and Energy": "https://www.motie.go.kr",
     "Bloomberg Terminals": "https://www.bloomberg.com/markets",
+    "Bloomberg": "https://www.bloomberg.com/markets",
     "Wall Street Journal": "https://www.wsj.com/news/markets",
     "Financial Times": "https://www.ft.com/markets",
     "S&P Global Commodities": "https://www.spglobal.com/commodityinsights/en",
+    "S&P Global": "https://www.spglobal.com/commodityinsights/en",
     "TradeWinds Shipping": "https://www.tradewindsnews.com/",
+    "TradeWinds": "https://www.tradewindsnews.com/",
     "CNBC Market Data": "https://www.cnbc.com/markets/",
+    "CNBC": "https://www.cnbc.com/markets/",
     "Nikkei Asia": "https://asia.nikkei.com/Economy/",
     "EE Times": "https://www.eetimes.com/"
 };
 
 function getNewsUrl(news) {
-    if (!news) return "https://news.google.com";
+    if (!news) return "https://www.reuters.com/markets/";
     
-    // Extract concise, real search keywords from phase1Filtering keywords or core title
-    let kw = "";
-    if (news.phase1Filtering && Array.isArray(news.phase1Filtering.matchKeywords) && news.phase1Filtering.matchKeywords.length > 0) {
-        kw = news.phase1Filtering.matchKeywords.slice(0, 3).join(' ');
-    } else {
-        kw = news.titleEn.split(' ').slice(0, 4).join(' ');
+    // Check direct mapped global financial outlet URL
+    if (GLOBAL_FINANCIAL_OUTLETS[news.source]) {
+        return GLOBAL_FINANCIAL_OUTLETS[news.source];
     }
     
-    const query = encodeURIComponent(kw);
-    return `https://news.google.com/search?q=${query}`;
+    // Match by source name string
+    const sourceStr = (news.source || "").toLowerCase();
+    if (sourceStr.includes('reuters')) return "https://www.reuters.com/markets/";
+    if (sourceStr.includes('bloomberg')) return "https://www.bloomberg.com/markets";
+    if (sourceStr.includes('journal') || sourceStr.includes('wsj')) return "https://www.wsj.com/news/markets";
+    if (sourceStr.includes('financial times') || sourceStr.includes('ft')) return "https://www.ft.com/markets";
+    if (sourceStr.includes('cnbc')) return "https://www.cnbc.com/markets/";
+    if (sourceStr.includes('nikkei')) return "https://asia.nikkei.com/Economy/";
+    if (sourceStr.includes('spglobal') || sourceStr.includes('s&p')) return "https://www.spglobal.com/commodityinsights/en";
+    if (sourceStr.includes('trade')) return "https://www.tradewindsnews.com/";
+    if (sourceStr.includes('motie') || sourceStr.includes('ministry')) return "https://www.motie.go.kr";
+    
+    // If news has a direct clean external article URL (not google search)
+    if (news.url && !news.url.includes('google.com') && !news.url.includes('.jsp')) {
+        return news.url;
+    }
+
+    return "https://www.reuters.com/markets/";
 }
 
 const newsDataset = [
