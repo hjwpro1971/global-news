@@ -68,7 +68,7 @@ function getNewsUrl(news) {
     if (!news) return "https://www.reuters.com/markets/";
     
     // 1. If we have a specific direct article URL (from RSS or dataset), USE IT FIRST!
-    if (news.url && news.url.startsWith('http') && !news.url.includes('.jsp')) {
+    if (news.url && news.url.startsWith('http')) {
         return news.url;
     }
 
@@ -88,6 +88,12 @@ function getNewsUrl(news) {
     if (sourceStr.includes('spglobal') || sourceStr.includes('s&p')) return "https://www.spglobal.com/commodityinsights/en";
     if (sourceStr.includes('trade')) return "https://www.tradewindsnews.com/";
     if (sourceStr.includes('motie') || sourceStr.includes('ministry')) return "https://www.motie.go.kr";
+    
+    // 3. If source is unknown and no URL, fallback to searching the article title on Google News
+    const searchTitle = news.titleEn && news.titleEn !== "No Title" ? news.titleEn : news.titleKr;
+    if (searchTitle && searchTitle !== "No Title") {
+        return `https://news.google.com/search?q=${encodeURIComponent(searchTitle)}`;
+    }
     
     return "https://www.reuters.com/markets/";
 }
