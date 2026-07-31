@@ -1468,11 +1468,10 @@ async function fetchTossMacroIndicators() {
         let changeType = 'EVEN';
 
         if (item) {
-            latestPrice = parseFloat(item.latestPrice ?? item.closePrice ?? item.price ?? item.currentPrice ?? item.val ?? 0);
-            basePrice = parseFloat(item.basePrice ?? item.prevClose ?? item.previousClose ?? item.openPrice ?? 0);
-            if (item.changeType) {
-                changeType = item.changeType;
-            }
+            const p = item.price || item;
+            latestPrice = parseFloat(p.latestPrice ?? p.closePrice ?? p.price ?? 0);
+            basePrice = parseFloat(p.basePrice ?? p.prevClose ?? p.base_price ?? 0);
+            changeType = p.changeType || item.changeType || 'EVEN';
         }
 
         if (!latestPrice || isNaN(latestPrice)) {
@@ -1480,7 +1479,7 @@ async function fetchTossMacroIndicators() {
             if (fb) {
                 latestPrice = fb.latestPrice;
                 basePrice = fb.basePrice;
-                if (!item?.changeType) changeType = fb.changeType;
+                if (changeType === 'EVEN') changeType = fb.changeType;
             }
         }
 
@@ -1489,7 +1488,7 @@ async function fetchTossMacroIndicators() {
             ? ((latestPrice - basePrice) / basePrice * 100)
             : 0;
 
-        if (changeType === 'EVEN' || !item?.changeType) {
+        if (changeType === 'EVEN') {
             if (priceDiff > 0) changeType = 'RISE';
             else if (priceDiff < 0) changeType = 'FALL';
             else changeType = 'EVEN';
@@ -1507,6 +1506,10 @@ async function fetchTossMacroIndicators() {
             changeType
         };
     });
+
+    if (isLive) {
+        console.log('[Toss Live Macro API Success] 토스 실시간 데이터가 정확히 바인딩되었습니다.');
+    }
 
     renderTossMacroTickerBar(macroList, isLive);
 
