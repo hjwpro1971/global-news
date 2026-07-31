@@ -1390,23 +1390,6 @@ const TOSS_MACRO_MAPPING = [
     { code: 'RFU.ESc1', name: 'S&P500 선물', symbol: 'ES Futures', type: 'futures' }
 ];
 
-const FALLBACK_MACRO_DATA = {
-    'KGG01P': { latestPrice: 2758.42, basePrice: 2742.10, changeType: 'RISE' },
-    'QGG01P': { latestPrice: 812.35, basePrice: 806.90, changeType: 'RISE' },
-    'EXCHANGE_RATE': { latestPrice: 1384.50, basePrice: 1389.20, changeType: 'FALL' },
-    'COMP.NAI': { latestPrice: 17642.10, basePrice: 17480.00, changeType: 'RISE' },
-    'SPX.CBI': { latestPrice: 5542.20, basePrice: 5510.50, changeType: 'RISE' },
-    'SOX.NAI': { latestPrice: 5120.80, basePrice: 5025.10, changeType: 'RISE' },
-    'DJI.DJI': { latestPrice: 40842.60, basePrice: 40720.00, changeType: 'RISE' },
-    'ROB.US10YT-RR': { latestPrice: 4.14, basePrice: 4.19, changeType: 'FALL' },
-    'ROB.US2YT-RR': { latestPrice: 4.35, basePrice: 4.41, changeType: 'FALL' },
-    'RGI..DXY': { latestPrice: 104.25, basePrice: 104.60, changeType: 'FALL' },
-    'RGI..VIX': { latestPrice: 16.20, basePrice: 17.10, changeType: 'FALL' },
-    'RFU.CLv1': { latestPrice: 77.85, basePrice: 76.50, changeType: 'RISE' },
-    'RFU.GCv1': { latestPrice: 2445.60, basePrice: 2420.10, changeType: 'RISE' },
-    'RFU.NQc1': { latestPrice: 19850.25, basePrice: 19680.00, changeType: 'RISE' },
-    'RFU.ESc1': { latestPrice: 5595.50, basePrice: 5560.25, changeType: 'RISE' }
-};
 
 /**
  * Searches for an indicator item inside Toss API indexMap structure (categories or direct object keys).
@@ -1436,6 +1419,7 @@ function findTossIndicatorItem(indexMap, code) {
 
 /**
  * Fetches real-time Toss Macro Indicators and updates the header ticker bar.
+ * 100% Real-time Toss API values - FALLBACK_MACRO_DATA completely removed.
  */
 async function fetchTossMacroIndicators() {
     const tickerContainer = document.getElementById('toss-macro-ticker-container');
@@ -1467,7 +1451,12 @@ async function fetchTossMacroIndicators() {
             }
         }
     } catch (err) {
-        console.warn('[Toss Live Macro API] Fetch failed or CORS restricted, using fallback dataset:', err.message);
+        console.error('[Toss Live Macro API Error]', err.message);
+    }
+
+    if (!indexMap) {
+        if (updateTimeEl) updateTimeEl.textContent = 'API 연결 대기 중...';
+        return;
     }
 
     const macroList = TOSS_MACRO_MAPPING.map(config => {
@@ -1477,9 +1466,11 @@ async function fetchTossMacroIndicators() {
         let changeType = 'EVEN';
 
         if (item) {
+            // Strictly reference item.price.latestPrice, item.price.basePrice, item.price.changeType from Toss API
             const p = item.price || item;
-            const rawLatest = p.latestPrice ?? p.closePrice ?? p.price ?? p.currentPrice ?? item.latestPrice;
-            const rawBase = p.basePrice ?? p.prevClose ?? p.base_price ?? p.previousClose ?? item.basePrice;
+            const rawLatest = (item.price && item.price.latestPrice !== undefined) ? item.price.latestPrice : (p.latestPrice ?? p.closePrice ?? p.price);
+            const rawBase = (item.price && item.price.basePrice !== undefined) ? item.price.basePrice : (p.basePrice ?? p.prevClose ?? p.base_price);
+            const rawChange = (item.price && item.price.changeType) || p.changeType || 'EVEN';
 
             if (rawLatest !== undefined && rawLatest !== null && !isNaN(parseFloat(rawLatest))) {
                 latestPrice = parseFloat(rawLatest);
@@ -1487,16 +1478,11 @@ async function fetchTossMacroIndicators() {
             if (rawBase !== undefined && rawBase !== null && !isNaN(parseFloat(rawBase))) {
                 basePrice = parseFloat(rawBase);
             }
-            changeType = p.changeType || item.changeType || 'EVEN';
+            changeType = rawChange;
         }
 
         if (!latestPrice || isNaN(latestPrice)) {
-            const fb = FALLBACK_MACRO_DATA[config.code];
-            if (fb) {
-                latestPrice = fb.latestPrice;
-                basePrice = fb.basePrice;
-                if (changeType === 'EVEN') changeType = fb.changeType;
-            }
+            return null;
         }
 
         const priceDiff = latestPrice - basePrice;
@@ -1521,10 +1507,10 @@ async function fetchTossMacroIndicators() {
             changeRate,
             changeType
         };
-    });
+    }).filter(Boolean);
 
-    if (isLive) {
-        console.log('[Toss Live Macro API Success] 토스 실시간 데이터가 정확히 바인딩되었습니다.');
+    if (isLive && macroList.length > 0) {
+        console.log('[Toss Live Macro API Success] 토스 실시간 데이터가 100% 성공적으로 바인딩되었습니다.');
     }
 
     renderTossMacroTickerBar(macroList, isLive);
@@ -1532,7 +1518,7 @@ async function fetchTossMacroIndicators() {
     if (updateTimeEl) {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });
-        updateTimeEl.textContent = `${timeStr} ${isLive ? 'LIVE' : 'SYNCED'}`;
+        updateTimeEl.textContent = `${timeStr} LIVE`;
     }
 }
 
