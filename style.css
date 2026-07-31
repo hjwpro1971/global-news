@@ -114,7 +114,8 @@ body {
 .market-clocks-bar,
 .metrics-container,
 .quick-stock-chips,
-.quick-stock-chips-wrapper {
+.quick-stock-chips-wrapper,
+.ticker-scroll-wrapper {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -315,6 +316,231 @@ body {
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
+}
+
+/* --- Toss Live Macro Ticker Bar Section --- */
+.toss-macro-ticker-section {
+    width: 100%;
+    max-width: 100%;
+    background: linear-gradient(180deg, #0d121f 0%, #0a0d14 100%);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.ticker-header-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: rgba(18, 24, 38, 0.9);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Pulse Beacon Live Icon */
+.live-beacon {
+    width: 9px;
+    height: 9px;
+    background-color: var(--bull-green);
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+    animation: beacon-pulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes beacon-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.8);
+    }
+    70% {
+        transform: scale(1.15);
+        box-shadow: 0 0 0 8px rgba(0, 230, 118, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+    }
+}
+
+.badge-title {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+}
+
+.update-clock {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.ticker-scroll-wrapper {
+    flex: 1;
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.ticker-scroll-wrapper::-webkit-scrollbar {
+    height: 4px;
+}
+.ticker-scroll-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ticker-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+.ticker-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ticker-scroll-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: max-content;
+    padding-bottom: 2px;
+}
+
+.ticker-loading {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+}
+
+/* Toss Macro Chip Card */
+.macro-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 6px 12px;
+    min-width: 148px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+    flex-shrink: 0;
+    cursor: default;
+    user-select: none;
+}
+
+.macro-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--border-medium);
+}
+
+/* Emerald Green for Rising 🟢 */
+.macro-chip.is-rise {
+    border-left: 3px solid var(--bull-green);
+    background: linear-gradient(135deg, rgba(20, 26, 40, 0.85) 0%, rgba(0, 230, 118, 0.06) 100%);
+}
+.macro-chip.is-rise:hover {
+    box-shadow: 0 4px 16px rgba(0, 230, 118, 0.18);
+}
+
+/* Crimson Red for Falling 🔴 */
+.macro-chip.is-fall {
+    border-left: 3px solid var(--bear-red);
+    background: linear-gradient(135deg, rgba(20, 26, 40, 0.85) 0%, rgba(255, 82, 82, 0.06) 100%);
+}
+.macro-chip.is-fall:hover {
+    box-shadow: 0 4px 16px rgba(255, 82, 82, 0.18);
+}
+
+/* Flat / Even */
+.macro-chip.is-even {
+    border-left: 3px solid var(--text-muted);
+}
+
+.chip-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.chip-name {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.chip-symbol {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    color: var(--text-muted);
+}
+
+.chip-bottom {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.chip-price {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chip-change {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+
+.chip-change.text-green {
+    color: var(--bull-green) !important;
+}
+.chip-change.text-red {
+    color: var(--bear-red) !important;
+}
+.chip-change.text-muted {
+    color: var(--text-muted) !important;
+}
+
+@media (max-width: 768px) {
+    .toss-macro-ticker-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+    .ticker-header-badge {
+        justify-content: space-between;
+        width: 100%;
+    }
+    .macro-chip {
+        min-width: 135px;
+        padding: 5px 10px;
+    }
 }
 
 /* --- Metrics Ticker Bar Section --- */
