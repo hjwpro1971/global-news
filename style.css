@@ -2490,3 +2490,24 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* News Source Clickable Hyperlink Styling */
+.news-source-link {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: color var(--transition-fast), text-decoration var(--transition-fast);
+}
+
+.news-source-link:hover {
+    color: #1557b0;
+    text-decoration: underline;
+}
+
+.news-source-link i {
+    font-size: 0.68rem;
+    margin-left: 1px;
+}

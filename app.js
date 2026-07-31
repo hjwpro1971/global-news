@@ -47,9 +47,24 @@
  * @property {Array<{sector: string, direction: 'UP'|'DOWN', magnitude: number}>} phase2DeepAnalysis.impactedSectors
  * @property {TargetStockImpact[]} phase2DeepAnalysis.targetStocks
  * @property {string} phase2DeepAnalysis.shortTermOutlook
- * @property {string} phase2DeepAnalysis.longTermOutlook
- * @property {string[]} phase2DeepAnalysis.riskFactors
- */
+const SOURCE_URL_MAP = {
+    "Reuters Financial": "https://www.reuters.com/markets/",
+    "Ministry of Trade, Industry and Energy": "https://www.motie.go.kr/motie/ne/presse/pressview.jsp",
+    "Bloomberg Terminals": "https://www.bloomberg.com/technology",
+    "Wall Street Journal": "https://www.wsj.com/news/business",
+    "Financial Times": "https://www.ft.com/companies/energy",
+    "S&P Global Commodities": "https://www.spglobal.com/commodityinsights/en",
+    "TradeWinds Shipping": "https://www.tradewindsnews.com/",
+    "CNBC Market Data": "https://www.cnbc.com/bonds/",
+    "Nikkei Asia": "https://asia.nikkei.com/Economy/",
+    "EE Times": "https://www.eetimes.com/"
+};
+
+function getNewsUrl(news) {
+    if (!news) return "https://news.google.com";
+    if (news.url) return news.url;
+    return SOURCE_URL_MAP[news.source] || "https://news.google.com";
+}
 
 const newsDataset = [
     {
@@ -864,7 +879,12 @@ function renderHeroSection(filteredData) {
                     <span class="top-impact-badge"><i class="fa-solid fa-fire"></i> TOP 1 IMPACT</span>
                     <span class="badge-category">${heroNews.category}</span>
                 </div>
-                <span class="hero-time-source"><i class="fa-regular fa-clock"></i> ${heroNews.source} • ${heroNews.timestamp}</span>
+                <span class="hero-time-source">
+                    <i class="fa-regular fa-clock"></i> 
+                    <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${heroNews.source} 원문 보도자료 바로가기">
+                        ${heroNews.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a> • ${heroNews.timestamp}
+                </span>
             </div>
 
             <h3 class="hero-title-en">${heroNews.titleEn}</h3>
@@ -948,7 +968,11 @@ function renderNewsGrid(filteredData) {
                     </div>
 
                     <div class="card-action-bar">
-                        <span class="card-source-time">${news.source.split(' ')[0]} • ${news.timestamp.split(' ')[1]}</span>
+                        <span class="card-source-time">
+                            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${news.source} 원문 보도자료 바로가기">
+                                ${news.source.split(' ')[0]} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a> • ${news.timestamp.split(' ')[1]}
+                        </span>
                         <button class="btn-card-detail btn-open-modal" data-id="${news.id}">
                             보고서 보기 <i class="fa-solid fa-arrow-right"></i>
                         </button>
@@ -1021,7 +1045,14 @@ function openModal(newsId) {
 
     // Populate Header & Meta
     document.getElementById('modal-category').textContent = news.category;
-    document.getElementById('modal-source-time').textContent = `${news.source} • ${news.timestamp}`;
+    const modalSourceTimeEl = document.getElementById('modal-source-time');
+    if (modalSourceTimeEl) {
+        modalSourceTimeEl.innerHTML = `
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${news.source} 원문 보도자료 바로가기">
+                ${news.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a> • ${news.timestamp}
+        `;
+    }
     document.getElementById('modal-title').textContent = news.titleKr;
     document.getElementById('modal-original-title').textContent = news.titleEn;
 
