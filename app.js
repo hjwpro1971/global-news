@@ -1446,14 +1446,23 @@ async function fetchTossMacroIndicators() {
     let isLive = false;
 
     try {
-        const response = await fetch('https://wts-cert-api.tossinvest.com/api/v3/dashboard/wts/overview/indicator/mini-chart', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-        if (response.ok) {
+        let response;
+        try {
+            response = await fetch('/api/toss-macro');
+            if (!response.ok) {
+                response = await fetch('https://wts-cert-api.tossinvest.com/api/v3/dashboard/wts/overview/indicator/mini-chart');
+            }
+        } catch (e) {
+            response = await fetch('https://wts-cert-api.tossinvest.com/api/v3/dashboard/wts/overview/indicator/mini-chart');
+        }
+
+        if (response && response.ok) {
             const data = await response.json();
             if (data && data.result && data.result.indexMap) {
                 indexMap = data.result.indexMap;
+                isLive = true;
+            } else if (data && data.indexMap) {
+                indexMap = data.indexMap;
                 isLive = true;
             }
         }
@@ -1469,8 +1478,15 @@ async function fetchTossMacroIndicators() {
 
         if (item) {
             const p = item.price || item;
-            latestPrice = parseFloat(p.latestPrice ?? p.closePrice ?? p.price ?? 0);
-            basePrice = parseFloat(p.basePrice ?? p.prevClose ?? p.base_price ?? 0);
+            const rawLatest = p.latestPrice ?? p.closePrice ?? p.price ?? p.currentPrice ?? item.latestPrice;
+            const rawBase = p.basePrice ?? p.prevClose ?? p.base_price ?? p.previousClose ?? item.basePrice;
+
+            if (rawLatest !== undefined && rawLatest !== null && !isNaN(parseFloat(rawLatest))) {
+                latestPrice = parseFloat(rawLatest);
+            }
+            if (rawBase !== undefined && rawBase !== null && !isNaN(parseFloat(rawBase))) {
+                basePrice = parseFloat(rawBase);
+            }
             changeType = p.changeType || item.changeType || 'EVEN';
         }
 
