@@ -2511,3 +2511,22 @@ body {
     font-size: 0.68rem;
     margin-left: 1px;
 }
+
+/* Clickable News Title Links */
+.news-title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.news-title-link:hover {
+    color: var(--accent-blue);
+    text-decoration: underline;
+}
+
+.news-title-link .title-icon {
+    font-size: 0.72rem;
+    color: var(--accent-blue);
+    margin-left: 4px;
+    vertical-align: middle;
+}

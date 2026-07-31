@@ -886,8 +886,16 @@ function renderHeroSection(filteredData) {
                 </span>
             </div>
 
-            <h3 class="hero-title-en">${heroNews.titleEn}</h3>
-            <h4 class="hero-title-kr">${heroNews.titleKr}</h4>
+            <h3 class="hero-title-en">
+                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                    ${heroNews.titleEn} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+                </a>
+            </h3>
+            <h4 class="hero-title-kr">
+                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                    ${heroNews.titleKr}
+                </a>
+            </h4>
 
             <!-- Impact Gauge Bar -->
             <div class="impact-gauge-box">
@@ -956,7 +964,11 @@ function renderNewsGrid(filteredData) {
                         </span>
                     </div>
 
-                    <h3 class="card-title-kr" title="${news.titleKr}">${news.titleKr}</h3>
+                    <h3 class="card-title-kr" title="${news.titleKr}">
+                        <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                            ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+                        </a>
+                    </h3>
                     <p class="card-title-en" title="${news.titleEn}">${news.titleEn}</p>
                     <p class="card-summary">${news.summary}</p>
                 </div>
@@ -1052,8 +1064,22 @@ function openModal(newsId) {
             </a> • ${news.timestamp}
         `;
     }
-    document.getElementById('modal-title').textContent = news.titleKr;
-    document.getElementById('modal-original-title').textContent = news.titleEn;
+    const modalTitleEl = document.getElementById('modal-title');
+    if (modalTitleEl) {
+        modalTitleEl.innerHTML = `
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+            </a>
+        `;
+    }
+    const modalOrigTitleEl = document.getElementById('modal-original-title');
+    if (modalOrigTitleEl) {
+        modalOrigTitleEl.innerHTML = `
+            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보도자료 바로가기">
+                ${news.titleEn}
+            </a>
+        `;
+    }
 
     // Score Banner
     const scoreNumEl = document.getElementById('modal-score-number');
