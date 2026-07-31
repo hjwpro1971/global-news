@@ -92,7 +92,7 @@ function getNewsUrl(news) {
     return "https://www.reuters.com/markets/";
 }
 
-
+let newsDataset = [];
 
 // ==========================================================================
 // 2. GLOBAL MARKET CLOCKS CONTROLLER
@@ -553,39 +553,28 @@ function closeModal() {
 
 async function fetchLiveRssNews() {
     try {
-        const response = await fetch('/api/news-rss');
-        if (response.ok) {
-            const data = await response.json();
-            if (data && data.items && data.items.length > 0) {
-                newsDataset = data.items.map((rssItem, idx) => {
-                    let timestamp = rssItem.pubDate;
-                    if (rssItem.pubDate) {
-                        const dateObj = new Date(rssItem.pubDate);
-                        if (!isNaN(dateObj.getTime())) {
-                            const yyyy = dateObj.getFullYear();
-                            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-                            const dd = String(dateObj.getDate()).padStart(2, '0');
-                            const hh = String(dateObj.getHours()).padStart(2, '0');
-                            const min = String(dateObj.getMinutes()).padStart(2, '0');
-                            timestamp = `${yyyy}-${mm}-${dd} ${hh}:${min}`;
-                        }
-                    }
-                    return {
-                        id: `news-${idx + 1}`,
-                        titleKr: rssItem.title,
-                        titleEn: "",
-                        url: rssItem.link,
-                        source: rssItem.source || "Global News",
-                        timestamp: timestamp,
-                        category: "글로벌 매크로",
-                        impactScore: 0,
-                        sentiment: "NEUTRAL",
-                        summary: "실시간 수집된 뉴스입니다. 원본 기사를 클릭하여 자세한 내용을 확인하세요.",
-                        phase1Filtering: { passed: true, matchKeywords: [] },
-                        phase2DeepAnalysis: { targetStocks: [] }
-                    };
-                });
-                console.log('[Live RSS Integration Success]', newsDataset.length, 'real RSS news articles loaded!');
+        const rssResponse = await fetch('/api/news-rss');
+        if (!rssResponse.ok) throw new Error('Failed to fetch raw RSS');
+        const rssData = await rssResponse.json();
+        
+        if (rssData && rssData.items && rssData.items.length > 0) {
+            console.log('[Live RSS] Fetched', rssData.items.length, 'articles. Sending to Gemini AI for selection and analysis...');
+            
+            const analyzeResponse = await fetch('/api/analyze-news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articles: rssData.items })
+            });
+            
+            if (!analyzeResponse.ok) {
+                const err = await analyzeResponse.text();
+                throw new Error('Analyze API Error: ' + err);
+            }
+            
+            const analyzedData = await analyzeResponse.json();
+            if (analyzedData.success && analyzedData.dataset) {
+                newsDataset = analyzedData.dataset;
+                console.log('[Live RSS Integration Success]', newsDataset.length, 'AI analyzed articles loaded!');
             }
         }
     } catch (e) {
@@ -1104,7 +1093,7 @@ function renderTossMacroTickerBar(macroList, isLive) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await fetchLiveRssNews(); // Fetch live Google News RSS feeds to populate dataset
+    await fetchLiveRssNews(); between real random RSS titles and static AI analysis mockup data
     fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
     startGlobalMarketClocks();
     initEventListeners();
