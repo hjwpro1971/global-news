@@ -61,11 +61,16 @@ const SOURCE_URL_MAP = {
 
 function getNewsUrl(news) {
     if (!news) return "https://news.google.com";
-    if (news.url && !news.url.includes('.jsp') && !news.url.includes('/pressview')) {
-        return news.url;
+    
+    // Extract concise, real search keywords from phase1Filtering keywords or core title
+    let kw = "";
+    if (news.phase1Filtering && Array.isArray(news.phase1Filtering.matchKeywords) && news.phase1Filtering.matchKeywords.length > 0) {
+        kw = news.phase1Filtering.matchKeywords.slice(0, 3).join(' ');
+    } else {
+        kw = news.titleEn.split(' ').slice(0, 4).join(' ');
     }
-    // Search exact news headline via Google News to guarantee 100% working live links without JSP 404/500 errors
-    const query = encodeURIComponent(`${news.source} ${news.titleEn || news.titleKr}`);
+    
+    const query = encodeURIComponent(kw);
     return `https://news.google.com/search?q=${query}`;
 }
 
