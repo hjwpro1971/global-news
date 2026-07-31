@@ -189,15 +189,14 @@ body {
 .logo-icon {
     width: 44px;
     height: 44px;
-    background: linear-gradient(135deg, rgba(41, 182, 246, 0.2), rgba(0, 230, 118, 0.2));
-    border: 1px solid var(--accent-blue);
+    background: #e8f0fe;
+    border: 1px solid #1a73e8;
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
-    color: var(--bull-green);
-    box-shadow: 0 0 12px rgba(41, 182, 246, 0.3);
+    color: #1a73e8;
 }
 
 .brand-text .app-title {
@@ -209,7 +208,7 @@ body {
 }
 
 .brand-text .app-title .highlight {
-    color: var(--bull-green);
+    color: #1a73e8;
 }
 
 .brand-text .app-subtitle {
@@ -265,14 +264,13 @@ body {
 .status-open {
     background-color: var(--bull-bg);
     color: var(--bull-green);
-    border: 1px solid rgba(0, 230, 118, 0.3);
-    box-shadow: 0 0 6px var(--bull-green-glow);
+    border: 1px solid #ceedd5;
 }
 
 .status-closed {
-    background-color: rgba(148, 163, 184, 0.1);
+    background-color: #f1f3f4;
     color: var(--text-muted);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+    border: 1px solid #dadce0;
 }
 
 .clock-time {
@@ -299,24 +297,13 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #1e3a8a, #0d9488);
+    background: #1a73e8;
     color: #ffffff;
-    border-color: rgba(41, 182, 246, 0.4);
+    border: 1px solid #1557b0;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb, #0f766e);
-    box-shadow: 0 0 15px rgba(13, 148, 136, 0.4);
-    transform: translateY(-1px);
-}
-
-.glow-btn {
-    animation: glow-pulse 3s infinite alternate;
-}
-
-@keyframes glow-pulse {
-    0% { box-shadow: 0 0 5px rgba(41, 182, 246, 0.3); }
-    100% { box-shadow: 0 0 16px rgba(0, 230, 118, 0.4); }
+    background: #1557b0;
 }
 
 .btn-secondary {
@@ -913,7 +900,7 @@ body {
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-blue), var(--bull-green));
+    background: #1a73e8;
     transition: width 0.3s ease;
 }
 
@@ -1444,7 +1431,7 @@ body {
 }
 
 .modal-card {
-    background: #0f1522;
+    background: #ffffff;
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-lg);
     width: 100%;
@@ -1452,7 +1439,7 @@ body {
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 12px 36px rgba(60, 64, 67, 0.2);
     overflow: hidden;
     animation: modal-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1474,7 +1461,7 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    background: #131b2e;
+    background: #ffffff;
 }
 
 .modal-title-group {
@@ -1529,6 +1516,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    background: #f8f9fa;
 }
 
 .modal-impact-banner {
@@ -1536,7 +1524,7 @@ body {
     align-items: center;
     gap: 20px;
     padding: 16px 20px;
-    background: var(--bg-input);
+    background: #ffffff;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-subtle);
 }
@@ -1576,13 +1564,13 @@ body {
 .sentiment-badge.bullish {
     background: var(--bull-bg);
     color: var(--bull-green);
-    border: 1px solid var(--bull-green);
+    border: 1px solid #ceedd5;
 }
 
 .sentiment-badge.bearish {
     background: var(--bear-bg);
     color: var(--bear-red);
-    border: 1px solid var(--bear-red);
+    border: 1px solid #f8c2c0;
 }
 
 .sentiment-desc {
@@ -1615,7 +1603,7 @@ body {
 }
 
 .pipeline-card {
-    background: rgba(15, 22, 36, 0.7);
+    background: #ffffff;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 16px;
@@ -1653,7 +1641,7 @@ body {
 
 /* Stage 2 Analysis Sub Cards */
 .analysis-sub-card {
-    background: rgba(20, 28, 45, 0.6);
+    background: #ffffff;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 12px 14px;
@@ -1665,8 +1653,8 @@ body {
 }
 
 .analysis-sub-card.summary-card {
-    background: rgba(41, 182, 246, 0.05);
-    border-color: rgba(41, 182, 246, 0.2);
+    background: #e8f0fe;
+    border-color: #aecbfa;
 }
 
 .analysis-sub-card h4 {
@@ -1696,7 +1684,8 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.02);
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
     border-left: 3px solid var(--accent-blue);
     padding: 8px 12px;
     border-radius: var(--radius-sm);
