@@ -353,7 +353,7 @@ function renderNewsGrid(filteredData) {
                         <span class="card-source-time">
                             <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="${news.source} 원문 보도자료 바로가기">
                                 ${news.source.split(' ')[0]} <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            </a> • ${news.timestamp.split(' ')[1]}
+                            </a> • ${news.timestamp}
                         </span>
                         <button class="btn-card-detail btn-open-modal" data-id="${news.id}">
                             보고서 보기 <i class="fa-solid fa-arrow-right"></i>
@@ -465,22 +465,24 @@ function openModal(newsId) {
 
     // Stage 1 Pipeline List
     const stage1ListEl = document.getElementById('modal-stage1-list');
+    const p1 = news.phase1Filtering || { matchKeywords: ["데이터 없음"], priorityScore: 0, screeningReason: "데이터 없음" };
     stage1ListEl.innerHTML = `
-        <li><strong>매칭 키워드:</strong> ${news.phase1Filtering.matchKeywords.join(', ')}</li>
-        <li><strong>우선순위 스코어:</strong> ${news.phase1Filtering.priorityScore}점 (통과 완료)</li>
-        <li><strong>스크리닝 사유:</strong> ${news.phase1Filtering.screeningReason}</li>
+        <li><strong>매칭 키워드:</strong> ${(p1.matchKeywords || ["데이터 없음"]).join(', ')}</li>
+        <li><strong>우선순위 스코어:</strong> ${p1.priorityScore || 0}점 (통과 완료)</li>
+        <li><strong>스크리닝 사유:</strong> ${p1.screeningReason || "해당사항 없음"}</li>
     `;
 
     // Stage 2 Article Context Deep Dive
     const contextEl = document.getElementById('modal-article-context');
-    if (contextEl && news.phase2DeepAnalysis.articleContext) {
-        contextEl.innerHTML = `<p>${news.phase2DeepAnalysis.articleContext}</p>`;
+    const p2 = news.phase2DeepAnalysis || {};
+    if (contextEl && p2.articleContext) {
+        contextEl.innerHTML = `<p>${p2.articleContext}</p>`;
     }
 
     // Stage 2 Step-by-Step Path
     const stepPathContainer = document.getElementById('modal-step-path');
-    if (stepPathContainer && news.phase2DeepAnalysis.stepByStepPath) {
-        stepPathContainer.innerHTML = news.phase2DeepAnalysis.stepByStepPath.map((step, idx) => `
+    if (stepPathContainer && p2.stepByStepPath) {
+        stepPathContainer.innerHTML = p2.stepByStepPath.map((step, idx) => `
             <div class="step-path-item">
                 <span class="step-badge">STEP ${idx + 1}</span>
                 <span class="step-desc">${step}</span>
@@ -490,8 +492,8 @@ function openModal(newsId) {
 
     // Stage 2 Impacted Sectors
     const sectorsContainer = document.getElementById('modal-impacted-sectors');
-    if (sectorsContainer && news.phase2DeepAnalysis.impactedSectors) {
-        sectorsContainer.innerHTML = news.phase2DeepAnalysis.impactedSectors.map(sec => `
+    if (sectorsContainer && p2.impactedSectors) {
+        sectorsContainer.innerHTML = p2.impactedSectors.map(sec => `
             <span class="sector-tag-chip ${sec.direction === 'UP' ? 'up' : 'down'}">
                 <i class="fa-solid ${sec.direction === 'UP' ? 'fa-circle-chevron-up' : 'fa-circle-chevron-down'}"></i>
                 ${sec.sector} (${sec.direction === 'UP' ? '수혜 🟢' : '영향/부담 🔴'})
@@ -500,11 +502,12 @@ function openModal(newsId) {
     }
 
     // Stage 2 Transmission Mechanism Text
-    document.getElementById('modal-transmission-text').textContent = news.phase2DeepAnalysis.transmissionMechanism;
+    document.getElementById('modal-transmission-text').textContent = p2.transmissionMechanism || "전파 경로 데이터 없음";
 
-    // Target Stock Impact Cards List (Strictly Qualitative without percentage numbers)
+    // Target Stock Impact Cards List
     const stockListEl = document.getElementById('modal-stock-list');
-    stockListEl.innerHTML = news.phase2DeepAnalysis.targetStocks.map(stock => `
+    const stocks = p2.targetStocks || [];
+    stockListEl.innerHTML = stocks.map(stock => `
         <div class="stock-impact-card ${stock.sentiment === 'BULLISH' ? 'bull' : 'bear'}">
             <div class="stock-card-header">
                 <div class="stock-identity">
@@ -528,11 +531,12 @@ function openModal(newsId) {
     `).join('');
 
     // Outlook & Risk Factors
-    document.getElementById('modal-short-term').textContent = news.phase2DeepAnalysis.shortTermOutlook;
-    document.getElementById('modal-long-term').textContent = news.phase2DeepAnalysis.longTermOutlook;
+    document.getElementById('modal-short-term').textContent = p2.shortTermOutlook || "단기 전망 데이터가 없습니다.";
+    document.getElementById('modal-long-term').textContent = p2.longTermOutlook || "중장기 전망 데이터가 없습니다.";
     
     const riskListEl = document.getElementById('modal-risk-list');
-    riskListEl.innerHTML = news.phase2DeepAnalysis.riskFactors.map(risk => `<li>${risk}</li>`).join('');
+    const risks = p2.riskFactors || ["리스크 요인 데이터가 없습니다."];
+    riskListEl.innerHTML = risks.map(risk => `<li>${risk}</li>`).join('');
 
     // Show Modal Overlay
     const backdrop = document.getElementById('modal-backdrop');
@@ -551,34 +555,125 @@ function closeModal() {
 // 6. PIPELINE SIMULATION CONSOLE ENGINE & LIVE RSS INTEGRATION
 // ==========================================================================
 
+function updateConsoleProgress(percent, msg) {
+    const progressBar = document.getElementById('pipeline-progress-bar');
+    const consoleTerminal = document.getElementById('console-terminal');
+    if (progressBar) progressBar.style.width = percent + "%";
+    if (consoleTerminal && msg) {
+        const line = document.createElement('div');
+        line.className = 'log-line info';
+        line.textContent = msg;
+        consoleTerminal.appendChild(line);
+        consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
+    }
+}
+
 async function fetchLiveRssNews() {
     try {
+        // 1. Check if DB has today's news
+        appState.isSimulating = true;
+        updateConsoleProgress(10, "[SYSTEM] DB 연동 캐시 확인 중...");
+        
+        try {
+            const dbCheckRes = await fetch('/api/get-today-news');
+            if (dbCheckRes.ok) {
+                const dbData = await dbCheckRes.json();
+                if (dbData.success && dbData.hasNews && dbData.data.length > 0) {
+                    // Map DB schema to frontend schema with SAFE DEFAULTS
+                    newsDataset = dbData.data.map(item => ({
+                        id: item.id || Math.random().toString(36).substr(2, 9),
+                        titleKr: item.title || "No Title",
+                        titleEn: item.original_title || "No Title",
+                        url: item.url || "",
+                        summary: item.summary || "",
+                        source: item.source || "Unknown Source",
+                        timestamp: item.published_at || new Date().toLocaleString(),
+                        category: item.sector || "Uncategorized",
+                        impactScore: item.impact_score || 0,
+                        sentiment: (item.impact_score || 0) >= 0 ? "BULLISH" : "BEARISH",
+                        phase1Filtering: {
+                            matchKeywords: ["DB에서 불러옴"],
+                            priorityScore: 90,
+                            screeningReason: "Supabase DB에 캐싱된 데이터입니다."
+                        },
+                        phase2DeepAnalysis: {
+                            context: item.theme || item.article_context || "",
+                            articleContext: item.article_context || item.theme || "본문 문맥 정보가 없습니다.",
+                            stepByStepPath: (typeof item.step_by_step_path === 'string' ? JSON.parse(item.step_by_step_path) : item.step_by_step_path) || ["DB 연동 데이터", "캐싱 로드 완료"],
+                            impactedSectors: [{ sector: item.sector || "해당섹터", direction: "UP" }],
+                            targetStocks: (typeof item.target_stocks === 'string' ? JSON.parse(item.target_stocks) : item.target_stocks) || [],
+                            transmissionMechanism: item.transmission_mechanism || "",
+                            shortTermOutlook: item.short_term_outlook || "단기 전망 데이터가 없습니다.",
+                            longTermOutlook: item.long_term_outlook || "중장기 전망 데이터가 없습니다.",
+                            riskFactors: ["리스크 요인 데이터가 없습니다."]
+                        }
+                    }));
+                    
+                    localStorage.setItem('cached_news_dataset', JSON.stringify(newsDataset));
+                    updateConsoleProgress(100, "[CACHE HIT] DB에서 오늘 날짜의 최신 뉴스(" + newsDataset.length + "건)를 즉시 불러왔습니다!");
+                    appState.isSimulating = false;
+                    try { renderApp(); } catch(err) { console.error("Render error:", err); }
+                    return;
+                }
+            }
+        } catch (dbErr) {
+            console.error('[DB Check Error]', dbErr);
+            // Ignore DB error and proceed with RSS fetch
+        }
+
+        // 2. DB Cache Miss -> Run normal pipeline
+        updateConsoleProgress(30, "[CACHE MISS] 오늘자 데이터가 없습니다. 라이브 RSS 파이프라인 가동...");
+        
         const rssResponse = await fetch('/api/news-rss');
         if (!rssResponse.ok) throw new Error('Failed to fetch raw RSS');
         const rssData = await rssResponse.json();
         
-        if (rssData && rssData.items && rssData.items.length > 0) {
-            console.log('[Live RSS] Fetched', rssData.items.length, 'articles. Sending to Gemini AI for selection and analysis...');
-            
+        if (!rssData || !rssData.items || rssData.items.length === 0) {
+            throw new Error('최근 24시간 내에 조건에 맞는 글로벌 경제/증시 뉴스가 없습니다. 검색 조건을 넓혀 다시 시도합니다.');
+        }
+
+        updateConsoleProgress(60, "[1차 엑기스] RSS 수집 완료. Gemini AI 분석 요청 중...");
+        console.log('[Live RSS] Fetched', rssData.items.length, 'articles. Sending to Gemini AI for selection and analysis...');
+        
+        const headers = { 'Content-Type': 'application/json' };
+            const localApiKey = localStorage.getItem('gemini_api_key_override');
+            if (localApiKey) {
+                headers['x-gemini-api-key'] = localApiKey;
+            }
+
             const analyzeResponse = await fetch('/api/analyze-news', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify({ articles: rssData.items })
             });
             
             if (!analyzeResponse.ok) {
                 const err = await analyzeResponse.text();
+                if (analyzeResponse.status === 500 && err.includes('Server is missing GEMINI_API_KEY')) {
+                    appState.isSimulating = false;
+                    const userKey = prompt("Vercel 서버에서 환경 변수를 찾지 못했습니다.\n직접 발급받으신 Gemini API Key를 입력해주시면 브라우저에서 바로 연결해 드리겠습니다!\n(입력하신 키는 이 브라우저에만 저장되며 안전합니다)");
+                    if (userKey && userKey.trim().length > 0) {
+                        localStorage.setItem('gemini_api_key_override', userKey.trim());
+                        alert("키가 저장되었습니다. 분석을 다시 시도합니다!");
+                        return fetchLiveRssNews(); // Retry
+                    }
+                }
                 throw new Error('Analyze API Error: ' + err);
             }
             
             const analyzedData = await analyzeResponse.json();
             if (analyzedData.success && analyzedData.dataset) {
                 newsDataset = analyzedData.dataset;
+                localStorage.setItem('cached_news_dataset', JSON.stringify(newsDataset));
+                updateConsoleProgress(100, "[2차 LLM 분석 및 저장] AI 분석 완료 및 DB 자동 저장 성공!");
                 console.log('[Live RSS Integration Success]', newsDataset.length, 'AI analyzed articles loaded!');
             }
-        }
     } catch (e) {
         console.error('[Live RSS Integration Error]', e.message);
+        updateConsoleProgress(0, "[ERROR] 파이프라인 에러: " + e.message);
+    } finally {
+        appState.isSimulating = false;
+        try { renderApp(); } catch(err) { console.error("Render error:", err); }
     }
 }
 
@@ -658,6 +753,52 @@ function attachDynamicEventListeners() {
 }
 
 function initEventListeners() {
+    const btnSaveSupabase = document.getElementById('btn-save-supabase');
+    if (btnSaveSupabase) {
+        btnSaveSupabase.addEventListener('click', async () => {
+            if (!newsDataset || newsDataset.length === 0) {
+                alert('저장할 데이터가 없습니다. 먼저 분석을 실행해 주세요.');
+                return;
+            }
+            const btnOriginalText = btnSaveSupabase.innerHTML;
+            btnSaveSupabase.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 저장 중...';
+            btnSaveSupabase.disabled = true;
+            
+            try {
+                const payload = newsDataset.map(item => ({
+                    title: item.titleKr,
+                    original_title: item.titleEn,
+                    summary: item.summary,
+                    source: item.source,
+                    published_at: item.timestamp,
+                    sector: item.category,
+                    theme: item.phase2DeepAnalysis?.context || '',
+                    impact_score: item.impactScore,
+                    target_stocks: item.phase2DeepAnalysis?.targetStocks || [],
+                    transmission_mechanism: item.phase2DeepAnalysis?.transmissionMechanism || []
+                }));
+                
+                const response = await fetch('/api/save-supabase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ payload })
+                });
+                
+                if (response.ok) {
+                    alert('성공적으로 저장되었습니다!');
+                } else {
+                    const err = await response.text();
+                    alert('저장 실패 (Vercel 설정 확인 필요): ' + err);
+                }
+            } catch (e) {
+                alert('오류 발생: ' + e.message);
+            } finally {
+                btnSaveSupabase.innerHTML = btnOriginalText;
+                btnSaveSupabase.disabled = false;
+            }
+        });
+    }
+
     const mobileFilterBtn = document.getElementById('btn-mobile-filter');
     const closeSidebarBtn = document.getElementById('btn-close-sidebar');
     const mobileDrawerBackdrop = document.getElementById('mobile-drawer-backdrop');
@@ -1092,10 +1233,24 @@ function renderTossMacroTickerBar(macroList, isLive) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await fetchLiveRssNews();
-    fetchTossMacroIndicators(); // Initial fetch on site load only (No 15s interval)
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Check Cache First
+    const cachedNews = localStorage.getItem('cached_news_dataset');
+    if (cachedNews) {
+        try {
+            newsDataset = JSON.parse(cachedNews);
+            console.log('[Cache] Loaded', newsDataset.length, 'articles from local cache.');
+        } catch(e) {
+            console.error('[Cache Error]', e);
+        }
+    }
+
+    fetchTossMacroIndicators();
     startGlobalMarketClocks();
     initEventListeners();
     renderApp();
+    
+    // 2. Fetch fresh data in background only if there's no cache or if we want to force refresh
+    // For now, let's always fetch fresh data in background to keep it live, but UI doesn't block
+    fetchLiveRssNews().then(() => renderApp());
 });

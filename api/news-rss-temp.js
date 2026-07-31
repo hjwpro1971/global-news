@@ -10,8 +10,8 @@ export default async function handler(req, res) {
 
     try {
         const rssUrls = [
-            'https://news.google.com/rss/search?q=Semiconductor+OR+Fed+OR+FOMC+OR+Economy+OR+Korea+when:1d&hl=en-US&gl=US&ceid=US:en',
-            'https://news.google.com/rss/search?q=%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%B1%98%EB%8F%84%EC%B2%B4+OR+%ED%99%98%EC%9C%A8+when:1d&hl=ko&gl=KR&ceid=KR:ko'
+            'https://news.google.com/rss/search?q=Semiconductor+Fed+FOMC+Economy+Korea+Market+when:1d&hl=en-US&gl=US&ceid=US:en',
+            'https://news.google.com/rss/search?q=%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+%EC%A6%9D%EC%8B%9C+%EB%B1%98%EB%8F%84%EC%B2%B4+%ED%99%98%EC%9C%A8+when:1d&hl=ko&gl=KR&ceid=KR:ko'
         ];
 
         const allItems = [];
@@ -46,7 +46,7 @@ export default async function handler(req, res) {
         const thirtySixHoursAgo = Date.now() - (36 * 60 * 60 * 1000);
         
         const sortedItems = Array.from(uniqueMap.values())
-            .filter(item => new Date(item.pubDate).getTime() > thirtySixHoursAgo)
+            
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
             .slice(0, 15);
 
