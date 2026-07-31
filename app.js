@@ -867,11 +867,9 @@ function updateMetricsUI(filteredData) {
     const bearCount = newsDataset.filter(d => d.sentiment === "BEARISH").length;
     const highImpactCount = newsDataset.filter(d => Math.abs(d.impactScore) >= 75).length;
 
-    document.getElementById('metric-total-news').textContent = `${totalCount}건`;
-    document.getElementById('metric-bull-count').textContent = `${bullCount}건 (${((bullCount/totalCount)*100).toFixed(1)}%)`;
-    document.getElementById('metric-bear-count').textContent = `${bearCount}건 (${((bearCount/totalCount)*100).toFixed(1)}%)`;
+    document.getElementById('metric-total-news').textContent = `총 수집 뉴스 ${totalCount}건 | 호재 ${bullCount}건 | 악재 ${bearCount}건`;
     document.getElementById('metric-high-impact').textContent = `${highImpactCount}건`;
-    document.getElementById('news-count-badge').textContent = `${filteredData.length}개 조건 부합`;
+    document.getElementById('news-count-badge').textContent = `${filteredData.length}개 분석 완료`;
 }
 
 // ==========================================================================
