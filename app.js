@@ -685,7 +685,15 @@ async function fetchLiveRssNews() {
             if (analyzedData.success && analyzedData.dataset) {
                 newsDataset = analyzedData.dataset;
                 localStorage.setItem('cached_news_dataset', JSON.stringify(newsDataset));
-                updateConsoleProgress(100, "[2차 LLM 분석 및 저장] AI 분석 완료 및 DB 자동 저장 성공!");
+                
+                if (analyzedData.dbError) {
+                    updateConsoleProgress(100, "[WARNING] AI 분석은 성공했으나 DB 저장에 실패했습니다.");
+                    console.error('[Live RSS DB Error]', analyzedData.dbError);
+                    alert("AI 분석은 완료되었으나 Supabase DB에 저장하지 못했습니다.\n원인: " + analyzedData.dbError + "\n\n(Supabase 테이블에 url, article_context 등의 컬럼이 추가되어 있는지 확인해주세요.)");
+                } else {
+                    updateConsoleProgress(100, "[2차 LLM 분석 및 저장] AI 분석 완료 및 DB 자동 저장 성공!");
+                }
+                
                 console.log('[Live RSS Integration Success]', newsDataset.length, 'AI analyzed articles loaded!');
             }
     } catch (e) {

@@ -167,20 +167,23 @@ Output exactly a JSON array containing ONLY the selected 3-5 articles in the fol
                     body: JSON.stringify(supabasePayload)
                 });
                 
+                let dbErrorMsg = null;
                 if (resp.ok) {
                     console.log('[Supabase] Successfully saved', supabasePayload.length, 'news items.');
                 } else {
                     const errorText = await resp.text();
                     console.error('[Supabase] Failed to save to DB. Status:', resp.status, errorText);
+                    dbErrorMsg = `Status ${resp.status}: ${errorText}`;
                 }
+                return res.status(200).json({ success: true, dataset: finalDataset, dbError: dbErrorMsg });
             } catch (dbErr) {
                 console.error('[Supabase] Error constructing payload:', dbErr);
+                return res.status(200).json({ success: true, dataset: finalDataset, dbError: dbErr.message });
             }
         } else {
             console.warn('[Supabase] Keys missing. Data will not be saved to DB.');
+            return res.status(200).json({ success: true, dataset: finalDataset, dbError: 'Supabase URL/Key missing' });
         }
-
-        return res.status(200).json({ success: true, dataset: finalDataset });
     } catch (error) {
         console.error('[Gemini Analysis Error]', error);
         return res.status(500).json({ error: error.message });
