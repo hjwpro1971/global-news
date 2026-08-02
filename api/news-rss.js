@@ -1,3 +1,5 @@
+import { parseRssItems } from './_lib/newsAnalysis.js';
+
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -43,12 +45,12 @@ export default async function handler(req, res) {
             }
         });
 
-        const thirtySixHoursAgo = Date.now() - (36 * 60 * 60 * 1000);
+        const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
         
         const sortedItems = Array.from(uniqueMap.values())
-            .filter(item => new Date(item.pubDate).getTime() > thirtySixHoursAgo)
+            .filter(item => new Date(item.pubDate).getTime() > twentyFourHoursAgo)
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 15);
+            .slice(0, 50);
 
         return res.status(200).json({
             status: 'ok',
@@ -60,44 +62,4 @@ export default async function handler(req, res) {
         console.error('[Vercel News RSS Serverless Error]', error);
         return res.status(500).json({ error: error.message });
     }
-}
-
-function parseRssItems(xmlText) {
-    const items = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
-    let match;
-
-    while ((match = itemRegex.exec(xmlText)) !== null) {
-        const itemContent = match[1];
-
-        const titleMatch = /<title>([\s\S]*?)<\/title>/i.exec(itemContent);
-        const linkMatch = /<link>([\s\S]*?)<\/link>/i.exec(itemContent);
-        const pubDateMatch = /<pubDate>([\s\S]*?)<\/pubDate>/i.exec(itemContent);
-        const sourceMatch = /<source[^>]*>([\s\S]*?)<\/source>/i.exec(itemContent);
-
-        let rawTitle = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : '';
-        let link = linkMatch ? linkMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : '';
-        let pubDate = pubDateMatch ? pubDateMatch[1].trim() : new Date().toUTCString();
-        let source = sourceMatch ? sourceMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'Google News';
-
-        // Extract real source from title if embedded like "Title - Source"
-        if (rawTitle.includes(' - ')) {
-            const parts = rawTitle.split(' - ');
-            if (parts.length > 1) {
-                source = parts.pop().trim();
-                rawTitle = parts.join(' - ').trim();
-            }
-        }
-
-        if (rawTitle && link) {
-            items.push({
-                title: rawTitle,
-                link,
-                pubDate,
-                source
-            });
-        }
-    }
-
-    return items;
 }

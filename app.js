@@ -64,6 +64,16 @@ const GLOBAL_FINANCIAL_OUTLETS = {
     "EE Times": "https://www.eetimes.com/"
 };
 
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function getNewsUrl(news) {
     if (!news) return "https://www.reuters.com/markets/";
     
@@ -236,6 +246,8 @@ function updateMetricsUI(filteredData) {
 
     const metricEl = document.getElementById('metric-total-news');
     if (metricEl) metricEl.textContent = `총 수집 뉴스 ${totalCount}건 | 호재 ${bullCount}건 | 악재 ${bearCount}건`;
+    const totalNewsCardEl = document.getElementById('total-news-count');
+    if (totalNewsCardEl) totalNewsCardEl.textContent = `총 수집 뉴스 ${totalCount}건`;
     document.getElementById('news-count-badge').textContent = `${filteredData.length}개 분석 완료`;
 }
 
@@ -256,10 +268,11 @@ function renderHeroSection(filteredData) {
     const isBull = heroNews.sentiment === "BULLISH";
     const gaugeWidth = Math.abs(heroNews.impactScore);
 
+    const heroNewsUrl = escapeHtml(getNewsUrl(heroNews));
     const stockTagsHtml = heroNews.phase2DeepAnalysis.targetStocks.map(stock => `
         <span class="stock-tag-item ${stock.sentiment === 'BULLISH' ? 'bull' : 'bear'}">
             <i class="fa-solid ${stock.sentiment === 'BULLISH' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
-            ${stock.name} (${stock.ticker}) · ${stock.sentiment === 'BULLISH' ? '호재 🟢' : '악재 🔴'} (${stock.impactLevel})
+            ${escapeHtml(stock.name)} (${escapeHtml(stock.ticker)}) · ${stock.sentiment === 'BULLISH' ? '호재 🟢' : '악재 🔴'} (${escapeHtml(stock.impactLevel)})
         </span>
     `).join('');
 
@@ -268,24 +281,24 @@ function renderHeroSection(filteredData) {
             <div class="hero-top-meta">
                 <div class="hero-badge-group">
                     <span class="top-impact-badge"><i class="fa-solid fa-fire"></i> TOP 1 IMPACT</span>
-                    <span class="badge-category">${heroNews.category}</span>
+                    <span class="badge-category">${escapeHtml(heroNews.category)}</span>
                 </div>
                 <span class="hero-time-source">
-                    <i class="fa-regular fa-clock"></i> 
-                    <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
-                        ${heroNews.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    </a> • ${heroNews.timestamp}
+                    <i class="fa-regular fa-clock"></i>
+                    <a href="${heroNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
+                        ${escapeHtml(heroNews.source)} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a> • ${escapeHtml(heroNews.timestamp)}
                 </span>
             </div>
 
             <h3 class="hero-title-en">
-                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
-                    ${heroNews.titleEn} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+                <a href="${heroNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                    ${escapeHtml(heroNews.titleEn)} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
                 </a>
             </h3>
             <h4 class="hero-title-kr">
-                <a href="${getNewsUrl(heroNews)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
-                    ${heroNews.titleKr}
+                <a href="${heroNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                    ${escapeHtml(heroNews.titleKr)}
                 </a>
             </h4>
 
@@ -293,7 +306,7 @@ function renderHeroSection(filteredData) {
             <div class="hero-body-content">
                 <div class="mechanism-box">
                     <h4><i class="fa-solid fa-diagram-project"></i> 증시 파급 메커니즘 (Transmission)</h4>
-                    <p>${heroNews.phase2DeepAnalysis.transmissionMechanism}</p>
+                    <p>${escapeHtml(heroNews.phase2DeepAnalysis.transmissionMechanism)}</p>
                 </div>
                 <div class="hero-stocks-box">
                     <h4><i class="fa-solid fa-chart-line"></i> 수혜/피해 주요 관심 종목</h4>
@@ -304,7 +317,7 @@ function renderHeroSection(filteredData) {
             </div>
 
             <div class="hero-card-footer">
-                <button class="btn btn-primary btn-open-modal" data-id="${heroNews.id}">
+                <button class="btn btn-primary btn-open-modal" data-id="${escapeHtml(heroNews.id)}">
                     <i class="fa-solid fa-file-contract"></i> 2단계 심층 파이프라인 리포트 전체보기
                 </button>
             </div>
@@ -327,9 +340,10 @@ function renderNewsGrid(filteredData) {
 
     gridEl.innerHTML = filteredData.map(news => {
         const isBull = news.sentiment === "BULLISH";
+        const newsUrl = escapeHtml(getNewsUrl(news));
         const stockPillsHtml = news.phase2DeepAnalysis.targetStocks.map(s => `
             <span class="mini-stock-pill ${s.sentiment === 'BULLISH' ? 'bull' : 'bear'}">
-                ${s.name} (${s.ticker}) · ${s.sentiment === 'BULLISH' ? '호재' : '악재'} (${s.impactLevel})
+                ${escapeHtml(s.name)} (${escapeHtml(s.ticker)}) · ${s.sentiment === 'BULLISH' ? '호재' : '악재'} (${escapeHtml(s.impactLevel)})
             </span>
         `).join('');
 
@@ -337,19 +351,19 @@ function renderNewsGrid(filteredData) {
             <div class="news-card ${isBull ? 'sentiment-bullish' : 'sentiment-bearish'}">
                 <div>
                     <div class="card-top-meta">
-                        <span class="badge-category">${news.category}</span>
+                        <span class="badge-category">${escapeHtml(news.category)}</span>
                         <span class="card-impact-badge ${isBull ? 'bullish' : 'bearish'}">
                             ${news.impactScore > 0 ? '+' : ''}${news.impactScore}점
                         </span>
                     </div>
 
                     <h3 class="card-title-kr" title="원문 보기">
-                        <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
-                            ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+                        <a href="${newsUrl}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                            ${escapeHtml(news.titleKr)} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
                         </a>
                     </h3>
-                    <p class="card-title-en" title="원문 보기">${news.titleEn}</p>
-                    <p class="card-summary">${news.summary}</p>
+                    <p class="card-title-en" title="원문 보기">${escapeHtml(news.titleEn)}</p>
+                    <p class="card-summary">${escapeHtml(news.summary)}</p>
                 </div>
 
                 <div>
@@ -359,11 +373,11 @@ function renderNewsGrid(filteredData) {
 
                     <div class="card-action-bar">
                         <span class="card-source-time">
-                            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
-                                ${news.source.split(' ')[0]} <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                            </a> • ${news.timestamp}
+                            <a href="${newsUrl}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
+                                ${escapeHtml((news.source || '').split(' ')[0])} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a> • ${escapeHtml(news.timestamp)}
                         </span>
-                        <button class="btn-card-detail btn-open-modal" data-id="${news.id}">
+                        <button class="btn-card-detail btn-open-modal" data-id="${escapeHtml(news.id)}">
                             보고서 보기 <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
@@ -435,27 +449,28 @@ function openModal(newsId) {
 
     // Populate Header & Meta
     document.getElementById('modal-category').textContent = news.category;
+    const modalNewsUrl = escapeHtml(getNewsUrl(news));
     const modalSourceTimeEl = document.getElementById('modal-source-time');
     if (modalSourceTimeEl) {
         modalSourceTimeEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
-                ${news.source} <i class="fa-solid fa-arrow-up-right-from-square"></i>
-            </a> • ${news.timestamp}
+            <a href="${modalNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
+                ${escapeHtml(news.source)} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a> • ${escapeHtml(news.timestamp)}
         `;
     }
     const modalTitleEl = document.getElementById('modal-title');
     if (modalTitleEl) {
         modalTitleEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
-                ${news.titleKr} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
+            <a href="${modalNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                ${escapeHtml(news.titleKr)} <i class="fa-solid fa-arrow-up-right-from-square title-icon"></i>
             </a>
         `;
     }
     const modalOrigTitleEl = document.getElementById('modal-original-title');
     if (modalOrigTitleEl) {
         modalOrigTitleEl.innerHTML = `
-            <a href="${getNewsUrl(news)}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
-                ${news.titleEn}
+            <a href="${modalNewsUrl}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                ${escapeHtml(news.titleEn)}
             </a>
         `;
     }
@@ -471,20 +486,11 @@ function openModal(newsId) {
 
     document.getElementById('modal-sentiment-desc').textContent = news.summary;
 
-    // Stage 1 Pipeline List
-    const stage1ListEl = document.getElementById('modal-stage1-list');
-    const p1 = news.phase1Filtering || { matchKeywords: ["데이터 없음"], priorityScore: 0, screeningReason: "데이터 없음" };
-    stage1ListEl.innerHTML = `
-        <li><strong>매칭 키워드:</strong> ${(p1.matchKeywords || ["데이터 없음"]).join(', ')}</li>
-        <li><strong>우선순위 스코어:</strong> ${p1.priorityScore || 0}점 (통과 완료)</li>
-        <li><strong>스크리닝 사유:</strong> ${p1.screeningReason || "해당사항 없음"}</li>
-    `;
-
     // Stage 2 Article Context Deep Dive
     const contextEl = document.getElementById('modal-article-context');
     const p2 = news.phase2DeepAnalysis || {};
     if (contextEl && p2.articleContext) {
-        contextEl.innerHTML = `<p>${p2.articleContext}</p>`;
+        contextEl.innerHTML = `<p>${escapeHtml(p2.articleContext)}</p>`;
     }
 
     // Stage 2 Step-by-Step Path
@@ -493,7 +499,7 @@ function openModal(newsId) {
         stepPathContainer.innerHTML = p2.stepByStepPath.map((step, idx) => `
             <div class="step-path-item">
                 <span class="step-badge">STEP ${idx + 1}</span>
-                <span class="step-desc">${step}</span>
+                <span class="step-desc">${escapeHtml(step)}</span>
             </div>
         `).join('');
     }
@@ -504,7 +510,7 @@ function openModal(newsId) {
         sectorsContainer.innerHTML = p2.impactedSectors.map(sec => `
             <span class="sector-tag-chip ${sec.direction === 'UP' ? 'up' : 'down'}">
                 <i class="fa-solid ${sec.direction === 'UP' ? 'fa-circle-chevron-up' : 'fa-circle-chevron-down'}"></i>
-                ${sec.sector} (${sec.direction === 'UP' ? '수혜 🟢' : '영향/부담 🔴'})
+                ${escapeHtml(sec.sector)} (${sec.direction === 'UP' ? '수혜 🟢' : '영향/부담 🔴'})
             </span>
         `).join('');
     }
@@ -519,19 +525,19 @@ function openModal(newsId) {
         <div class="stock-impact-card ${stock.sentiment === 'BULLISH' ? 'bull' : 'bear'}">
             <div class="stock-card-header">
                 <div class="stock-identity">
-                    <span class="stock-name">${stock.name}</span>
-                    <span class="stock-ticker-code">(${stock.ticker})</span>
+                    <span class="stock-name">${escapeHtml(stock.name)}</span>
+                    <span class="stock-ticker-code">(${escapeHtml(stock.ticker)})</span>
                 </div>
                 <div class="stock-direction-badge ${stock.sentiment === 'BULLISH' ? 'bullish' : 'bearish'}">
                     <i class="fa-solid ${stock.sentiment === 'BULLISH' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
-                    ${stock.sentiment === 'BULLISH' ? '호재 🟢' : '악재 🔴'} | 영향도: ${stock.impactLevel}
+                    ${stock.sentiment === 'BULLISH' ? '호재 🟢' : '악재 🔴'} | 영향도: ${escapeHtml(stock.impactLevel)}
                 </div>
             </div>
             <div class="stock-reasoning-body">
-                <p class="stock-reasoning"><strong>영향 배경 및 세부 이유:</strong> ${stock.reasoning}</p>
+                <p class="stock-reasoning"><strong>영향 배경 및 세부 이유:</strong> ${escapeHtml(stock.reasoning)}</p>
                 ${stock.keyDrivers && stock.keyDrivers.length > 0 ? `
                     <div class="stock-key-drivers">
-                        ${stock.keyDrivers.map(d => `<span class="driver-tag">#${d}</span>`).join('')}
+                        ${stock.keyDrivers.map(d => `<span class="driver-tag">#${escapeHtml(d)}</span>`).join('')}
                     </div>
                 ` : ''}
             </div>
@@ -544,12 +550,18 @@ function openModal(newsId) {
     
     const riskListEl = document.getElementById('modal-risk-list');
     const risks = p2.riskFactors || ["리스크 요인 데이터가 없습니다."];
-    riskListEl.innerHTML = risks.map(risk => `<li>${risk}</li>`).join('');
+    riskListEl.innerHTML = risks.map(risk => `<li>${escapeHtml(risk)}</li>`).join('');
 
     // Show Modal Overlay
     const backdrop = document.getElementById('modal-backdrop');
     backdrop.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Reset scroll position to top
+    const modalBody = document.querySelector('.modal-body');
+    if (modalBody) {
+        modalBody.scrollTop = 0;
+    }
 }
 
 function closeModal() {
@@ -576,13 +588,14 @@ function updateConsoleProgress(percent, msg) {
     }
 }
 
-async function fetchLiveRssNews() {
+async function fetchLiveRssNews(forceRefresh = false) {
     try {
         // 1. Check if DB has today's news
         appState.isSimulating = true;
         updateConsoleProgress(10, "[SYSTEM] DB 연동 캐시 확인 중...");
         
-        try {
+        if (!forceRefresh) {
+            try {
             const dbHeaders = {};
             const localSupaUrl = localStorage.getItem('supabase_url_override');
             const localSupaKey = localStorage.getItem('supabase_key_override');
@@ -632,12 +645,13 @@ async function fetchLiveRssNews() {
                     return;
                 }
             }
-        } catch (dbErr) {
-            console.error('[DB Check Error]', dbErr);
-            // Ignore DB error and proceed with RSS fetch
+            } catch (dbErr) {
+                console.error('[DB Check Error]', dbErr);
+                // Ignore DB error and proceed with RSS fetch
+            }
         }
 
-        // 2. DB Cache Miss -> Run normal pipeline
+        // 2. DB Cache Miss or forceRefresh -> Run normal pipeline
         updateConsoleProgress(30, "[CACHE MISS] 오늘자 데이터가 없습니다. 라이브 RSS 파이프라인 가동...");
         
         const rssResponse = await fetch('/api/news-rss');
@@ -652,10 +666,6 @@ async function fetchLiveRssNews() {
         console.log('[Live RSS] Fetched', rssData.items.length, 'articles. Sending to Gemini AI for selection and analysis...');
         
         const headers = { 'Content-Type': 'application/json' };
-            const localApiKey = localStorage.getItem('gemini_api_key_override');
-            if (localApiKey) {
-                headers['x-gemini-api-key'] = localApiKey;
-            }
 
             const localSupaUrl = localStorage.getItem('supabase_url_override');
             if (localSupaUrl) {
@@ -672,13 +682,7 @@ async function fetchLiveRssNews() {
             if (!analyzeResponse.ok) {
                 const err = await analyzeResponse.text();
                 if (analyzeResponse.status === 500 && err.includes('Server is missing GEMINI_API_KEY')) {
-                    appState.isSimulating = false;
-                    const userKey = prompt("Vercel 서버에서 환경 변수를 찾지 못했습니다.\n직접 발급받으신 Gemini API Key를 입력해주시면 브라우저에서 바로 연결해 드리겠습니다!\n(입력하신 키는 이 브라우저에만 저장되며 안전합니다)");
-                    if (userKey && userKey.trim().length > 0) {
-                        localStorage.setItem('gemini_api_key_override', userKey.trim());
-                        alert("키가 저장되었습니다. 분석을 다시 시도합니다!");
-                        return fetchLiveRssNews(); // Retry
-                    }
+                    throw new Error('서버에 GEMINI_API_KEY 환경 변수가 설정되어 있지 않습니다. Vercel 대시보드에서 환경 변수를 설정해주세요.');
                 }
                 throw new Error('Analyze API Error: ' + err);
             }
@@ -711,62 +715,21 @@ function runPipelineSimulation() {
     if (appState.isSimulating) return;
 
     appState.isSimulating = true;
-    const consoleBadge = document.getElementById('console-status-badge');
-    const progressBar = document.getElementById('pipeline-progress-bar');
-    const consoleTerminal = document.getElementById('console-terminal');
     const runBtn = document.getElementById('btn-run-simulation');
 
     if (runBtn) {
         runBtn.disabled = true;
-        runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 분석 중...`;
+        runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...`;
     }
 
-    if (consoleBadge) consoleBadge.textContent = "PROCESSING";
-    if (consoleBadge) consoleBadge.className = "console-badge running";
-    if (progressBar) progressBar.style.width = "0%";
-    if (consoleTerminal) consoleTerminal.innerHTML = '';
-
-    const logs = [
-        { time: 200, type: "system", text: "[SYSTEM] 글로벌 파이프라인 인프라 연결 시작 (Google News RSS, Reuters, Bloomberg Feed)" },
-        { time: 500, type: "info", text: "[FETCH] 실시간 글로벌 헤드라인 RSS 피드 수집 완료 (반도체, 통화정책, 지정학, 해운)" },
-        { time: 900, type: "filter", text: "[1단계 엑기스] 고유 키워드 추출 & 스크리닝 (Pass: 10건 / Reject: 0건)" },
-        { time: 1400, type: "info", text: "[2단계 LLM 엔진] 한국 증시(KOSPI/KOSDAQ) 전파 경로 Transmission Vector 분석 중..." },
-        { time: 1900, type: "success", text: "[2단계 LLM 엔진] 수혜/피해 24개 주요 종목 연관 매핑 및 영향도 평가 완료!" },
-        { time: 2300, type: "system", text: "[SYSTEM] 파이프라인 갱신 완료. 최신 대시보드 렌더링 완료." }
-    ];
-
-    let currentProgress = 0;
-    const progressInterval = setInterval(() => {
-        currentProgress += 4;
-        if (currentProgress > 100) currentProgress = 100;
-        if (progressBar) progressBar.style.width = `${currentProgress}%`;
-    }, 80);
-
-    logs.forEach(logItem => {
-        setTimeout(() => {
-            const line = document.createElement('div');
-            line.className = `log-line ${logItem.type}`;
-            line.textContent = `${logItem.text}`;
-            consoleTerminal.appendChild(line);
-            consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
-        }, logItem.time);
-    });
-
-    setTimeout(async () => {
-        await fetchLiveRssNews();
-        clearInterval(progressInterval);
-        if (progressBar) progressBar.style.width = "100%";
-        if (consoleBadge) consoleBadge.textContent = "READY";
-        if (consoleBadge) consoleBadge.className = "console-badge";
-        
+    fetchLiveRssNews(false).finally(() => {
         if (runBtn) {
             runBtn.disabled = false;
             runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">뉴스분석</span>`;
         }
-
         appState.isSimulating = false;
         renderApp();
-    }, 2500);
+    });
 }
 
 // ==========================================================================
@@ -1242,8 +1205,8 @@ function renderTossMacroTickerBar(macroList, isLive) {
         return `
             <div class="macro-chip ${stateClass}" title="원문 보기">
                 <div class="chip-top">
-                    <span class="chip-name">${item.name}</span>
-                    <span class="chip-symbol">${item.symbol}</span>
+                    <span class="chip-name">${escapeHtml(item.name)}</span>
+                    <span class="chip-symbol">${escapeHtml(item.symbol)}</span>
                 </div>
                 <div class="chip-bottom">
                     <span class="chip-price">${formattedPrice}</span>
@@ -1281,7 +1244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderApp();
     
     // 2. Fetch fresh data in background only if there's no cache or if we want to force refresh
-    // For now, let's always fetch fresh data in background to keep it live, but UI doesn't block
+    renderTrendChart();
     fetchLiveRssNews().then(() => renderApp());
 });
 
@@ -1292,3 +1255,122 @@ window.clearCacheAndReload = function() {
         location.reload();
     }
 };
+
+// ==========================================================================
+// 8. MACRO TREND CHART CONTROLLER
+// ==========================================================================
+let macroTrendChartInstance = null;
+
+async function renderTrendChart() {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas) return;
+
+    try {
+        const dbHeaders = {};
+        const localSupaUrl = localStorage.getItem('supabase_url_override');
+        const localSupaKey = localStorage.getItem('supabase_key_override');
+        if (localSupaUrl && localSupaKey) {
+            dbHeaders['x-supabase-url'] = localSupaUrl;
+            dbHeaders['x-supabase-key'] = localSupaKey;
+        }
+
+        const res = await fetch('/api/get-trend-data', { headers: dbHeaders });
+        if (!res.ok) throw new Error('Failed to fetch trend data');
+        
+        const data = await res.json();
+        if (!data.success || !data.trend || data.trend.length === 0) {
+            return;
+        }
+
+        const labels = data.trend.map(d => d.date);
+        const scores = data.trend.map(d => d.avgScore);
+
+        if (macroTrendChartInstance) {
+            macroTrendChartInstance.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+        macroTrendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '일평균 증시 온도',
+                    data: scores,
+                    borderColor: function(context) {
+                        const chart = context.chart;
+                        const {chartArea} = chart;
+                        if (!chartArea) return null;
+                        return scores[scores.length - 1] >= 0 ? '#00e676' : '#ff1744';
+                    },
+                    backgroundColor: function(context) {
+                        const chart = context.chart;
+                        const {ctx, chartArea} = chart;
+                        if (!chartArea) return null;
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        if (scores[scores.length - 1] >= 0) {
+                            gradient.addColorStop(0, 'rgba(0, 230, 118, 0.5)');
+                            gradient.addColorStop(1, 'rgba(0, 230, 118, 0.0)');
+                        } else {
+                            gradient.addColorStop(0, 'rgba(255, 23, 68, 0.5)');
+                            gradient.addColorStop(1, 'rgba(255, 23, 68, 0.0)');
+                        }
+                        return gradient;
+                    },
+                    borderWidth: 2,
+                    pointBackgroundColor: '#1a1f2c',
+                    pointBorderColor: scores.map(s => s >= 0 ? '#00e676' : '#ff1744'),
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(26, 31, 44, 0.9)',
+                        titleColor: '#8892b0',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y > 0 ? '+' + context.parsed.y : context.parsed.y;
+                                    label += context.parsed.y >= 0 ? ' (호재)' : ' (악재)';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: '#8892b0', font: { family: 'Inter', size: 10 } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5], drawBorder: false },
+                        ticks: { 
+                            color: '#8892b0', 
+                            font: { family: 'Inter', size: 10 },
+                            callback: function(value) { return value > 0 ? '+' + value : value; }
+                        }
+                    }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            }
+        });
+    } catch (err) {
+        console.error('[Trend Chart Error]', err);
+    }
+}
