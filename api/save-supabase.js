@@ -17,6 +17,23 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Server is missing Supabase Environment Variables' });
         }
 
+        // 1. Cleanup old data (older than 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        try {
+            await fetch(`${supabaseUrl}/rest/v1/news_impacts?created_at=lt.${sevenDaysAgo.toISOString()}`, {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${supabaseKey}`
+                }
+            });
+        } catch (e) {
+            console.error('[Supabase Cleanup Error]', e);
+        }
+
+        // 2. Insert new data
         const resp = await fetch(`${supabaseUrl}/rest/v1/news_impacts`, {
             method: 'POST',
             headers: {

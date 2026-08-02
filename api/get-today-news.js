@@ -11,16 +11,11 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Server is missing Supabase Environment Variables' });
         }
 
-        // Calculate timestamp for 12 hours ago
-        const twelveHoursAgo = new Date();
-        twelveHoursAgo.setHours(twelveHoursAgo.getHours() - 12);
-        
-        // Fetch up to 20 articles from the last 12 hours, ordered by most recent
+        // Fetch most recent top 10 impactful articles
         const queryParams = new URLSearchParams({
             select: '*',
-            order: 'created_at.desc',
-            limit: '20',
-            'created_at': `gte.${twelveHoursAgo.toISOString()}`
+            order: 'id.desc',
+            limit: '10'
         });
 
         const resp = await fetch(`${supabaseUrl}/rest/v1/news_impacts?${queryParams.toString()}`, {

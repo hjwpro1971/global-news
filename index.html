@@ -19,6 +19,9 @@
     <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -61,6 +64,17 @@
                         <span class="market-status status-open" style="background: rgba(0,210,255,0.1); color: #00d2ff; border-color: rgba(0,210,255,0.3);">Live</span>
                     </div>
                     <div class="clock-time" id="total-news-count" style="font-size: 0.9rem;">총 수집 뉴스 4건</div>
+                </div>
+            </div>
+
+            <!-- Macro Trend Chart -->
+            <div class="trend-chart-container">
+                <div class="trend-chart-header">
+                    <h3><i class="fa-solid fa-chart-area text-blue" style="margin-right: 8px;"></i> 글로벌 증시 온도 (최근 7일)</h3>
+                    <span style="font-size: 0.75rem; color: #8892b0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;">+ 호재 / - 악재</span>
+                </div>
+                <div style="height: 180px; width: 100%;">
+                    <canvas id="trendChart"></canvas>
                 </div>
             </div>
 
@@ -134,14 +148,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="app-footer">
-        <div class="footer-container">
-            <p>© 2026 Global Economics to KR Stock Impact Monitor. Designed for Quantitative Macro Analysis.</p>
-            <p class="footer-notice">본 시스템에서 제공하는 정보는 AI 2단계 파이프라인 분석 시뮬레이션 결과이며 투자 권유가 아닙니다. 모든 투자의 책임은 본인에게 있습니다.</p>
-        </div>
-    </footer>
-
     <!-- Detailed Impact Analysis Modal -->
     <div id="modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-card">
@@ -173,18 +179,12 @@
                     </div>
                 </div>
 
-                <!-- 2-Stage Pipeline Breakdown Section -->
+                <!-- AI Deep Analysis Section -->
                 <div class="modal-section pipeline-breakdown">
-                    <h3><i class="fa-solid fa-layer-group text-blue"></i> AI 2단계 파이프라인 검증 보고서</h3>
+                    <h3><i class="fa-solid fa-layer-group text-blue"></i> AI 심층 분석 보고서</h3>
                     <div class="pipeline-grid">
-                        <div class="pipeline-card stage-1">
-                            <div class="stage-tag"><i class="fa-solid fa-filter"></i> 1단계: 제목 엑기스 스크리닝 (Screening)</div>
-                            <ul class="stage-list" id="modal-stage1-list">
-                                <!-- Stage 1 items -->
-                            </ul>
-                        </div>
-                        <div class="pipeline-card stage-2">
-                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> 2단계: 본문 LLM 파급 메커니즘 & 기사 심층 분석</div>
+                        <div class="pipeline-card stage-2" style="grid-column: span 2;">
+                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> LLM 파급 메커니즘 & 핵심 맥락 분석</div>
                             
                             <div class="analysis-sub-card">
                                 <h4><i class="fa-solid fa-newspaper text-blue"></i> 기사 핵심 배경 및 파급 심층 맥락</h4>

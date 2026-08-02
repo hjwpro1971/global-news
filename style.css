@@ -2539,3 +2539,45 @@ body {
     margin-left: 4px;
     vertical-align: middle;
 }
+
+/* Trend Chart Styles */
+.trend-chart-container {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(26, 31, 44, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+}
+
+.trend-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.trend-chart-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .trend-chart-container {
+        padding: 12px;
+    }
+    .trend-chart-header h3 {
+        font-size: 0.9rem;
+    }
+    .main-wrapper {
+        padding: 10px 8px !important;
+    }
+    .header-container {
+        padding: 10px 8px !important;
+    }
+}
