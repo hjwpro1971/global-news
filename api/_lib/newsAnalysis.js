@@ -182,6 +182,14 @@ across many outlets (higher headlineFrequencyScore = discussed more widely today
 Your task is to identify the top MAXIMUM 10 articles that have the HIGHEST impact on the Korean stock market (KOSPI/KOSDAQ).
 Ignore duplicates, low-impact news, or generic opinions.
 
+**THEME DIVERSITY RULE**: Several articles below may describe the SAME underlying macro
+event from different angles (e.g. one is a fact-check, one is a political reaction, one is
+the market's price move) - these count as ONE story even if their headlines and wording
+differ. Select AT MOST 2 articles per underlying event/theme, prioritizing the one with the
+clearest direct market impact. Do NOT let a single busy news event (e.g. one day's oil-price
+story) fill most of your selection - actively look for distinct, unrelated stories/sectors so
+the final list reflects a spread of what actually matters today, not one repeated topic.
+
 Raw articles:
 ${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
 
