@@ -256,7 +256,10 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 `;
 }
 
-const FLASH_MODEL = 'gemini-2.5-flash';
+// $0.10/$0.40 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
+// cheapest text model available. Screening only needs to read a title and return an
+// ID from a fixed list, well within a Lite model's capability.
+const FLASH_MODEL = 'gemini-2.5-flash-lite';
 // $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
 // cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
 // account. The deep-analysis task here is rule-following + structured JSON output
