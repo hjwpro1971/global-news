@@ -1,4 +1,10 @@
-import { parseRssItems, screenArticles, deepAnalyzeArticles, reconcileSentiment, purgeOldNews, insertNews } from './_lib/newsAnalysis.js';
+import {
+    buildRssUrls, parseRssItems, rankByHeadlineFrequency,
+    screenArticles, deepAnalyzeArticles, reconcileSentiment,
+    purgeOldNews, insertNews,
+    acquireAnalysisLock, releaseAnalysisLock, markFetchedNow,
+    getFetchState, resolveCollectionWindowStart
+} from './_lib/newsAnalysis.js';
 
 export const maxDuration = 60; // Allow up to 60s for Hobby users if opted in
 
@@ -7,12 +13,25 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_KEY;
+    let lockAcquired = false;
+
     try {
-        // 1. Fetch RSS News Directly
-        const rssUrls = [
-            'https://news.google.com/rss/search?q=Semiconductor+OR+Fed+OR+FOMC+OR+Economy+OR+Korea+when:1d&hl=en-US&gl=US&ceid=US:en',
-            'https://news.google.com/rss/search?q=%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%B1%98%EB%8F%84%EC%B2%B4+OR+%ED%99%98%EC%9C%A8+when:1d&hl=ko&gl=KR&ceid=KR:ko'
-        ];
+        if (supabaseUrl && supabaseKey) {
+            lockAcquired = await acquireAnalysisLock(supabaseUrl, supabaseKey);
+            if (!lockAcquired) {
+                return res.status(409).json({ success: false, message: 'Another analysis run is already in progress.' });
+            }
+        }
+
+        // 1. Fetch RSS News (windowed by last_fetched_at so a delayed/missed cron
+        // doesn't lose articles, and a fresh run doesn't re-collect a fixed 24h every time)
+        const windowStartMs = supabaseUrl && supabaseKey
+            ? resolveCollectionWindowStart((await getFetchState(supabaseUrl, supabaseKey)).last_fetched_at)
+            : Date.now() - 24 * 60 * 60 * 1000;
+
+        const rssUrls = buildRssUrls();
 
         const allItems = [];
         for (const url of rssUrls) {
@@ -39,23 +58,28 @@ export default async function handler(req, res) {
                 uniqueMap.set(item.link, item);
             }
         });
-        const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
         const articles = Array.from(uniqueMap.values())
-            .filter(item => new Date(item.pubDate).getTime() > twentyFourHoursAgo)
+            .filter(item => new Date(item.pubDate).getTime() > windowStartMs)
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 50);
+            .slice(0, 150);
 
         if (articles.length === 0) {
+            if (supabaseUrl && supabaseKey) await markFetchedNow(supabaseUrl, supabaseKey);
             return res.status(200).json({ success: true, message: 'No articles to process.' });
         }
 
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
         if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
 
+        // 2. Local, zero-cost pre-filter: rank by cross-outlet headline frequency and
+        // dedupe near-identical stories before spending any Gemini tokens.
+        const candidates = rankByHeadlineFrequency(articles);
+
         // STEP 1: Gemini Flash (Fast & Cheap Screening)
-        const selectedArticles = await screenArticles(articles, GEMINI_API_KEY);
+        const selectedArticles = await screenArticles(candidates, GEMINI_API_KEY);
 
         if (selectedArticles.length === 0) {
+            if (supabaseUrl && supabaseKey) await markFetchedNow(supabaseUrl, supabaseKey);
             return res.status(200).json({ success: true, message: 'No high impact articles found.' });
         }
 
@@ -63,9 +87,6 @@ export default async function handler(req, res) {
         const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
 
         // 3. Save to Supabase
-        const supabaseUrl = process.env.SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_KEY;
-
         if (supabaseUrl && supabaseKey) {
             const supabasePayload = analyzedData.map(item => {
                 const orig = articles[item.originalId] || {};
@@ -81,6 +102,7 @@ export default async function handler(req, res) {
                     sector: item.category,
                     theme: item.phase2DeepAnalysis?.articleContext || '',
                     impact_score: (sentiment === "BEARISH" ? -1 : 1) * Math.abs(item.impactScore || 50),
+                    score_reason: item.scoreReason || '',
                     target_stocks: item.phase2DeepAnalysis?.targetStocks || [],
                     transmission_mechanism: item.phase2DeepAnalysis?.transmissionMechanism || '',
                     url: orig.link || '',
@@ -100,11 +122,20 @@ export default async function handler(req, res) {
                 console.error('[Supabase Error]', await dbResp.text());
                 throw new Error('Failed to save to Supabase');
             }
+
+            // Only the scheduled cron advances the incremental-collection watermark.
+            // A manual /api/analyze-news trigger must not, or the next cron could
+            // skip articles published between the manual run and the real schedule.
+            await markFetchedNow(supabaseUrl, supabaseKey);
         }
 
         return res.status(200).json({ success: true, message: 'Cron Job Completed Successfully', count: analyzedData.length });
     } catch (error) {
         console.error('[Cron Job Error]', error);
         return res.status(500).json({ error: error.message });
+    } finally {
+        if (lockAcquired && supabaseUrl && supabaseKey) {
+            await releaseAnalysisLock(supabaseUrl, supabaseKey);
+        }
     }
 }

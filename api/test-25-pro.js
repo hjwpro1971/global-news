@@ -1,4 +1,10 @@
 export default async function handler(req, res) {
+    // Debug-only endpoint - hidden behind an admin token; unlimited unauthenticated
+    // access would let anyone burn Gemini API quota on this project's key.
+    if (!process.env.ADMIN_DEBUG_TOKEN || req.query.admin_token !== process.env.ADMIN_DEBUG_TOKEN) {
+        return res.status(404).json({ error: 'Not Found' });
+    }
+
     try {
         const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
         const proResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`, {

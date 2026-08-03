@@ -639,7 +639,11 @@ async function fetchLiveRssNews(forceRefresh = false) {
                     }));
                     
                     localStorage.setItem('cached_news_dataset', JSON.stringify(newsDataset));
-                    updateConsoleProgress(100, "[CACHE HIT] DB에서 오늘 날짜의 최신 뉴스(" + newsDataset.length + "건)를 즉시 불러왔습니다!");
+                    if (dbData.isStale) {
+                        updateConsoleProgress(100, "[알림] 오늘의 뉴스를 아직 수집하지 못했습니다. 가장 최근 뉴스(" + newsDataset.length + "건)를 표시합니다.");
+                    } else {
+                        updateConsoleProgress(100, "[CACHE HIT] DB에서 오늘 날짜의 최신 뉴스(" + newsDataset.length + "건)를 즉시 불러왔습니다!");
+                    }
                     appState.isSimulating = false;
                     try { renderApp(); } catch(err) { console.error("Render error:", err); }
                     return;

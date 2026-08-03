@@ -1,4 +1,7 @@
-import { screenArticles, deepAnalyzeArticles, reconcileSentiment, purgeOldNews, insertNews } from './_lib/newsAnalysis.js';
+import {
+    rankByHeadlineFrequency, screenArticles, deepAnalyzeArticles, reconcileSentiment,
+    purgeOldNews, insertNews, acquireAnalysisLock, releaseAnalysisLock
+} from './_lib/newsAnalysis.js';
 
 export const maxDuration = 60;
 
@@ -16,15 +19,32 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'Server is missing GEMINI_API_KEY environment variable. Please configure it in Vercel.' });
     }
 
+    // Lock uses the server's own Supabase credentials (not a user-supplied override) so
+    // a manual trigger and the scheduled cron - which always use the env credentials -
+    // actually contend on the same lock row.
+    const lockSupabaseUrl = process.env.SUPABASE_URL;
+    const lockSupabaseKey = process.env.SUPABASE_KEY;
+    let lockAcquired = false;
+
     try {
+        if (lockSupabaseUrl && lockSupabaseKey) {
+            lockAcquired = await acquireAnalysisLock(lockSupabaseUrl, lockSupabaseKey);
+            if (!lockAcquired) {
+                return res.status(409).json({ error: 'Another analysis run is already in progress. Please try again shortly.' });
+            }
+        }
+
         const { articles } = req.body;
 
         if (!articles || !Array.isArray(articles)) {
             return res.status(400).json({ error: 'Invalid input. Expected an array of articles.' });
         }
 
+        // Local, zero-cost pre-filter before spending any Gemini tokens.
+        const candidates = rankByHeadlineFrequency(articles);
+
         // STEP 1: Gemini Flash (Fast & Cheap Screening)
-        const selectedArticles = await screenArticles(articles, GEMINI_API_KEY);
+        const selectedArticles = await screenArticles(candidates, GEMINI_API_KEY);
 
         if (selectedArticles.length === 0) {
             return res.status(200).json({ success: true, dataset: [] });
@@ -61,6 +81,7 @@ export default async function handler(req, res) {
                 timestamp: timestamp || new Date().toISOString(),
                 category: item.category || "글로벌 매크로",
                 impactScore: (sentiment === "BEARISH" ? -1 : 1) * Math.abs(item.impactScore || 50),
+                scoreReason: item.scoreReason || '',
                 sentiment: sentiment,
                 summary: item.summary || "",
                 phase1Filtering: { passed: true, matchKeywords: [], priorityScore: 90 },
@@ -85,6 +106,7 @@ export default async function handler(req, res) {
                     sector: item.category,
                     theme: item.phase2DeepAnalysis?.articleContext || '',
                     impact_score: item.impactScore,
+                    score_reason: item.scoreReason,
                     target_stocks: item.phase2DeepAnalysis?.targetStocks || [],
                     transmission_mechanism: item.phase2DeepAnalysis?.transmissionMechanism || '',
                     url: item.url || '',
@@ -118,5 +140,9 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error('[Gemini Analysis Error]', error);
         return res.status(500).json({ error: error.message });
+    } finally {
+        if (lockAcquired && lockSupabaseUrl && lockSupabaseKey) {
+            await releaseAnalysisLock(lockSupabaseUrl, lockSupabaseKey);
+        }
     }
 }
