@@ -31,16 +31,22 @@ export default async function handler(req, res) {
             'Authorization': `Bearer ${supabaseKey}`
         };
 
+        // Filter on created_at (when WE collected/saved it), not published_at (the
+        // source article's own publish time). published_at often falls on the
+        // "previous" KST day for articles picked up right after midnight, which made
+        // this query return 0 rows even though today's batch was saved - causing the
+        // frontend to treat the DB cache as empty and re-run the full Gemini pipeline
+        // on every page load / button click instead of using the cached data.
         const [startIso, endIso] = kstTodayRangeUtc();
         const todayParams = new URLSearchParams({
             select: '*',
             order: 'id.desc',
             limit: '10',
-            'published_at': `gte.${startIso}`
+            'created_at': `gte.${startIso}`
         });
-        // published_at upper bound as a second query param with the same key isn't
+        // created_at upper bound as a second query param with the same key isn't
         // supported by URLSearchParams directly, so append it manually.
-        const todayUrl = `${supabaseUrl}/rest/v1/news_impacts?${todayParams.toString()}&published_at=lt.${encodeURIComponent(endIso)}`;
+        const todayUrl = `${supabaseUrl}/rest/v1/news_impacts?${todayParams.toString()}&created_at=lt.${encodeURIComponent(endIso)}`;
 
         const todayResp = await fetch(todayUrl, { headers });
         if (!todayResp.ok) {
