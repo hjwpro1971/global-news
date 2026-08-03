@@ -264,8 +264,12 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
     "originalId": (the originalId from the input),
     "titleKr": "Translate the title to Korean dynamically and naturally",
     "category": "e.g., 통화정책/금융, 반도체/IT, 거시경제",
-    "impactScore": (integer between 50 and 100),
-    "scoreReason": "1-2 sentences explaining how the 40/30/30 weighted rubric produced this score",
+    "impactScore": (integer between 50 and 100 - this is a MAGNITUDE only, not a direction;
+      a BEARISH article with severe negative impact should still score high, e.g. 80+),
+    "scoreReason": "1-2 sentences explaining how the 40/30/30 weighted rubric produced this
+      MAGNITUDE. Word it consistently with the sentiment below - for a BEARISH article, say
+      the NEGATIVE impact/risk is large (e.g. '외국인 이탈 압력이 커 파급력이 높음'), never
+      '높은 점수를 부여함' in a way that reads as if the news itself were positive.",
     "sentiment": "BULLISH" or "BEARISH" or "NEUTRAL",
     "summary": "2-3 sentences summarizing the news",
     "phase2DeepAnalysis": {
