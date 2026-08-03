@@ -257,7 +257,12 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 }
 
 const FLASH_MODEL = 'gemini-2.5-flash';
-const PRO_MODEL = 'gemini-3.6-flash'; // confirmed available via /api/test-models on this account
+// $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
+// cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
+// account. The deep-analysis task here is rule-following + structured JSON output
+// (the rubric/schema are fully spelled out in the prompt), not open-ended reasoning,
+// so a Flash-Lite model is sufficient.
+const PRO_MODEL = 'gemini-3.1-flash-lite';
 
 // Gemini can return an empty/blocked response (safety filters, quota) with no `candidates`.
 // Extracting this in one place turns that into a readable error instead of a raw TypeError.
