@@ -5,13 +5,20 @@ import {
     acquireAnalysisLock, releaseAnalysisLock, markFetchedNow,
     getFetchState, resolveCollectionWindowStart
 } from './_lib/newsAnalysis.js';
+import { requireBatchAuth } from './_lib/batchAuth.js';
 
 export const maxDuration = 60; // Allow up to 60s for Hobby users if opted in
 
+// 🕐 이 라우트를 부르는 스케줄은 저장소 밖에 있다: cron-job.org (KST 06:00, 매일).
+//    Vercel Cron은 쓰지 않는다 — Hobby 플랜은 하루 1회만 실행되고 시각 보장도 없어
+//    형제 저장소(my-stock-app)에서 배치가 통째로 누락된 실사고가 있었다(2026-08-03).
+//    스케줄 변경은 cron-job.org 대시보드에서 하며, 인증은 X-Batch-Key 헤더다.
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
+    // 🔒 실행마다 Gemini 비용이 발생하므로 무인 호출은 사전 공유 키를 요구한다.
+    if (requireBatchAuth(req, res)) return;
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;
