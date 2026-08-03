@@ -1,6 +1,7 @@
 import {
     buildRssUrls, parseRssItems, rankByHeadlineFrequency,
-    screenArticles, deepAnalyzeArticles, reconcileSentiment,
+    screenArticles, saveShortlist, selectTopForDeepAnalysis,
+    deepAnalyzeArticles, reconcileSentiment,
     purgeOldNews, insertNews,
     acquireAnalysisLock, releaseAnalysisLock, markFetchedNow,
     getFetchState, resolveCollectionWindowStart
@@ -82,15 +83,28 @@ export default async function handler(req, res) {
         // dedupe near-identical stories before spending any Gemini tokens.
         const candidates = rankByHeadlineFrequency(articles);
 
-        // STEP 1: Gemini Flash (Fast & Cheap Screening)
-        const selectedArticles = await screenArticles(candidates, GEMINI_API_KEY);
+        // STEP 1: Screening + categorization (single cheap Gemini call). This produces
+        // the "list" - saved to news_shortlist BEFORE any deep-analysis call, so the
+        // selection/categorization/diversity logic can be verified on its own instead
+        // of only being visible after the expensive step below has already run.
+        const shortlist = await screenArticles(candidates, GEMINI_API_KEY);
 
-        if (selectedArticles.length === 0) {
+        if (shortlist.length === 0) {
             if (supabaseUrl && supabaseKey) await markFetchedNow(supabaseUrl, supabaseKey);
             return res.status(200).json({ success: true, message: 'No high impact articles found.' });
         }
 
-        // STEP 2: Gemini Pro (Deep Analysis & Quality)
+        if (supabaseUrl && supabaseKey) {
+            const shortlistResp = await saveShortlist(supabaseUrl, supabaseKey, shortlist);
+            if (!shortlistResp.ok) {
+                console.error('[Shortlist Save Error]', await shortlistResp.text());
+            }
+        }
+
+        // STEP 2: Deep analysis - only the top N of the shortlist, capped per category
+        // so one dominant event (e.g. today's oil/Iran story) can't consume the whole
+        // deep-analysis budget even if it dominates the shortlist itself.
+        const selectedArticles = selectTopForDeepAnalysis(shortlist);
         const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
 
         // 3. Save to Supabase
@@ -136,7 +150,13 @@ export default async function handler(req, res) {
             await markFetchedNow(supabaseUrl, supabaseKey);
         }
 
-        return res.status(200).json({ success: true, message: 'Cron Job Completed Successfully', count: analyzedData.length });
+        return res.status(200).json({
+            success: true,
+            message: 'Cron Job Completed Successfully',
+            shortlistCount: shortlist.length,
+            deepAnalyzedCount: analyzedData.length,
+            count: analyzedData.length // kept for backward compatibility with any existing log parsing
+        });
     } catch (error) {
         console.error('[Cron Job Error]', error);
         return res.status(500).json({ error: error.message });

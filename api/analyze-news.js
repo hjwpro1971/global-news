@@ -1,5 +1,6 @@
 import {
-    rankByHeadlineFrequency, screenArticles, deepAnalyzeArticles, reconcileSentiment,
+    rankByHeadlineFrequency, screenArticles, saveShortlist, selectTopForDeepAnalysis,
+    deepAnalyzeArticles, reconcileSentiment,
     purgeOldNews, insertNews, acquireAnalysisLock, releaseAnalysisLock
 } from './_lib/newsAnalysis.js';
 
@@ -43,14 +44,25 @@ export default async function handler(req, res) {
         // Local, zero-cost pre-filter before spending any Gemini tokens.
         const candidates = rankByHeadlineFrequency(articles);
 
-        // STEP 1: Gemini Flash (Fast & Cheap Screening)
-        const selectedArticles = await screenArticles(candidates, GEMINI_API_KEY);
+        // STEP 1: Screening + categorization - produces the "list", saved before any
+        // deep-analysis call (same structure as cron-update-news.js).
+        const shortlist = await screenArticles(candidates, GEMINI_API_KEY);
 
-        if (selectedArticles.length === 0) {
+        if (shortlist.length === 0) {
             return res.status(200).json({ success: true, dataset: [] });
         }
 
-        // STEP 2: Gemini Pro (Deep Analysis & Quality)
+        const supabaseUrlForShortlist = req.headers['x-supabase-url'] || process.env.SUPABASE_URL;
+        const supabaseKeyForShortlist = req.headers['x-supabase-key'] || process.env.SUPABASE_KEY;
+        if (supabaseUrlForShortlist && supabaseKeyForShortlist) {
+            const shortlistResp = await saveShortlist(supabaseUrlForShortlist, supabaseKeyForShortlist, shortlist);
+            if (!shortlistResp.ok) {
+                console.error('[Shortlist Save Error]', await shortlistResp.text());
+            }
+        }
+
+        // STEP 2: Deep analysis - only the top N of the shortlist, capped per category.
+        const selectedArticles = selectTopForDeepAnalysis(shortlist);
         const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
 
         // Merge original article URLs and Dates back into the selected articles
@@ -92,8 +104,8 @@ export default async function handler(req, res) {
         // ==========================================
         // Supabase Data Insertion
         // ==========================================
-        const supabaseUrl = req.headers['x-supabase-url'] || process.env.SUPABASE_URL;
-        const supabaseKey = req.headers['x-supabase-key'] || process.env.SUPABASE_KEY;
+        const supabaseUrl = supabaseUrlForShortlist;
+        const supabaseKey = supabaseKeyForShortlist;
 
         if (supabaseUrl && supabaseKey) {
             try {

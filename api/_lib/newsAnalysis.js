@@ -116,7 +116,22 @@ function sourcePriorityRank(source) {
 const SIMILARITY_CLUSTER_THRESHOLD = 0.35;
 const HIGH_IMPACT_SCORE_THRESHOLD = 6;
 const MIN_CANDIDATES = 2;
-const MAX_CANDIDATES = 7;
+// Local pre-filter candidate cap BEFORE Gemini screening (step 2 of the pipeline).
+// Kept separate from LIST_SIZE/DEEP_ANALYSIS_TOP_N below: this is how many raw
+// articles get shown to the screening prompt, not how many end up in the shortlist.
+const MAX_CANDIDATES = 20;
+
+// [2026-08-04 redesign] The pipeline used to conflate "which articles are worth
+// showing" with "which articles are worth spending Gemini deep-analysis tokens
+// on" - both were capped at the same small number (7), so once deep analysis was
+// wired to the same list, a single busy news event could dominate everything
+// downstream with no visibility into why. Now screening produces a wider
+// shortlist (a cheap, single Lite call regardless of size) that gets saved and
+// can be inspected on its own; only a smaller top-N of THAT list goes on to the
+// expensive structured deep-analysis call.
+const LIST_SIZE = 12; // how many articles the screening step selects into the shortlist
+const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
+const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 
 // Ranks + deduplicates articles using headline token frequency, then returns a
 // dynamically-sized shortlist to send to Gemini (fewer tokens spent on quiet news days).
@@ -174,12 +189,18 @@ export function rankByHeadlineFrequency(articles) {
     return clustered.slice(0, limit).map(c => ({ ...c.article, headlineFrequencyScore: c.score, articleIndex: c.idx }));
 }
 
+// Fixed category set so downstream code (per-category caps, dashboards) can rely on
+// a closed vocabulary instead of free-text Gemini output drifting over time.
+export const NEWS_CATEGORIES = [
+    '통화정책/금리', '반도체/IT', '지정학', '환율/원자재', '거시경제', '국내증시', '기업/산업', '기타'
+];
+
 export function buildScreeningPrompt(articles) {
     return `
 You are a highly efficient news screener for the South Korean Stock Market.
 I will provide you with a list of global news articles, already pre-filtered by headline-frequency
 across many outlets (higher headlineFrequencyScore = discussed more widely today).
-Your task is to identify the top MAXIMUM 10 articles that have the HIGHEST impact on the Korean stock market (KOSPI/KOSDAQ).
+Your task is to identify the top MAXIMUM ${LIST_SIZE} articles that have the HIGHEST impact on the Korean stock market (KOSPI/KOSDAQ).
 Ignore duplicates, low-impact news, or generic opinions.
 
 **THEME DIVERSITY RULE**: Several articles below may describe the SAME underlying macro
@@ -190,13 +211,17 @@ clearest direct market impact. Do NOT let a single busy news event (e.g. one day
 story) fill most of your selection - actively look for distinct, unrelated stories/sectors so
 the final list reflects a spread of what actually matters today, not one repeated topic.
 
+For each selected article, classify it into EXACTLY ONE of these categories:
+${JSON.stringify(NEWS_CATEGORIES)}
+
 Raw articles:
 ${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
 
-Output exactly a JSON array containing the selected article IDs. Do NOT wrap in markdown blocks, just raw JSON:
+Output exactly a JSON array. Do NOT wrap in markdown blocks, just raw JSON:
 [
   {
     "id": 0,
+    "category": "one of the categories listed above, exactly as written",
     "reason": "1 sentence reason why this is high impact"
   }
 ]
@@ -341,8 +366,16 @@ export async function screenArticles(articles, apiKey) {
         return {
             originalId: item.id,
             title: source?.title,
+            originalTitle: source?.title,
+            url: source?.link,
+            pubDate: source?.pubDate,
             source: source?.source,
-            headlineFrequencyScore: source?.headlineFrequencyScore ?? 0
+            headlineFrequencyScore: source?.headlineFrequencyScore ?? 0,
+            // Gemini is asked to pick from NEWS_CATEGORIES but may still drift on a bad
+            // day - fall back to '기타' rather than let an unexpected value break
+            // anything downstream that groups/counts by category.
+            category: NEWS_CATEGORIES.includes(item.category) ? item.category : '기타',
+            reason: item.reason || ''
         };
     }).filter(a => a.title);
 }
@@ -389,10 +422,10 @@ export function reconcileSentiment(sentiment, targetStocks) {
     return resolved;
 }
 
-export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays) {
+export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays, table = 'news_impacts') {
     const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000).toISOString();
     try {
-        await fetch(`${supabaseUrl}/rest/v1/news_impacts?created_at=lt.${cutoff}`, {
+        await fetch(`${supabaseUrl}/rest/v1/${table}?created_at=lt.${cutoff}`, {
             method: 'DELETE',
             headers: {
                 'apikey': supabaseKey,
@@ -400,8 +433,70 @@ export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays) {
             }
         });
     } catch (delErr) {
-        console.warn('[Supabase Cleanup Warning]', delErr);
+        console.warn(`[Supabase Cleanup Warning] (${table})`, delErr);
     }
+}
+
+// ==========================================================================
+// news_shortlist: the "list" output of the screening step, saved BEFORE any
+// deep-analysis Gemini call so it can be inspected/verified independently of
+// what happens downstream (see 2026-08-04 pipeline redesign notes above).
+// ==========================================================================
+
+export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
+    const payload = shortlist.map(item => ({
+        title: item.titleKr || item.title,
+        original_title: item.originalTitle || item.title,
+        source: item.source || '',
+        category: item.category || '기타',
+        reason: item.reason || '',
+        url: item.url || '',
+        published_at: item.pubDate || null,
+        headline_frequency_score: item.headlineFrequencyScore ?? 0
+    }));
+
+    await purgeOldNews(supabaseUrl, supabaseKey, 14, 'news_shortlist');
+
+    return fetch(`${supabaseUrl}/rest/v1/news_shortlist`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+    });
+}
+
+// From the shortlist, pick the top N for the expensive deep-analysis call, capping
+// how many can come from any single category so one busy topic (e.g. "이란/유가")
+// can't crowd out the rest of the deep-analysis budget even if it dominates the
+// shortlist itself.
+export function selectTopForDeepAnalysis(shortlist, n = DEEP_ANALYSIS_TOP_N, maxPerCategory = DEEP_ANALYSIS_MAX_PER_CATEGORY) {
+    const sorted = [...shortlist].sort((a, b) => (b.headlineFrequencyScore ?? 0) - (a.headlineFrequencyScore ?? 0));
+    const perCategoryCount = new Map();
+    const selected = [];
+
+    for (const item of sorted) {
+        if (selected.length >= n) break;
+        const category = item.category || '기타';
+        const countSoFar = perCategoryCount.get(category) || 0;
+        if (countSoFar >= maxPerCategory) continue;
+        selected.push(item);
+        perCategoryCount.set(category, countSoFar + 1);
+    }
+
+    // If the per-category cap left the quota under-filled (e.g. too few categories
+    // represented), backfill with whatever's left over in score order.
+    if (selected.length < n) {
+        for (const item of sorted) {
+            if (selected.length >= n) break;
+            if (!selected.includes(item)) selected.push(item);
+        }
+    }
+
+    return selected;
 }
 
 export async function insertNews(supabaseUrl, supabaseKey, payload) {

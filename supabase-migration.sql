@@ -25,3 +25,21 @@ ON CONFLICT (id) DO NOTHING;
 -- 아래 쿼리로 기존 중복 url 중 가장 최근 것만 남기고 정리한 뒤 2번을 다시 실행하세요.
 -- DELETE FROM news_impacts a USING news_impacts b
 -- WHERE a.url = b.url AND a.url <> '' AND a.id < b.id;
+
+-- 4. [2026-08-04] 파이프라인 재설계: 선별+분류 결과를 심층분석 전에 별도로
+--    저장하는 "리스트" 테이블. 이걸 두면 "선별이 잘못됐는지"와 "심층분석이
+--    잘못됐는지"를 분리해서 검증할 수 있다 (기존엔 최종 news_impacts 결과만
+--    보고 원인을 역추적해야 했음).
+CREATE TABLE IF NOT EXISTS news_shortlist (
+    id bigserial PRIMARY KEY,
+    title text NOT NULL,
+    original_title text,
+    source text,
+    category text,
+    reason text,
+    url text,
+    published_at timestamptz,
+    headline_frequency_score integer,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS news_shortlist_created_at_idx ON news_shortlist (created_at DESC);
