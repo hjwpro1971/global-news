@@ -77,10 +77,25 @@ const SOURCE_PRIORITY = [
     'cnbc', 'nikkei', 's&p global', 'yonhap', '연합뉴스', '한국경제', '매일경제'
 ];
 
+// Common Korean particles glued onto the end of a noun (조사) - stripping them lets
+// "코스피는"/"코스피가"/"코스피" all collapse to the same token "코스피" instead of
+// three different tokens, which otherwise tanks Jaccard similarity between headlines
+// about the same story. Ordered longest-first so a multi-char particle is tried before
+// a shorter one that could also match as a suffix of it.
+const PARTICLE_SUFFIXES = ['에서', '으로', '에게', '한테', '까지', '부터', '는', '은', '이', '가', '을', '를', '에', '와', '과', '도', '만', '의'];
+
+function stripParticle(token) {
+    for (const p of PARTICLE_SUFFIXES) {
+        if (token.length > p.length + 1 && token.endsWith(p)) return token.slice(0, -p.length);
+    }
+    return token;
+}
+
 function tokenize(title) {
     return (title || '')
         .toLowerCase()
         .split(/[^\p{L}\p{N}]+/u)
+        .map(stripParticle)
         .filter(t => t.length >= 2 && !STOPWORDS.has(t));
 }
 
@@ -98,7 +113,7 @@ function sourcePriorityRank(source) {
     return idx === -1 ? SOURCE_PRIORITY.length : idx;
 }
 
-const SIMILARITY_CLUSTER_THRESHOLD = 0.5;
+const SIMILARITY_CLUSTER_THRESHOLD = 0.35;
 const HIGH_IMPACT_SCORE_THRESHOLD = 6;
 const MIN_CANDIDATES = 2;
 const MAX_CANDIDATES = 7;
@@ -152,7 +167,11 @@ export function rankByHeadlineFrequency(articles) {
     const highImpactCount = clustered.filter(c => c.score >= HIGH_IMPACT_SCORE_THRESHOLD).length;
     const limit = Math.max(MIN_CANDIDATES, Math.min(MAX_CANDIDATES, highImpactCount || MIN_CANDIDATES));
 
-    return clustered.slice(0, limit).map(c => ({ ...c.article, headlineFrequencyScore: c.score }));
+    // `articleIndex` preserves the position in the ORIGINAL `articles` array (pre-ranking).
+    // screenArticles/deepAnalyzeArticles must echo this back as `originalId` - if a caller
+    // uses the candidate list's own position instead, `articles[originalId]` in
+    // cron-update-news.js/analyze-news.js silently resolves to an unrelated article.
+    return clustered.slice(0, limit).map(c => ({ ...c.article, headlineFrequencyScore: c.score, articleIndex: c.idx }));
 }
 
 export function buildScreeningPrompt(articles) {
@@ -164,7 +183,7 @@ Your task is to identify the top MAXIMUM 10 articles that have the HIGHEST impac
 Ignore duplicates, low-impact news, or generic opinions.
 
 Raw articles:
-${JSON.stringify(articles.map((a, i) => ({ id: i, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
+${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
 
 Output exactly a JSON array containing the selected article IDs. Do NOT wrap in markdown blocks, just raw JSON:
 [
@@ -292,12 +311,21 @@ export async function screenArticles(articles, apiKey) {
     const flashData = await flashResponse.json();
     const screenedList = JSON.parse(extractGeminiText(flashData, 'Gemini Flash screening'));
 
-    return screenedList.map(item => ({
-        originalId: item.id,
-        title: articles[item.id]?.title,
-        source: articles[item.id]?.source,
-        headlineFrequencyScore: articles[item.id]?.headlineFrequencyScore ?? 0
-    })).filter(a => a.title);
+    // Gemini echoes back the `id` we gave it in buildScreeningPrompt, which is each
+    // candidate's `articleIndex` (its position in the ORIGINAL articles array) - not
+    // this `articles`/`candidates` array's own position. Look candidates up by that
+    // original index so `originalId` stays valid once it reaches deepAnalyzeArticles.
+    const byOriginalIndex = new Map(articles.map(a => [a.articleIndex, a]));
+
+    return screenedList.map(item => {
+        const source = byOriginalIndex.get(item.id);
+        return {
+            originalId: item.id,
+            title: source?.title,
+            source: source?.source,
+            headlineFrequencyScore: source?.headlineFrequencyScore ?? 0
+        };
+    }).filter(a => a.title);
 }
 
 export async function deepAnalyzeArticles(selectedArticles, apiKey) {
