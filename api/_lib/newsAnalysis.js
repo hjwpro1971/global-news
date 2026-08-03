@@ -238,7 +238,7 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 }
 
 const FLASH_MODEL = 'gemini-2.5-flash';
-const PRO_MODEL = 'gemini-2.5-pro';
+const PRO_MODEL = 'gemini-3.6-flash'; // confirmed available via /api/test-models on this account
 
 // Gemini can return an empty/blocked response (safety filters, quota) with no `candidates`.
 // Extracting this in one place turns that into a readable error instead of a raw TypeError.
