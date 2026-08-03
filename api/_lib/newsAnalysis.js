@@ -256,10 +256,13 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 `;
 }
 
-// $0.10/$0.40 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
-// cheapest text model available. Screening only needs to read a title and return an
-// ID from a fixed list, well within a Lite model's capability.
-const FLASH_MODEL = 'gemini-2.5-flash-lite';
+// Screening only needs to read a title and return an ID from a fixed list, well within
+// a Lite model's capability.
+// [2026-08-04] gemini-2.5-flash-lite → 3.1-flash-lite. Google retired 2.5-flash-lite for
+// new users and the API began returning 404 ("no longer available to new users"), which
+// silently broke the daily cron — the failure surfaced only as stale news data.
+// PRO_MODEL was already on 3.1; this constant was the one left behind.
+const FLASH_MODEL = 'gemini-3.1-flash-lite';
 // $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
 // cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
 // account. The deep-analysis task here is rule-following + structured JSON output
