@@ -776,6 +776,16 @@ async function fetchLiveRssNews(forceRefresh = false, autoTriggerPipeline = true
     }
 }
 
+// Data-changing controls that must not be usable while a pipeline run is in flight -
+// re-clicking any of these mid-run is what caused last time's lock conflicts (409s)
+// and shortlist mix-ups between overlapping requests.
+function setDataActionsDisabled(disabled) {
+    const btnSaveSupabase = document.getElementById('btn-save-supabase');
+    if (btnSaveSupabase) btnSaveSupabase.disabled = disabled;
+    const logoIcon = document.querySelector('.logo-icon');
+    if (logoIcon) logoIcon.style.pointerEvents = disabled ? 'none' : '';
+}
+
 function runPipelineSimulation() {
     if (appState.isSimulating) return;
 
@@ -787,6 +797,7 @@ function runPipelineSimulation() {
         // 문구·경과시간은 startRunBtnProgress()의 타이머가 그린다 (단계는 percent에서 파생).
         startRunBtnProgress();
     }
+    setDataActionsDisabled(true);
 
     // autoTriggerPipeline=true: explicit user click, allowed to start a new analysis run.
     fetchLiveRssNews(false, true).finally(() => {
@@ -795,6 +806,7 @@ function runPipelineSimulation() {
             runBtn.disabled = false;
             runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">뉴스분석</span>`;
         }
+        setDataActionsDisabled(false);
         appState.isSimulating = false;
         renderApp();
     });
@@ -817,6 +829,10 @@ function initEventListeners() {
     const btnSaveSupabase = document.getElementById('btn-save-supabase');
     if (btnSaveSupabase) {
         btnSaveSupabase.addEventListener('click', async () => {
+            if (appState.isSimulating) {
+                alert('뉴스 수집/분석이 진행 중입니다. 완료된 후 다시 시도해주세요.');
+                return;
+            }
             if (!newsDataset || newsDataset.length === 0) {
                 alert('저장할 데이터가 없습니다. 먼저 분석을 실행해 주세요.');
                 return;
@@ -1320,6 +1336,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Cache clearing function
 window.clearCacheAndReload = function() {
+    if (appState.isSimulating) {
+        alert('뉴스 수집/분석이 진행 중입니다. 완료된 후 다시 시도해주세요.');
+        return;
+    }
     if (confirm('로컬 캐시를 초기화하고 데이터를 새로 불러오시겠습니까?')) {
         localStorage.clear();
         location.reload();
