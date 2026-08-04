@@ -607,7 +607,11 @@ async function fetchLiveRssNews(forceRefresh = false) {
             const dbCheckRes = await fetch('/api/get-today-news', { headers: dbHeaders });
             if (dbCheckRes.ok) {
                 const dbData = await dbCheckRes.json();
-                if (dbData.success && dbData.hasNews && dbData.data.length > 0) {
+                // isStale=true means the API fell back to an older batch (no news saved
+                // today yet, e.g. cron failed) - that's NOT a cache hit. Treating it as
+                // one meant the "뉴스분석" button (and every page load) would silently
+                // keep re-showing yesterday's data forever and never re-run the pipeline.
+                if (dbData.success && dbData.hasNews && !dbData.isStale && dbData.data.length > 0) {
                     // Map DB schema to frontend schema with SAFE DEFAULTS
                     newsDataset = dbData.data.map(item => ({
                         id: item.id || Math.random().toString(36).substr(2, 9),
