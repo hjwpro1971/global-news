@@ -405,9 +405,56 @@ export async function deepAnalyzeArticles(selectedArticles, apiKey) {
     try {
         return JSON.parse(responseText);
     } catch (parseErr) {
+        // Gemini occasionally emits a well-formed JSON array followed by stray extra
+        // characters/brackets after it (observed 2026-08-05: a valid 5-item array,
+        // then three more unmatched `]`/`}` tokens tacked on). Recover by extracting
+        // just the first balanced top-level array instead of failing the whole batch.
+        const recovered = extractFirstJsonArray(responseText);
+        if (recovered !== null) {
+            try {
+                return JSON.parse(recovered);
+            } catch (recoverErr) {
+                // fall through to the original error below
+            }
+        }
         console.error('Failed to parse Gemini output:', responseText);
         throw new Error('Gemini output was not valid JSON');
     }
+}
+
+// Scans for the first top-level `[...]` and returns it once brackets balance out,
+// tracking string/escape state so brackets inside quoted text don't get counted.
+// Returns null if no balanced array is found (e.g. genuinely truncated output).
+function extractFirstJsonArray(text) {
+    const start = text.indexOf('[');
+    if (start === -1) return null;
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = start; i < text.length; i++) {
+        const ch = text[i];
+        if (inString) {
+            if (escaped) {
+                escaped = false;
+            } else if (ch === '\\') {
+                escaped = true;
+            } else if (ch === '"') {
+                inString = false;
+            }
+            continue;
+        }
+        if (ch === '"') {
+            inString = true;
+        } else if (ch === '[') {
+            depth++;
+        } else if (ch === ']') {
+            depth--;
+            if (depth === 0) return text.slice(start, i + 1);
+        }
+    }
+    return null;
 }
 
 // Post-processing logical consistency check: overall sentiment must agree with the
