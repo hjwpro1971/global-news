@@ -1,4 +1,4 @@
-import { parseRssItems } from './_lib/newsAnalysis.js';
+import { parseRssItems, buildRssUrls } from './_lib/newsAnalysis.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,10 +11,12 @@ export default async function handler(req, res) {
     }
 
     try {
-        const rssUrls = [
-            'https://news.google.com/rss/search?q=Semiconductor+OR+Fed+OR+FOMC+OR+Economy+OR+Korea+when:1d&hl=en-US&gl=US&ceid=US:en',
-            'https://news.google.com/rss/search?q=%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%B1%98%EB%8F%84%EC%B2%B4+OR+%ED%99%98%EC%9C%A8+when:1d&hl=ko&gl=KR&ceid=KR:ko'
-        ];
+        // Was hardcoded to 2 old search queries here while cron-update-news.js already
+        // used the expanded buildRssUrls() (8 categories / 16 queries) - meant the
+        // manual "뉴스분석" button pulled from a much narrower pool than the cron path,
+        // so genuinely major stories (e.g. today's oil-price/record-high rally) could
+        // be entirely absent from what the button ever saw. Use the same source as cron.
+        const rssUrls = buildRssUrls();
 
         const allItems = [];
 
@@ -50,7 +52,7 @@ export default async function handler(req, res) {
         const sortedItems = Array.from(uniqueMap.values())
             .filter(item => new Date(item.pubDate).getTime() > twentyFourHoursAgo)
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 50);
+            .slice(0, 150); // matches cron-update-news.js's cap after the expanded query set above
 
         return res.status(200).json({
             status: 'ok',
