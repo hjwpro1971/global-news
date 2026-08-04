@@ -11,9 +11,16 @@ export const RSS_QUERIES = [
     'inflation+OR+CPI+OR+"jobs+report"+OR+recession+when:1d',
     'geopolitics+OR+tariff+OR+sanctions+OR+war+when:1d',
     'oil+OR+commodity+OR+"crude+price"+OR+OPEC+when:1d',
+    // Added: these move markets as directly as Fed/oil/FX but had no dedicated query -
+    // they were only ever caught incidentally by another query's wording.
+    '"nonfarm+payrolls"+OR+"unemployment+rate"+OR+"jobs+report"+when:1d', // US labor market
+    '"treasury+yield"+OR+"10-year+yield"+OR+"bond+market"+when:1d', // US rates transmission mechanism
+    'ISM+OR+"manufacturing+PMI"+OR+"factory+activity"+when:1d', // US leading indicator
+    'China+OR+"Chinese+economy"+OR+"China+PMI"+when:1d', // Korea's largest trading partner
     '%EA%B8%88%EB%A6%AC+OR+%ED%99%98%EC%9C%A8+OR+%EC%97%B0%EC%A4%80+when:1d', // 금리 OR 환율 OR 연준
     '%EB%B0%98%EB%8F%84%EC%B2%B4+OR+%EC%BD%94%EC%8A%A4%ED%94%BC+OR+%EC%BD%94%EC%8A%A4%EB%8B%A5+when:1d', // 반도체 OR 코스피 OR 코스닥
-    '%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%AC%B4%EC%97%AD+when:1d' // 글로벌 경제 OR 증시 OR 무역
+    '%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%AC%B4%EC%97%AD+when:1d', // 글로벌 경제 OR 증시 OR 무역
+    '%EC%99%B8%EA%B5%AD%EC%9D%B8+%EC%88%9C%EB%A7%A4%EC%88%98+OR+%EC%88%9C%EB%A7%A4%EB%8F%84+OR+%EB%AC%B4%EC%97%AD%EC%88%98%EC%A7%80+when:1d' // 외국인 순매수 OR 순매도 OR 무역수지
 ];
 
 function buildRssUrl(query, lang) {
@@ -129,7 +136,7 @@ const MAX_CANDIDATES = 20;
 // shortlist (a cheap, single Lite call regardless of size) that gets saved and
 // can be inspected on its own; only a smaller top-N of THAT list goes on to the
 // expensive structured deep-analysis call.
-const LIST_SIZE = 12; // how many articles the screening step selects into the shortlist
+const LIST_SIZE = 14; // how many articles the screening step selects into the shortlist (bumped from 12 alongside the 8->10 category expansion so newly-added categories, e.g. 중국경기/고용지표, have room to actually appear)
 const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
 const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 
@@ -192,7 +199,8 @@ export function rankByHeadlineFrequency(articles) {
 // Fixed category set so downstream code (per-category caps, dashboards) can rely on
 // a closed vocabulary instead of free-text Gemini output drifting over time.
 export const NEWS_CATEGORIES = [
-    '통화정책/금리', '반도체/IT', '지정학', '환율/원자재', '거시경제', '국내증시', '기업/산업', '기타'
+    '통화정책/금리', '반도체/IT', '지정학', '환율/원자재', '거시경제',
+    '고용/무역지표', '중국경기', '국내증시', '기업/산업', '기타'
 ];
 
 export function buildScreeningPrompt(articles) {
