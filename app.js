@@ -631,7 +631,11 @@ function updateConsoleProgress(percent, msg) {
     }
 }
 
-async function fetchLiveRssNews(forceRefresh = false) {
+// autoTriggerPipeline=false: only ever reads what's already in the DB - never starts
+// the RSS+Gemini pipeline on its own. Used for page load and after cache-clear, so
+// opening/reloading the page (or the "캐시 초기화" icon) can never silently kick off
+// an analysis run - only the explicit "뉴스분석" button may do that.
+async function fetchLiveRssNews(forceRefresh = false, autoTriggerPipeline = true) {
     try {
         // 1. Check if DB has today's news
         appState.isSimulating = true;
@@ -700,6 +704,16 @@ async function fetchLiveRssNews(forceRefresh = false) {
                 console.error('[DB Check Error]', dbErr);
                 // Ignore DB error and proceed with RSS fetch
             }
+        }
+
+        if (!autoTriggerPipeline) {
+            // Passive read-only call (page load / cache clear): DB had nothing usable,
+            // but we must NOT start the paid Gemini pipeline on our own - only the
+            // "뉴스분석" button click may do that.
+            appState.isSimulating = false;
+            updateConsoleProgress(0, "[알림] 오늘자 분석 데이터가 없습니다. '뉴스분석' 버튼을 눌러 새로 생성하세요.");
+            try { renderApp(); } catch (err) { console.error("Render error:", err); }
+            return;
         }
 
         // 2. DB Cache Miss or forceRefresh -> Run normal pipeline
@@ -774,7 +788,8 @@ function runPipelineSimulation() {
         startRunBtnProgress();
     }
 
-    fetchLiveRssNews(false).finally(() => {
+    // autoTriggerPipeline=true: explicit user click, allowed to start a new analysis run.
+    fetchLiveRssNews(false, true).finally(() => {
         stopRunBtnProgress();
         if (runBtn) {
             runBtn.disabled = false;
@@ -1298,7 +1313,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 2. Fetch fresh data in background only if there's no cache or if we want to force refresh
     renderTrendChart();
-    fetchLiveRssNews().then(() => renderApp());
+    // autoTriggerPipeline=false: page load only ever reads existing DB data, never
+    // starts a new (paid) analysis run on its own.
+    fetchLiveRssNews(false, false).then(() => renderApp());
 });
 
 // Cache clearing function
