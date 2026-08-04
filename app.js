@@ -575,6 +575,44 @@ function closeModal() {
 // 6. PIPELINE SIMULATION CONSOLE ENGINE & LIVE RSS INTEGRATION
 // ==========================================================================
 
+// ── 뉴스분석 버튼의 진행 상태 표시 ──
+// Gemini 호출이 2회(스크리닝 + 심층분석) 순차로 일어나 전체가 1~3분 걸린다.
+// 그 동안 버튼 문구가 "불러오는 중..."으로 고정돼 있으면 멈춘 것과 구분되지 않는다.
+// 단계 문구는 updateConsoleProgress()의 percent에서 파생시켜, 호출부를 건드리지 않고
+// 파이프라인 전 구간이 자동으로 반영되게 한다.
+let _pipelineStageLabel = '';   // 현재 단계 문구 (타이머가 매초 다시 그린다)
+let _pipelineTimerId = null;    // 경과시간 타이머 핸들
+let _pipelineStartedAt = 0;
+
+function _stageLabelFor(percent) {
+    if (percent >= 100) return '💾 저장 중';
+    if (percent >= 60)  return '🤖 AI 뉴스 분석 중';
+    if (percent >= 30)  return '📡 뉴스 수집 중';
+    return '🔍 캐시 확인 중';
+}
+
+function _renderRunBtnProgress() {
+    const runBtn = document.getElementById('btn-run-simulation');
+    if (!runBtn || !_pipelineStageLabel) return;
+    const sec = Math.floor((Date.now() - _pipelineStartedAt) / 1000);
+    const mmss = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+    runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${_pipelineStageLabel} ${mmss}`;
+}
+
+// 경과시간을 매초 갱신한다 — 초가 계속 올라가면 응답이 없어도 "살아있다"가 보인다.
+function startRunBtnProgress() {
+    _pipelineStartedAt = Date.now();
+    _pipelineStageLabel = _stageLabelFor(0);
+    stopRunBtnProgress(false);
+    _pipelineTimerId = setInterval(_renderRunBtnProgress, 1000);
+    _renderRunBtnProgress();
+}
+
+function stopRunBtnProgress(clearLabel = true) {
+    if (_pipelineTimerId) { clearInterval(_pipelineTimerId); _pipelineTimerId = null; }
+    if (clearLabel) _pipelineStageLabel = '';
+}
+
 function updateConsoleProgress(percent, msg) {
     const progressBar = document.getElementById('pipeline-progress-bar');
     const consoleTerminal = document.getElementById('console-terminal');
@@ -585,6 +623,11 @@ function updateConsoleProgress(percent, msg) {
         line.textContent = msg;
         consoleTerminal.appendChild(line);
         if (consoleTerminal) consoleTerminal.scrollTop = consoleTerminal.scrollHeight;
+    }
+    // 파이프라인이 도는 중일 때만 버튼을 갱신한다 (타이머가 없으면 무시).
+    if (_pipelineTimerId) {
+        _pipelineStageLabel = _stageLabelFor(percent);
+        _renderRunBtnProgress();
     }
 }
 
@@ -727,10 +770,12 @@ function runPipelineSimulation() {
 
     if (runBtn) {
         runBtn.disabled = true;
-        runBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> 불러오는 중...`;
+        // 문구·경과시간은 startRunBtnProgress()의 타이머가 그린다 (단계는 percent에서 파생).
+        startRunBtnProgress();
     }
 
     fetchLiveRssNews(false).finally(() => {
+        stopRunBtnProgress();
         if (runBtn) {
             runBtn.disabled = false;
             runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">뉴스분석</span>`;
