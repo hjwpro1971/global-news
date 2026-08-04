@@ -1,3 +1,15 @@
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+// Group key must be the KST calendar day, not the server's (UTC) local day - a record
+// saved at 21:46 UTC is already 06:46 the NEXT day in KST. Grouping by UTC date made
+// today's (KST) data silently attach to "yesterday" on the trend chart, one day off
+// every single day. get-today-news.js/get-shortlist.js already do this KST shift;
+// this endpoint had been missed when that fix went in.
+function kstDateLabel(isoString) {
+    const kst = new Date(new Date(isoString).getTime() + KST_OFFSET_MS);
+    return `${String(kst.getUTCMonth() + 1).padStart(2, '0')}/${String(kst.getUTCDate()).padStart(2, '0')}`;
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'GET') {
         return res.status(405).json({ error: 'Method Not Allowed' });
@@ -38,10 +50,9 @@ export default async function handler(req, res) {
             
             data.forEach(item => {
                 if (!item.created_at || item.impact_score === undefined) return;
-                
-                const dateObj = new Date(item.created_at);
-                const dateStr = `${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
-                
+
+                const dateStr = kstDateLabel(item.created_at);
+
                 if (!dailyData[dateStr]) {
                     dailyData[dateStr] = { sum: 0, count: 0 };
                 }
