@@ -42,7 +42,7 @@ export default async function handler(req, res) {
         const rssUrls = buildRssUrls();
 
         const allItems = [];
-        for (const url of rssUrls) {
+        for (const { url, group } of rssUrls) {
             try {
                 const response = await fetch(url, {
                     headers: {
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
                 });
                 if (response.ok) {
                     const xmlText = await response.text();
-                    const items = parseRssItems(xmlText);
+                    const items = parseRssItems(xmlText, group);
                     allItems.push(...items);
                 }
             } catch (e) {

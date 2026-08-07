@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
         const allItems = [];
 
-        for (const url of rssUrls) {
+        for (const { url, group } of rssUrls) {
             try {
                 const response = await fetch(url, {
                     headers: {
@@ -31,7 +31,10 @@ export default async function handler(req, res) {
 
                 if (response.ok) {
                     const xmlText = await response.text();
-                    const items = parseRssItems(xmlText);
+                    // queryGroup travels with each item in the JSON response so the
+                    // browser can pass it back via /api/analyze-news, letting
+                    // rankByHeadlineFrequency's diversity cap work on this path too.
+                    const items = parseRssItems(xmlText, group);
                     allItems.push(...items);
                 }
             } catch (e) {

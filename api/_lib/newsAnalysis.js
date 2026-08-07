@@ -5,33 +5,44 @@
 // feeds) because per-outlet RSS formats vary enough to need their own parsers - out of scope
 // for this pass. Expanding beyond 2 queries widens headline coverage before the local
 // frequency ranking below picks candidates, without adding any paid API calls.
+//
+// Each query carries a `group` label. This is NOT the same as NEWS_CATEGORIES (which
+// Gemini assigns per-article) - it's used earlier, purely locally, so
+// rankByHeadlineFrequency can cap how many of the top candidates come from one query
+// group. Without this, a single heavy-news-volume topic (e.g. a big China trade data
+// release) can fill the entire local shortlist by token-frequency alone and starve out
+// other groups - including ones with genuinely market-moving news that day (e.g. a Fed
+// official signalling a rate hike) - before Gemini screening ever sees them.
 export const RSS_QUERIES = [
-    'Fed+OR+FOMC+OR+"interest+rate"+OR+"rate+cut"+OR+"rate+hike"+when:1d',
-    'Semiconductor+OR+chip+OR+"AI+capex"+OR+Nvidia+when:1d',
-    'inflation+OR+CPI+OR+"jobs+report"+OR+recession+when:1d',
-    'geopolitics+OR+tariff+OR+sanctions+OR+war+when:1d',
-    'oil+OR+commodity+OR+"crude+price"+OR+OPEC+when:1d',
-    // Added: these move markets as directly as Fed/oil/FX but had no dedicated query -
-    // they were only ever caught incidentally by another query's wording.
-    '"nonfarm+payrolls"+OR+"unemployment+rate"+OR+"jobs+report"+when:1d', // US labor market
-    '"treasury+yield"+OR+"10-year+yield"+OR+"bond+market"+when:1d', // US rates transmission mechanism
-    'ISM+OR+"manufacturing+PMI"+OR+"factory+activity"+when:1d', // US leading indicator
-    'China+OR+"Chinese+economy"+OR+"China+PMI"+when:1d', // Korea's largest trading partner
-    '%EA%B8%88%EB%A6%AC+OR+%ED%99%98%EC%9C%A8+OR+%EC%97%B0%EC%A4%80+when:1d', // 금리 OR 환율 OR 연준
-    '%EB%B0%98%EB%8F%84%EC%B2%B4+OR+%EC%BD%94%EC%8A%A4%ED%94%BC+OR+%EC%BD%94%EC%8A%A4%EB%8B%A5+when:1d', // 반도체 OR 코스피 OR 코스닥
-    '%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%AC%B4%EC%97%AD+when:1d', // 글로벌 경제 OR 증시 OR 무역
-    '%EC%99%B8%EA%B5%AD%EC%9D%B8+%EC%88%9C%EB%A7%A4%EC%88%98+OR+%EC%88%9C%EB%A7%A4%EB%8F%84+OR+%EB%AC%B4%EC%97%AD%EC%88%98%EC%A7%80+when:1d' // 외국인 순매수 OR 순매도 OR 무역수지
+    { group: 'fed_rates', query: 'Fed+OR+FOMC+OR+"interest+rate"+OR+"rate+cut"+OR+"rate+hike"+when:1d' },
+    { group: 'semiconductor', query: 'Semiconductor+OR+chip+OR+"AI+capex"+OR+Nvidia+when:1d' },
+    { group: 'inflation', query: 'inflation+OR+CPI+OR+"jobs+report"+OR+recession+when:1d' },
+    { group: 'geopolitics', query: 'geopolitics+OR+tariff+OR+sanctions+OR+war+when:1d' },
+    { group: 'oil', query: 'oil+OR+commodity+OR+"crude+price"+OR+OPEC+when:1d' },
+    { group: 'jobs', query: '"nonfarm+payrolls"+OR+"unemployment+rate"+OR+"jobs+report"+when:1d' }, // US labor market
+    { group: 'treasury_yield', query: '"treasury+yield"+OR+"10-year+yield"+OR+"bond+market"+when:1d' }, // US rates transmission mechanism
+    { group: 'ism_pmi', query: 'ISM+OR+"manufacturing+PMI"+OR+"factory+activity"+when:1d' }, // US leading indicator
+    { group: 'china', query: 'China+OR+"Chinese+economy"+OR+"China+PMI"+when:1d' }, // Korea's largest trading partner
+    { group: 'fed_rates_kr', query: '%EA%B8%88%EB%A6%AC+OR+%ED%99%98%EC%9C%A8+OR+%EC%97%B0%EC%A4%80+when:1d' }, // 금리 OR 환율 OR 연준
+    { group: 'semiconductor_kr', query: '%EB%B0%98%EB%8F%84%EC%B2%B4+OR+%EC%BD%94%EC%8A%A4%ED%94%BC+OR+%EC%BD%94%EC%8A%A4%EB%8B%A5+when:1d' }, // 반도체 OR 코스피 OR 코스닥
+    { group: 'macro_kr', query: '%EA%B8%80%EB%A1%9C%EB%B2%8C+%EA%B2%BD%EC%A0%9C+OR+%EC%A6%9D%EC%8B%9C+OR+%EB%AC%B4%EC%97%AD+when:1d' }, // 글로벌 경제 OR 증시 OR 무역
+    { group: 'foreign_flows_kr', query: '%EC%99%B8%EA%B5%AD%EC%9D%B8+%EC%88%9C%EB%A7%A4%EC%88%98+OR+%EC%88%9C%EB%A7%A4%EB%8F%84+OR+%EB%AC%B4%EC%97%AD%EC%88%98%EC%A7%80+when:1d' } // 외국인 순매수 OR 순매도 OR 무역수지
 ];
 
 function buildRssUrl(query, lang) {
     return `https://news.google.com/rss/search?q=${query}&hl=${lang === 'ko' ? 'ko&gl=KR&ceid=KR:ko' : 'en-US&gl=US&ceid=US:en'}`;
 }
 
+// Returns [{ url, group }] so callers can tag each fetched item with the query group
+// it came from - required for the diversity cap in rankByHeadlineFrequency below.
 export function buildRssUrls() {
-    return RSS_QUERIES.flatMap(q => [buildRssUrl(q, 'en'), buildRssUrl(q, 'ko')]);
+    return RSS_QUERIES.flatMap(({ group, query }) => [
+        { url: buildRssUrl(query, 'en'), group },
+        { url: buildRssUrl(query, 'ko'), group }
+    ]);
 }
 
-export function parseRssItems(xmlText) {
+export function parseRssItems(xmlText, queryGroup = null) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
     let match;
@@ -56,7 +67,7 @@ export function parseRssItems(xmlText) {
         }
 
         if (rawTitle && link) {
-            items.push({ title: rawTitle, link, pubDate, source });
+            items.push({ title: rawTitle, link, pubDate, source, queryGroup });
         }
     }
     return items;
@@ -127,6 +138,14 @@ const MIN_CANDIDATES = 2;
 // Kept separate from LIST_SIZE/DEEP_ANALYSIS_TOP_N below: this is how many raw
 // articles get shown to the screening prompt, not how many end up in the shortlist.
 const MAX_CANDIDATES = 20;
+// [2026-08-07] On a heavy news day for one RSS query group (e.g. a big China trade
+// data release), that group's articles can share enough repeated tokens (country
+// name, "trade", "exports"...) to dominate the token-frequency score and fill ALL
+// MAX_CANDIDATES slots by itself - even when a different group has genuinely
+// market-moving news that day (e.g. a Fed official signalling a rate hike). Capping
+// candidates-per-query-group guarantees every RSS query at least gets a chance to
+// reach Gemini screening, rather than being drowned out purely by story volume.
+const MAX_CANDIDATES_PER_QUERY_GROUP = 4;
 
 // [2026-08-04 redesign] The pipeline used to conflate "which articles are worth
 // showing" with "which articles are worth spending Gemini deep-analysis tokens
@@ -189,11 +208,33 @@ export function rankByHeadlineFrequency(articles) {
     const highImpactCount = clustered.filter(c => c.score >= HIGH_IMPACT_SCORE_THRESHOLD).length;
     const limit = Math.max(MIN_CANDIDATES, Math.min(MAX_CANDIDATES, highImpactCount || MIN_CANDIDATES));
 
+    // Diversity pass: take top-scoring articles up to MAX_CANDIDATES_PER_QUERY_GROUP per
+    // RSS query group first, then backfill any remaining slots by pure score. This is the
+    // same two-phase pattern as selectTopForDeepAnalysis() below, one stage earlier in
+    // the pipeline. queryGroup is null for callers that don't tag it (e.g. ad-hoc use) -
+    // those items are treated as their own ungrouped bucket and never crowd anything out.
+    const perGroupCount = new Map();
+    const diverse = [];
+    for (const c of clustered) {
+        if (diverse.length >= limit) break;
+        const group = c.article.queryGroup ?? `__ungrouped_${c.idx}`;
+        const countSoFar = perGroupCount.get(group) || 0;
+        if (countSoFar >= MAX_CANDIDATES_PER_QUERY_GROUP) continue;
+        diverse.push(c);
+        perGroupCount.set(group, countSoFar + 1);
+    }
+    if (diverse.length < limit) {
+        for (const c of clustered) {
+            if (diverse.length >= limit) break;
+            if (!diverse.includes(c)) diverse.push(c);
+        }
+    }
+
     // `articleIndex` preserves the position in the ORIGINAL `articles` array (pre-ranking).
     // screenArticles/deepAnalyzeArticles must echo this back as `originalId` - if a caller
     // uses the candidate list's own position instead, `articles[originalId]` in
     // cron-update-news.js/analyze-news.js silently resolves to an unrelated article.
-    return clustered.slice(0, limit).map(c => ({ ...c.article, headlineFrequencyScore: c.score, articleIndex: c.idx }));
+    return diverse.map(c => ({ ...c.article, headlineFrequencyScore: c.score, articleIndex: c.idx }));
 }
 
 // Fixed category set so downstream code (per-category caps, dashboards) can rely on
