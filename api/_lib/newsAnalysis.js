@@ -266,12 +266,18 @@ Your task follows a strict PDCA methodology to analyze their deep impact on the 
 Here are the selected critical articles:
 ${JSON.stringify(selectedArticles, null, 2)}
 
+Each article below already carries a \`category\` field assigned during screening. Your
+output must ECHO that exact same category string back unchanged - do NOT reclassify or
+pick a different one, even if you think another category fits better. The screening
+category is used elsewhere to cap how many articles per category get analyzed, and if
+you change it here the two stages disagree about what topic each article belongs to.
+
 Output exactly a JSON array containing the deep analysis for EACH of the provided articles. Do NOT wrap in markdown blocks, just raw JSON:
 [
   {
     "originalId": (the originalId from the input),
     "titleKr": "Translate the title to Korean dynamically and naturally",
-    "category": "e.g., 통화정책/금융, 반도체/IT, 거시경제",
+    "category": (copy the input article's own \`category\` field verbatim - do not invent a new one),
     "impactScore": (integer between 50 and 100 - this is a MAGNITUDE only, not a direction;
       a BEARISH article with severe negative impact should still score high, e.g. 80+),
     "scoreReason": "1-2 sentences explaining how the 40/30/30 weighted rubric produced this

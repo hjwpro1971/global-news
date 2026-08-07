@@ -105,6 +105,11 @@ export default async function handler(req, res) {
         // so one dominant event (e.g. today's oil/Iran story) can't consume the whole
         // deep-analysis budget even if it dominates the shortlist itself.
         const selectedArticles = selectTopForDeepAnalysis(shortlist);
+        // Screening-stage category by originalId, so it can be re-applied after deep
+        // analysis regardless of what Gemini echoes back there (belt-and-suspenders on
+        // top of the prompt instruction below - the two stages must not disagree, since
+        // the per-category cap above was computed using THIS category).
+        const screeningCategoryById = new Map(selectedArticles.map(a => [a.originalId, a.category]));
         const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
 
         // 3. Save to Supabase
@@ -120,7 +125,7 @@ export default async function handler(req, res) {
                     summary: item.summary,
                     source: orig.source || 'Global News',
                     published_at: timestamp,
-                    sector: item.category,
+                    sector: screeningCategoryById.get(item.originalId) || item.category,
                     theme: item.phase2DeepAnalysis?.articleContext || '',
                     impact_score: (sentiment === "BEARISH" ? -1 : 1) * Math.abs(item.impactScore || 50),
                     score_reason: item.scoreReason || '',

@@ -63,6 +63,9 @@ export default async function handler(req, res) {
 
         // STEP 2: Deep analysis - only the top N of the shortlist, capped per category.
         const selectedArticles = selectTopForDeepAnalysis(shortlist);
+        // Screening-stage category by originalId - re-applied below regardless of what
+        // Gemini echoes back during deep analysis (see cron-update-news.js for why).
+        const screeningCategoryById = new Map(selectedArticles.map(a => [a.originalId, a.category]));
         const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
 
         // Merge original article URLs and Dates back into the selected articles
@@ -91,7 +94,7 @@ export default async function handler(req, res) {
                 url: originalArticle?.link || "",
                 source: originalArticle?.source || "Global News",
                 timestamp: timestamp || new Date().toISOString(),
-                category: item.category || "글로벌 매크로",
+                category: screeningCategoryById.get(item.originalId) || item.category || "글로벌 매크로",
                 impactScore: (sentiment === "BEARISH" ? -1 : 1) * Math.abs(item.impactScore || 50),
                 scoreReason: item.scoreReason || '',
                 sentiment: sentiment,
