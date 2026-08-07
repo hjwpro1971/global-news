@@ -90,10 +90,43 @@ const STOPWORDS = new Set([
     '대한', '에서', '으로', '한다고', '전했다', '밝혔다'
 ]);
 
-const SOURCE_PRIORITY = [
-    'reuters', 'bloomberg', 'wall street journal', 'wsj', 'financial times', 'ft',
-    'cnbc', 'nikkei', 's&p global', 'yonhap', '연합뉴스', '한국경제', '매일경제'
+// Tiered source trust list. `weight` feeds the headline-frequency score below (a Tier-1
+// exclusive report gets a floor even with zero cross-outlet repetition); the tier order
+// also drives sourcePriorityRank() (picking a cluster's representative article) via
+// flattening below, so the two never disagree about which sources rank higher.
+const SOURCE_TIERS = [
+    { weight: 1.5, sources: ['reuters', 'bloomberg', 'wall street journal', 'wsj', 'financial times', 'ft', 'yonhap', '연합뉴스'] },
+    { weight: 1.2, sources: ['cnbc', 'nikkei', 's&p global', '한국경제', '매일경제'] }
+    // anything not listed falls through to weight 1.0 / lowest cluster-representative priority.
 ];
+
+// 3-char-or-shorter abbreviations (ft, wsj) can appear as a substring inside an unrelated
+// outlet name (e.g. "Aftenposten" contains "ft"), so match those on a word boundary.
+// Longer names (reuters, bloomberg...) are safe with plain substring matching, including
+// suffixed variants like "Bloomberg.com".
+function matchesSource(normalizedSource, candidate) {
+    return candidate.length <= 3
+        ? new RegExp(`\\b${candidate}\\b`, 'i').test(normalizedSource)
+        : normalizedSource.includes(candidate);
+}
+
+function findSourceTier(source) {
+    const normalized = (source || '').toLowerCase();
+    return SOURCE_TIERS.find(tier => tier.sources.some(s => matchesSource(normalized, s)));
+}
+
+function sourceWeight(source) {
+    return findSourceTier(source)?.weight ?? 1.0;
+}
+
+// Kept separate from sourceWeight() so callers never compare the 1.5 float literal
+// directly - if SOURCE_TIERS is reordered or its weights change, this still means
+// exactly "top tier" without needing to be updated in lockstep.
+function isTopTierSource(source) {
+    return findSourceTier(source) === SOURCE_TIERS[0];
+}
+
+const SOURCE_PRIORITY = SOURCE_TIERS.flatMap(tier => tier.sources);
 
 // Common Korean particles glued onto the end of a noun (조사) - stripping them lets
 // "코스피는"/"코스피가"/"코스피" all collapse to the same token "코스피" instead of
@@ -171,9 +204,14 @@ export function rankByHeadlineFrequency(articles) {
         set.forEach(token => freq.set(token, (freq.get(token) || 0) + 1));
     });
 
+    // BASE_SCORE ensures a genuine exclusive (zero token overlap with anything else that
+    // day) doesn't score exactly 0 - multiplying 0 by any source weight is still 0, so an
+    // additive floor is what actually lets source trust rescue an exclusive from the cut.
+    const BASE_SCORE = 1;
     const scored = articles.map((article, idx) => {
-        let score = 0;
-        tokenSets[idx].forEach(token => { score += freq.get(token) - 1; }); // -1: don't count the article's own headline
+        let freqScore = 0;
+        tokenSets[idx].forEach(token => { freqScore += Math.max(0, freq.get(token) - 1); }); // -1: don't count the article's own headline
+        const score = (BASE_SCORE + freqScore) * sourceWeight(article.source);
         return { article, tokens: tokenSets[idx], score, idx };
     });
 
@@ -227,6 +265,25 @@ export function rankByHeadlineFrequency(articles) {
         for (const c of clustered) {
             if (diverse.length >= limit) break;
             if (!diverse.includes(c)) diverse.push(c);
+        }
+    }
+
+    // Top-tier-source floor: if no Tier-1 source made it into the candidates (e.g. every
+    // Reuters/Bloomberg story that day was an exclusive with too little cross-outlet
+    // repetition to out-score a busy topic), swap the single lowest-scoring candidate for
+    // the best-scoring excluded Tier-1 article. MAX_CANDIDATES stays fixed either way, so
+    // this never changes Gemini screening's token cost.
+    if (!diverse.some(c => isTopTierSource(c.article.source))) {
+        const bestExcludedTopTier = clustered
+            .filter(c => !diverse.includes(c) && isTopTierSource(c.article.source))
+            .sort((a, b) => b.score - a.score)[0];
+        if (bestExcludedTopTier) {
+            diverse.sort((a, b) => a.score - b.score);
+            diverse[0] = bestExcludedTopTier;
+            // Restore the descending-by-score contract this function's return value has
+            // everywhere else - current callers re-sort by headlineFrequencyScore anyway,
+            // but keeping the invariant true avoids surprising a future caller that doesn't.
+            diverse.sort((a, b) => b.score - a.score);
         }
     }
 
