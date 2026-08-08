@@ -42,6 +42,20 @@ export function buildRssUrls() {
     ]);
 }
 
+// [2026-08-08] Social-media aggregator feeds (Facebook page RSS syndication is the
+// observed case) put the full post text in <title> instead of a real headline. A post
+// with 2 full sentences tokenizes to 30+ words vs. a normal headline's 5-10, so it shares
+// enough common tokens with that day's real coverage to win the headline-frequency score
+// outright (observed: a Facebook post scored 134, the day's highest, while every genuine
+// headline scored under 70). Block known SNS domains at parse time so this can't happen
+// regardless of scoring tweaks made later.
+const BLOCKED_SOURCE_DOMAINS = ['facebook.com', 'twitter.com', 'x.com', 'instagram.com', 'threads.net'];
+
+function isBlockedSource(source) {
+    const normalized = (source || '').toLowerCase();
+    return BLOCKED_SOURCE_DOMAINS.some(d => normalized.includes(d));
+}
+
 export function parseRssItems(xmlText, queryGroup = null) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -66,7 +80,7 @@ export function parseRssItems(xmlText, queryGroup = null) {
             }
         }
 
-        if (rawTitle && link) {
+        if (rawTitle && link && !isBlockedSource(source)) {
             items.push({ title: rawTitle, link, pubDate, source, queryGroup });
         }
     }
