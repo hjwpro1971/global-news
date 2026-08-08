@@ -615,7 +615,15 @@ export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
         reason: item.reason || '',
         url: item.url || '',
         published_at: item.pubDate || null,
-        headline_frequency_score: item.headlineFrequencyScore ?? 0
+        // [2026-08-08] news_shortlist.headline_frequency_score is an `integer` column, but
+        // the source-trust weighting added 2026-08-07 (sourceWeight() multiplies by 1.5/1.2)
+        // made this a non-integer float (e.g. 7 * 1.5 = 10.5). Postgres/PostgREST rejects a
+        // float insert into an integer column, which silently failed the WHOLE shortlist
+        // insert for two days straight (2026-08-07, 2026-08-08 cron runs) - deep analysis
+        // downstream kept working because it never touches this table, so the failure was
+        // invisible outside news_shortlist going stale. Round here so this can never
+        // recur even if another float-producing scoring tweak lands later.
+        headline_frequency_score: Math.round(item.headlineFrequencyScore ?? 0)
     }));
 
     await purgeOldNews(supabaseUrl, supabaseKey, 14, 'news_shortlist');
