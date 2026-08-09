@@ -56,6 +56,20 @@ function isBlockedSource(source) {
     return BLOCKED_SOURCE_DOMAINS.some(d => normalized.includes(d));
 }
 
+// [2026-08-10] Market-research promo sites (IndexBox, MarketWatch-style aggregators,
+// paid-report vendors) title their listings like "X Market to Reach $Y by 2035" and
+// often stuff in an unrelated hot keyword (observed: "...on Semiconductor Cleanroom
+// Demand" tacked onto a fabrics-market report) purely to get picked up by keyword-based
+// RSS searches. This let a fabrics report win the day's "반도체/IT" category slot ahead
+// of any real semiconductor news, and Gemini deep-analysis then invented a plausible-
+// sounding Samsung/SK hynix impact story around it. Filter the title pattern at parse
+// time rather than trying to catch this downstream.
+const MARKET_RESEARCH_TITLE_PATTERN = /\bmarket\b.{0,40}\b(to reach|to hit|to grow|size|forecast|cagr)\b/i;
+
+function isMarketResearchTitle(title) {
+    return MARKET_RESEARCH_TITLE_PATTERN.test(title || '');
+}
+
 export function parseRssItems(xmlText, queryGroup = null) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -80,7 +94,7 @@ export function parseRssItems(xmlText, queryGroup = null) {
             }
         }
 
-        if (rawTitle && link && !isBlockedSource(source)) {
+        if (rawTitle && link && !isBlockedSource(source) && !isMarketResearchTitle(rawTitle)) {
             items.push({ title: rawTitle, link, pubDate, source, queryGroup });
         }
     }
