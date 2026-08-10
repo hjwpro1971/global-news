@@ -660,8 +660,42 @@ export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays, tabl
 // what happens downstream (see 2026-08-04 pipeline redesign notes above).
 // ==========================================================================
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+// [2026-08-11] news_shortlist has no unique constraint on url, and this function has
+// always been a plain INSERT. When cron and a manual analyze-news trigger overlap (or
+// resolveCollectionWindowStart's lookback re-covers a time range already processed),
+// the same article passes screening twice and gets inserted twice with different
+// created_at timestamps - observed directly (id 72 and id 83, same url/title/source,
+// 13 minutes apart). get-shortlist.js's small `limit` then lets duplicates crowd out
+// genuinely distinct stories, which is what read as "too few / repetitive news."
+// Fetch today's (KST) already-saved urls and drop anything already present before insert.
+async function fetchTodaysShortlistUrls(supabaseUrl, supabaseKey) {
+    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
+    const y = nowKst.getUTCFullYear();
+    const m = nowKst.getUTCMonth();
+    const d = nowKst.getUTCDate();
+    const startUtc = new Date(Date.UTC(y, m, d, 0, 0, 0) - KST_OFFSET_MS).toISOString();
+
+    const params = new URLSearchParams({ select: 'url', 'created_at': `gte.${startUtc}` });
+    try {
+        const resp = await fetch(`${supabaseUrl}/rest/v1/news_shortlist?${params.toString()}`, {
+            headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+        });
+        if (!resp.ok) return new Set();
+        const rows = await resp.json();
+        return new Set(rows.map(r => r.url).filter(Boolean));
+    } catch (e) {
+        console.warn('[Shortlist Dedup Warning]', e.message);
+        return new Set();
+    }
+}
+
 export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
-    const payload = shortlist.map(item => ({
+    const existingUrls = await fetchTodaysShortlistUrls(supabaseUrl, supabaseKey);
+    const deduped = shortlist.filter(item => !item.url || !existingUrls.has(item.url));
+
+    const payload = deduped.map(item => ({
         title: item.titleKr || item.title,
         original_title: item.originalTitle || item.title,
         source: item.source || '',
@@ -681,6 +715,10 @@ export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
     }));
 
     await purgeOldNews(supabaseUrl, supabaseKey, 14, 'news_shortlist');
+
+    if (payload.length === 0) {
+        return { ok: true, status: 200, text: async () => '[]' };
+    }
 
     return fetch(`${supabaseUrl}/rest/v1/news_shortlist`, {
         method: 'POST',
