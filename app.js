@@ -809,6 +809,7 @@ function runPipelineSimulation() {
         setDataActionsDisabled(false);
         appState.isSimulating = false;
         renderApp();
+        fetchAndRenderShortlist();
     });
 }
 
@@ -1326,13 +1327,77 @@ document.addEventListener('DOMContentLoaded', () => {
     startGlobalMarketClocks();
     initEventListeners();
     renderApp();
-    
+    // Screening-stage list (news_shortlist) - read-only, no Gemini deep-analysis cost.
+    // Shown separately from the deep-analysis hero/grid below, which currently has
+    // little/no data while deep analysis is paused (DEEP_ANALYSIS_ENABLED=false).
+    fetchAndRenderShortlist();
+
     // 2. Fetch fresh data in background only if there's no cache or if we want to force refresh
     renderTrendChart();
     // autoTriggerPipeline=false: page load only ever reads existing DB data, never
     // starts a new (paid) analysis run on its own.
     fetchLiveRssNews(false, false).then(() => renderApp());
 });
+
+// ==========================================================================
+// SHORTLIST SECTION (news_shortlist - screening-stage results, no deep
+// analysis fields like targetStocks/transmissionMechanism/outlooks exist yet)
+// ==========================================================================
+
+async function fetchAndRenderShortlist() {
+    const gridEl = document.getElementById('shortlist-grid');
+    const noResultsEl = document.getElementById('shortlist-no-results');
+    const countBadge = document.getElementById('shortlist-count-badge');
+    if (!gridEl) return;
+
+    try {
+        const dbHeaders = {};
+        const localSupaUrl = localStorage.getItem('supabase_url_override');
+        const localSupaKey = localStorage.getItem('supabase_key_override');
+        if (localSupaUrl && localSupaKey) {
+            dbHeaders['x-supabase-url'] = localSupaUrl;
+            dbHeaders['x-supabase-key'] = localSupaKey;
+        }
+
+        const res = await fetch('/api/get-shortlist', { headers: dbHeaders });
+        if (!res.ok) throw new Error('Failed to fetch shortlist');
+        const data = await res.json();
+
+        const items = (data.success && data.hasList) ? data.data : [];
+        if (countBadge) countBadge.textContent = items.length + '개' + (data.isStale ? ' (최근 데이터)' : '');
+
+        if (items.length === 0) {
+            gridEl.innerHTML = '';
+            if (noResultsEl) noResultsEl.classList.remove('hidden');
+            return;
+        }
+        if (noResultsEl) noResultsEl.classList.add('hidden');
+
+        gridEl.innerHTML = items.map(item => {
+            const url = escapeHtml(getNewsUrl({ url: item.url, source: item.source }));
+            return `
+                <div class="news-card" style="padding:14px 16px;">
+                    <div class="card-top-meta">
+                        <span class="badge-category">${escapeHtml(item.category || '기타')}</span>
+                        <span class="card-source-time">
+                            <a href="${url}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
+                                ${escapeHtml(item.source || '')} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a> • ${escapeHtml(item.published_at || '')}
+                        </span>
+                    </div>
+                    <h3 class="card-title-kr" style="margin:6px 0 4px;">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                            ${escapeHtml(item.title)}
+                        </a>
+                    </h3>
+                    ${item.reason ? `<p class="card-summary" style="margin:0;">${escapeHtml(item.reason)}</p>` : ''}
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error('[Shortlist Fetch Error]', e);
+    }
+}
 
 // Cache clearing function
 window.clearCacheAndReload = function() {

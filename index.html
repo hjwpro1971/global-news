@@ -110,6 +110,23 @@
                 <!-- Swipeable Quick Stock Chip Bar (Mobile & Responsive Top Bar) -->
 
 
+                <!-- Shortlist Section: screening-stage results (news_shortlist), shown
+                     before/without paid deep analysis - see api/get-shortlist.js -->
+                <section class="news-list-section" id="shortlist-section">
+                    <div class="news-list-header">
+                        <div class="title-with-count">
+                            <h2><i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스</h2>
+                            <span class="badge-count" id="shortlist-count-badge">0개</span>
+                        </div>
+                    </div>
+                    <div class="shortlist-grid" id="shortlist-grid" style="display:flex; flex-direction:column; gap:10px;">
+                        <!-- Shortlist items dynamically injected by app.js -->
+                    </div>
+                    <div class="no-results hidden" id="shortlist-no-results">
+                        <p>오늘 선별된 뉴스가 아직 없습니다.</p>
+                    </div>
+                </section>
+
                 <!-- News Grid Section: Top 2~10+ Impact News Cards -->
                 <section class="news-list-section">
                     <div class="news-list-header">
