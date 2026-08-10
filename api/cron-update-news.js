@@ -1,5 +1,5 @@
 import {
-    buildRssUrls, parseRssItems, rankByHeadlineFrequency,
+    buildRssUrls, fetchAllRssItems, rankByHeadlineFrequency,
     screenArticles, saveShortlist, selectTopForDeepAnalysis,
     deepAnalyzeArticles, reconcileSentiment,
     purgeOldNews, insertNews,
@@ -40,25 +40,7 @@ export default async function handler(req, res) {
             : Date.now() - 24 * 60 * 60 * 1000;
 
         const rssUrls = buildRssUrls();
-
-        const allItems = [];
-        for (const { url, group } of rssUrls) {
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-                        'Accept': 'application/rss+xml, application/xml, text/xml, */*'
-                    }
-                });
-                if (response.ok) {
-                    const xmlText = await response.text();
-                    const items = parseRssItems(xmlText, group);
-                    allItems.push(...items);
-                }
-            } catch (e) {
-                console.error('[RSS Fetch Error]', url, e.message);
-            }
-        }
+        const allItems = await fetchAllRssItems(rssUrls);
 
         const uniqueMap = new Map();
         allItems.forEach(item => {

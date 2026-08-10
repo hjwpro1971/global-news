@@ -101,6 +101,32 @@ export function parseRssItems(xmlText, queryGroup = null) {
     return items;
 }
 
+// [2026-08-11] cron-update-news.js and news-rss.js each fetched buildRssUrls()'s 26 URLs
+// (13 queries x en/ko) one at a time in a `for...await` loop. Even at ~1s per Google News
+// RSS request, 26 sequential requests alone can approach/exceed cron-job.org's 30s
+// timeout before Gemini screening or deep analysis even start - this is what caused the
+// "Failed (timeout)" cron run on 2026-08-11. Fetching all feeds concurrently instead
+// turns ~26x sequential latency into ~1x (bounded by the slowest single feed).
+export async function fetchAllRssItems(rssUrls) {
+    const results = await Promise.all(rssUrls.map(async ({ url, group }) => {
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+                }
+            });
+            if (!response.ok) return [];
+            const xmlText = await response.text();
+            return parseRssItems(xmlText, group);
+        } catch (e) {
+            console.error('[RSS Fetch Error]', url, e.message);
+            return [];
+        }
+    }));
+    return results.flat();
+}
+
 // ==========================================================================
 // Local headline-frequency ranking (no external NLP dependency - this project
 // has no package.json, so a real morphological analyzer like kuromoji would

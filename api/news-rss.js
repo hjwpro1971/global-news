@@ -1,4 +1,4 @@
-import { parseRssItems, buildRssUrls } from './_lib/newsAnalysis.js';
+import { buildRssUrls, fetchAllRssItems } from './_lib/newsAnalysis.js';
 
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,30 +17,11 @@ export default async function handler(req, res) {
         // so genuinely major stories (e.g. today's oil-price/record-high rally) could
         // be entirely absent from what the button ever saw. Use the same source as cron.
         const rssUrls = buildRssUrls();
-
-        const allItems = [];
-
-        for (const { url, group } of rssUrls) {
-            try {
-                const response = await fetch(url, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Accept': 'application/rss+xml, application/xml, text/xml, */*'
-                    }
-                });
-
-                if (response.ok) {
-                    const xmlText = await response.text();
-                    // queryGroup travels with each item in the JSON response so the
-                    // browser can pass it back via /api/analyze-news, letting
-                    // rankByHeadlineFrequency's diversity cap work on this path too.
-                    const items = parseRssItems(xmlText, group);
-                    allItems.push(...items);
-                }
-            } catch (e) {
-                console.error('[RSS Fetch Error]', url, e.message);
-            }
-        }
+        // queryGroup travels with each item in the JSON response so the browser can pass
+        // it back via /api/analyze-news, letting rankByHeadlineFrequency's diversity cap
+        // work on this path too. fetchAllRssItems fetches all feeds concurrently instead
+        // of one at a time (see its definition for why this matters for cron timeouts).
+        const allItems = await fetchAllRssItems(rssUrls);
 
         // Deduplicate items by link or title
         const uniqueMap = new Map();
