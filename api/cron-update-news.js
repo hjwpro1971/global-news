@@ -83,6 +83,19 @@ export default async function handler(req, res) {
             }
         }
 
+        // [2026-08-11] Deep analysis paused at user request while the collection/
+        // screening quality (volume, duplicates) is under review - news_shortlist keeps
+        // filling in normally so that work isn't blocked, but no Gemini Pro deep-analysis
+        // cost is spent and news_impacts stops updating until DEEP_ANALYSIS_ENABLED is
+        // unset or set back to a truthy value.
+        if (process.env.DEEP_ANALYSIS_ENABLED === 'false') {
+            return res.status(200).json({
+                success: true,
+                message: 'Deep analysis is paused (DEEP_ANALYSIS_ENABLED=false). Shortlist saved, no news_impacts update.',
+                shortlistCount: shortlist.length
+            });
+        }
+
         // STEP 2: Deep analysis - only the top N of the shortlist, capped per category
         // so one dominant event (e.g. today's oil/Iran story) can't consume the whole
         // deep-analysis budget even if it dominates the shortlist itself.

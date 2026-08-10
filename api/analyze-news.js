@@ -61,6 +61,17 @@ export default async function handler(req, res) {
             }
         }
 
+        // [2026-08-11] Deep analysis paused at user request - see cron-update-news.js
+        // for the full reasoning. Shortlist above already saved, so screening/collection
+        // quality review can continue without spending Gemini Pro deep-analysis cost.
+        if (process.env.DEEP_ANALYSIS_ENABLED === 'false') {
+            return res.status(200).json({
+                success: true,
+                dataset: [],
+                message: 'Deep analysis is paused (DEEP_ANALYSIS_ENABLED=false). Shortlist saved.'
+            });
+        }
+
         // STEP 2: Deep analysis - only the top N of the shortlist, capped per category.
         const selectedArticles = selectTopForDeepAnalysis(shortlist);
         // Screening-stage category by originalId - re-applied below regardless of what
