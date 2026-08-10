@@ -48,10 +48,19 @@ export default async function handler(req, res) {
                 uniqueMap.set(item.link, item);
             }
         });
+        // [2026-08-11] Was capped at 150, but the window (up to 30h) typically contains
+        // 1200-1300 unique items on a busy day - the 150 cap silently dropped ~88% of
+        // them, collapsing the intended 30h window down to effectively just the last few
+        // hours (since results are sorted newest-first before the cap). That's what was
+        // causing "too few / repetitive news" - real coverage from earlier in the window
+        // (e.g. right after US market close) never reached rankByHeadlineFrequency at
+        // all. Raised well above the observed daily volume; rankByHeadlineFrequency below
+        // still narrows this down to MAX_CANDIDATES before any Gemini call, so this only
+        // costs a bit more local computation, not more API spend.
         const articles = Array.from(uniqueMap.values())
             .filter(item => new Date(item.pubDate).getTime() > windowStartMs)
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 150);
+            .slice(0, 600);
 
         if (articles.length === 0) {
             if (supabaseUrl && supabaseKey) await markFetchedNow(supabaseUrl, supabaseKey);

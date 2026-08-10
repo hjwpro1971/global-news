@@ -33,10 +33,12 @@ export default async function handler(req, res) {
 
         const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
         
+        // [2026-08-11] Raised from 150 to 600 to match cron-update-news.js - see that
+        // file's comment for why 150 was silently dropping ~88% of the 24h window.
         const sortedItems = Array.from(uniqueMap.values())
             .filter(item => new Date(item.pubDate).getTime() > twentyFourHoursAgo)
             .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-            .slice(0, 150); // matches cron-update-news.js's cap after the expanded query set above
+            .slice(0, 600);
 
         return res.status(200).json({
             status: 'ok',
