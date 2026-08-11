@@ -61,14 +61,15 @@ export default async function handler(req, res) {
             }
         }
 
-        // [2026-08-11] Deep analysis paused at user request - see cron-update-news.js
-        // for the full reasoning. Shortlist above already saved, so screening/collection
-        // quality review can continue without spending Gemini Pro deep-analysis cost.
-        if (process.env.DEEP_ANALYSIS_ENABLED === 'false') {
+        // [2026-08-12] Deep analysis paused at user request - see cron-update-news.js
+        // for the full reasoning, including why this is opt-in (!== 'true') rather than
+        // opt-out. Shortlist above already saved, so screening/collection quality review
+        // can continue without spending Gemini Pro deep-analysis cost.
+        if (process.env.DEEP_ANALYSIS_ENABLED !== 'true') {
             return res.status(200).json({
                 success: true,
                 dataset: [],
-                message: 'Deep analysis is paused (DEEP_ANALYSIS_ENABLED=false). Shortlist saved.'
+                message: 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved.'
             });
         }
 

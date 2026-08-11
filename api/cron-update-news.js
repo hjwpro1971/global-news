@@ -92,15 +92,19 @@ export default async function handler(req, res) {
             }
         }
 
-        // [2026-08-11] Deep analysis paused at user request while the collection/
+        // [2026-08-12] Deep analysis paused at user request while the collection/
         // screening quality (volume, duplicates) is under review - news_shortlist keeps
         // filling in normally so that work isn't blocked, but no Gemini Pro deep-analysis
-        // cost is spent and news_impacts stops updating until DEEP_ANALYSIS_ENABLED is
-        // unset or set back to a truthy value.
-        if (process.env.DEEP_ANALYSIS_ENABLED === 'false') {
+        // cost is spent and news_impacts stops updating. Flipped from opt-out
+        // (=== 'false') to opt-in (!== 'true') because the opt-out form silently did
+        // nothing when the Vercel dashboard env var was never actually added - deep
+        // analysis kept running against the user's explicit instruction. This way the
+        // pause is the default with zero Vercel configuration required; set
+        // DEEP_ANALYSIS_ENABLED=true to resume.
+        if (process.env.DEEP_ANALYSIS_ENABLED !== 'true') {
             return res.status(200).json({
                 success: true,
-                message: 'Deep analysis is paused (DEEP_ANALYSIS_ENABLED=false). Shortlist saved, no news_impacts update.',
+                message: 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved, no news_impacts update.',
                 shortlistCount: shortlist.length
             });
         }
