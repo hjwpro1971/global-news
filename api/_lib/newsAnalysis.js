@@ -285,7 +285,7 @@ const MAX_CANDIDATES_PER_QUERY_GROUP = 8;
 // 8 items because the screening prompt only ever said "MAXIMUM N", so Gemini's
 // theme-diversity filtering had no floor to respect. Requirement is now a hard
 // minimum of 20 distinct (non-duplicate) stories, enforced in the prompt below.
-const LIST_SIZE = 20; // how many articles the screening step selects into the shortlist
+export const LIST_SIZE = 20; // how many articles the screening step selects into the shortlist
 const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
 const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 

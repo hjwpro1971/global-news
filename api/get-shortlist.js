@@ -1,3 +1,5 @@
+import { LIST_SIZE } from './_lib/newsAnalysis.js';
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 // Returns [startOfTodayUTC, endOfTodayUTC] as ISO strings for "today" in KST,
@@ -38,7 +40,11 @@ export default async function handler(req, res) {
         const todayParams = new URLSearchParams({
             select: '*',
             order: 'id.desc',
-            limit: '12',
+            // [2026-08-13] Was hardcoded to 12, silently truncating a full 20-item
+            // shortlist (LIST_SIZE) below what screenArticles() actually saved -
+            // looked like "screening still isn't reaching 20" when the real cause was
+            // this display-layer cap. Track LIST_SIZE directly so the two can't drift.
+            limit: String(LIST_SIZE),
             'created_at': `gte.${startIso}`
         });
         const todayUrl = `${supabaseUrl}/rest/v1/news_shortlist?${todayParams.toString()}&created_at=lt.${encodeURIComponent(endIso)}`;
@@ -54,7 +60,7 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, hasList: true, isStale: false, data: todayData });
         }
 
-        const fallbackParams = new URLSearchParams({ select: '*', order: 'id.desc', limit: '12' });
+        const fallbackParams = new URLSearchParams({ select: '*', order: 'id.desc', limit: String(LIST_SIZE) });
         const fallbackResp = await fetch(`${supabaseUrl}/rest/v1/news_shortlist?${fallbackParams.toString()}`, { headers });
         if (!fallbackResp.ok) {
             const errorText = await fallbackResp.text();
