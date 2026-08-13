@@ -438,13 +438,14 @@ ${JSON.stringify(NEWS_CATEGORIES)}
 Raw articles:
 ${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
 
-Output exactly a JSON array. Do NOT wrap in markdown blocks, just raw JSON:
+Output exactly a JSON array. Do NOT wrap in markdown blocks, just raw JSON. Do NOT
+translate, rename, or add any JSON keys beyond exactly these three - only the VALUES
+of "reason" should be Korean:
 [
   {
     "id": 0,
-    "titleKr": "Translate the article's title to natural Korean",
     "category": "one of the categories listed above, exactly as written",
-    "reason": "1 sentence reason why this is high impact"
+    "reason": "1 sentence reason why this is high impact, written in Korean"
   }
 ]
 `;
@@ -605,10 +606,6 @@ export async function screenArticles(articles, apiKey) {
             originalId: item.id,
             title: source?.title,
             originalTitle: source?.title,
-            // [2026-08-13] saveShortlist() prefers titleKr over title when present, so
-            // shortlist rows now show a Korean title even while deep analysis (which
-            // used to be the only place titleKr came from) stays paused.
-            titleKr: item.titleKr || source?.title,
             url: source?.link,
             pubDate: source?.pubDate,
             source: source?.source,
