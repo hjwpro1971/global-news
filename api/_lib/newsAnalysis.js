@@ -575,7 +575,12 @@ export async function screenArticles(articles, apiKey) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: buildScreeningPrompt(articles) }] }],
-            generationConfig: { temperature: 0.1, responseMimeType: "application/json" }
+            // [2026-08-14] Explicit ceiling added after screening started truncating mid-
+            // response on some runs - MAX_CANDIDATES 40 + the titleKr translation field
+            // (added 2026-08-13) roughly doubled expected output size versus when this
+            // endpoint was last sized. 8192 gives headroom for a full 20-item response
+            // (each ~150-250 tokens: id, Korean title, category, one-sentence reason).
+            generationConfig: { temperature: 0.1, responseMimeType: "application/json", maxOutputTokens: 8192 }
         })
     });
 
@@ -585,7 +590,8 @@ export async function screenArticles(articles, apiKey) {
     }
 
     const flashData = await flashResponse.json();
-    const screenedList = JSON.parse(extractGeminiText(flashData, 'Gemini Flash screening'));
+    const screeningText = extractGeminiText(flashData, 'Gemini Flash screening');
+    const screenedList = parseGeminiJsonArray(screeningText, 'Gemini Flash screening');
 
     // Gemini echoes back the `id` we gave it in buildScreeningPrompt, which is each
     // candidate's `articleIndex` (its position in the ORIGINAL articles array) - not
@@ -633,14 +639,19 @@ export async function deepAnalyzeArticles(selectedArticles, apiKey) {
 
     const data = await proResponse.json();
     const responseText = extractGeminiText(data, 'Gemini Pro deep analysis');
+    return parseGeminiJsonArray(responseText, 'Gemini Pro deep analysis');
+}
 
+// Shared by screenArticles and deepAnalyzeArticles: Gemini occasionally emits a
+// well-formed JSON array followed by stray extra characters/brackets after it
+// (observed 2026-08-05 on deep analysis: a valid 5-item array, then three more
+// unmatched `]`/`}` tokens tacked on) or gets truncated mid-array on an unusually
+// long response. Recover by extracting just the first balanced top-level array
+// instead of failing the whole batch (and, upstream, the whole cron run with a 500).
+function parseGeminiJsonArray(responseText, label) {
     try {
         return JSON.parse(responseText);
     } catch (parseErr) {
-        // Gemini occasionally emits a well-formed JSON array followed by stray extra
-        // characters/brackets after it (observed 2026-08-05: a valid 5-item array,
-        // then three more unmatched `]`/`}` tokens tacked on). Recover by extracting
-        // just the first balanced top-level array instead of failing the whole batch.
         const recovered = extractFirstJsonArray(responseText);
         if (recovered !== null) {
             try {
@@ -649,8 +660,8 @@ export async function deepAnalyzeArticles(selectedArticles, apiKey) {
                 // fall through to the original error below
             }
         }
-        console.error('Failed to parse Gemini output:', responseText);
-        throw new Error('Gemini output was not valid JSON');
+        console.error(`Failed to parse ${label} output:`, responseText);
+        throw new Error(`${label} output was not valid JSON`);
     }
 }
 
