@@ -68,7 +68,13 @@
             </div>
 
             <!-- Macro Trend Chart -->
-            <div class="trend-chart-container">
+            <!-- [2026-08-14] Hidden while deep analysis (news_impacts, Gemini Pro) stays
+                 paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - get-trend-data.js
+                 sources this from news_impacts.impact_score, which has stopped updating,
+                 so the chart only ever shows stale pre-pause data or an empty state. Kept
+                 in the DOM (not deleted) since app.js still calls document.getElementById
+                 ('trendChart') on it; that call is a no-op when the canvas is hidden. -->
+            <div class="trend-chart-container" style="display:none;">
                 <div class="trend-chart-header">
                     <h3><i class="fa-solid fa-chart-area text-blue" style="margin-right: 8px;"></i> 글로벌 증시 온도 (최근 7일)</h3>
                     <span style="font-size: 0.75rem; color: #8892b0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;">+ 호재 / - 악재</span>
