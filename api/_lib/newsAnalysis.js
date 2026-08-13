@@ -442,6 +442,7 @@ Output exactly a JSON array. Do NOT wrap in markdown blocks, just raw JSON:
 [
   {
     "id": 0,
+    "titleKr": "Translate the article's title to natural Korean",
     "category": "one of the categories listed above, exactly as written",
     "reason": "1 sentence reason why this is high impact"
   }
@@ -598,6 +599,10 @@ export async function screenArticles(articles, apiKey) {
             originalId: item.id,
             title: source?.title,
             originalTitle: source?.title,
+            // [2026-08-13] saveShortlist() prefers titleKr over title when present, so
+            // shortlist rows now show a Korean title even while deep analysis (which
+            // used to be the only place titleKr came from) stays paused.
+            titleKr: item.titleKr || source?.title,
             url: source?.link,
             pubDate: source?.pubDate,
             source: source?.source,
