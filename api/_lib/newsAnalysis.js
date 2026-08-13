@@ -224,7 +224,13 @@ const MIN_CANDIDATES = 2;
 // Local pre-filter candidate cap BEFORE Gemini screening (step 2 of the pipeline).
 // Kept separate from LIST_SIZE/DEEP_ANALYSIS_TOP_N below: this is how many raw
 // articles get shown to the screening prompt, not how many end up in the shortlist.
-const MAX_CANDIDATES = 20;
+// [2026-08-13] Raised from 20 to 40: with LIST_SIZE also raised to 20 (see below),
+// giving Gemini only 20 raw candidates left no headroom once the theme-diversity
+// rule dropped same-event duplicates - observed directly, a 20-candidate batch
+// screened down to just 8 shortlist items on a CPI/AI-rally-heavy day. Gemini needs
+// a genuinely wider pool to find 20 DISTINCT stories from, not just 20 candidates
+// to rubber-stamp.
+const MAX_CANDIDATES = 40;
 // [2026-08-07] On a heavy news day for one RSS query group (e.g. a big China trade
 // data release), that group's articles can share enough repeated tokens (country
 // name, "trade", "exports"...) to dominate the token-frequency score and fill ALL
@@ -232,7 +238,11 @@ const MAX_CANDIDATES = 20;
 // market-moving news that day (e.g. a Fed official signalling a rate hike). Capping
 // candidates-per-query-group guarantees every RSS query at least gets a chance to
 // reach Gemini screening, rather than being drowned out purely by story volume.
-const MAX_CANDIDATES_PER_QUERY_GROUP = 4;
+// [2026-08-13] Raised from 4 to 8 alongside MAX_CANDIDATES 20->40, keeping the same
+// ~5x ratio so the per-group ceiling scales with the larger pool instead of becoming
+// the binding constraint that stops any single busy group from ever supplying its
+// fair share of the now-larger candidate list.
+const MAX_CANDIDATES_PER_QUERY_GROUP = 8;
 
 // [2026-08-04 redesign] The pipeline used to conflate "which articles are worth
 // showing" with "which articles are worth spending Gemini deep-analysis tokens
@@ -242,7 +252,11 @@ const MAX_CANDIDATES_PER_QUERY_GROUP = 4;
 // shortlist (a cheap, single Lite call regardless of size) that gets saved and
 // can be inspected on its own; only a smaller top-N of THAT list goes on to the
 // expensive structured deep-analysis call.
-const LIST_SIZE = 14; // how many articles the screening step selects into the shortlist (bumped from 12 alongside the 8->10 category expansion so newly-added categories, e.g. 중국경기/고용지표, have room to actually appear)
+// [2026-08-13] Raised from 14 to 20 at user request: shortlist was landing as low as
+// 8 items because the screening prompt only ever said "MAXIMUM N", so Gemini's
+// theme-diversity filtering had no floor to respect. Requirement is now a hard
+// minimum of 20 distinct (non-duplicate) stories, enforced in the prompt below.
+const LIST_SIZE = 20; // how many articles the screening step selects into the shortlist
 const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
 const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 
@@ -360,8 +374,14 @@ export function buildScreeningPrompt(articles) {
 You are a highly efficient news screener for the South Korean Stock Market.
 I will provide you with a list of global news articles, already pre-filtered by headline-frequency
 across many outlets (higher headlineFrequencyScore = discussed more widely today).
-Your task is to identify the top MAXIMUM ${LIST_SIZE} articles that have the HIGHEST impact on the Korean stock market (KOSPI/KOSDAQ).
-Ignore duplicates, low-impact news, or generic opinions.
+
+Your task is to select EXACTLY ${LIST_SIZE} articles - this is a REQUIRED COUNT, not a ceiling.
+Only merge two articles into one selection when they cover the literal same event (see
+THEME DIVERSITY RULE below); do not drop articles just because they feel lower-impact once
+you already have a handful - keep going down the list by score until you reach ${LIST_SIZE}
+distinct stories. If, and only if, the provided articles genuinely do not contain ${LIST_SIZE}
+distinct underlying stories (e.g. an unusually quiet news day), select as many distinct stories
+as actually exist and no more - never pad with true duplicates just to hit the count.
 
 **THEME DIVERSITY RULE**: Several articles below may describe the SAME underlying macro
 event from different angles (e.g. one is a fact-check, one is a political reaction, one is
