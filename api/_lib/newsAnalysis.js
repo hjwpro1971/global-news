@@ -619,6 +619,54 @@ export async function screenArticles(articles, apiKey) {
     }).filter(a => a.title);
 }
 
+// [2026-08-14] Deliberately separate from screenArticles(): asking Flash to translate
+// titles AS PART OF the screening/categorization JSON schema (tried and reverted the
+// same day) made the whole structured response unstable - Gemini started renaming JSON
+// keys into Korean, scrambling title/original_title, and mangling reason sentences.
+// A plain "translate this numbered list of titles" call with no schema constraints is a
+// much narrower task, far less likely to destabilize into the same failure mode. One
+// extra cheap Flash call for the whole shortlist (not per-article), so cost stays low.
+export async function translateTitlesToKorean(titles, apiKey) {
+    if (titles.length === 0) return [];
+
+    const prompt = `Translate each of these ${titles.length} English news headlines into natural, concise Korean.
+Output ONLY a JSON array of ${titles.length} strings, in the exact same order as the input, one translation per headline.
+If a headline is already in Korean, return it unchanged (but you may lightly clean up spacing/particles).
+Do not add, remove, merge, or reorder items - the output array length must equal the input length.
+
+Input headlines:
+${JSON.stringify(titles, null, 2)}`;
+
+    const response = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${FLASH_MODEL}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.1, responseMimeType: "application/json", maxOutputTokens: 4096 }
+        })
+    });
+
+    if (!response.ok) {
+        console.warn('[Title Translation Warning]', response.status, await response.text());
+        return titles; // fall back to original (English) titles rather than failing the run
+    }
+
+    try {
+        const data = await response.json();
+        const translated = JSON.parse(extractGeminiText(data, 'Title translation'));
+        // Length mismatch means the model dropped/merged/added items - unsafe to trust
+        // positional mapping, so fall back to originals rather than risk misattribution.
+        if (!Array.isArray(translated) || translated.length !== titles.length) {
+            console.warn('[Title Translation Warning] length mismatch, falling back to English titles');
+            return titles;
+        }
+        return translated.map((t, i) => (typeof t === 'string' && t.trim()) ? t : titles[i]);
+    } catch (e) {
+        console.warn('[Title Translation Warning]', e.message);
+        return titles;
+    }
+}
+
 export async function deepAnalyzeArticles(selectedArticles, apiKey) {
     const proResponse = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${PRO_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',

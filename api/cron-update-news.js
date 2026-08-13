@@ -1,6 +1,6 @@
 import {
     buildRssUrls, fetchAllRssItems, rankByHeadlineFrequency,
-    screenArticles, saveShortlist, selectTopForDeepAnalysis,
+    screenArticles, translateTitlesToKorean, saveShortlist, selectTopForDeepAnalysis,
     deepAnalyzeArticles, reconcileSentiment,
     purgeOldNews, insertNews,
     acquireAnalysisLock, releaseAnalysisLock, markFetchedNow,
@@ -84,6 +84,13 @@ export default async function handler(req, res) {
             if (supabaseUrl && supabaseKey) await markFetchedNow(supabaseUrl, supabaseKey);
             return res.status(200).json({ success: true, message: 'No high impact articles found.' });
         }
+
+        // [2026-08-14] Separate, unstructured translation pass instead of asking
+        // screenArticles' JSON-schema call to also translate - see translateTitlesToKorean's
+        // own comment for why that combination proved unstable. Failure here falls back to
+        // English titles rather than blocking the whole run.
+        const translatedTitles = await translateTitlesToKorean(shortlist.map(a => a.title), GEMINI_API_KEY);
+        shortlist.forEach((a, i) => { a.titleKr = translatedTitles[i]; });
 
         if (supabaseUrl && supabaseKey) {
             const shortlistResp = await saveShortlist(supabaseUrl, supabaseKey, shortlist);

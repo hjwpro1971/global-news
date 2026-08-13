@@ -1,5 +1,5 @@
 import {
-    rankByHeadlineFrequency, screenArticles, saveShortlist, selectTopForDeepAnalysis,
+    rankByHeadlineFrequency, screenArticles, translateTitlesToKorean, saveShortlist, selectTopForDeepAnalysis,
     deepAnalyzeArticles, reconcileSentiment,
     purgeOldNews, insertNews, acquireAnalysisLock, releaseAnalysisLock
 } from './_lib/newsAnalysis.js';
@@ -51,6 +51,12 @@ export default async function handler(req, res) {
         if (shortlist.length === 0) {
             return res.status(200).json({ success: true, dataset: [] });
         }
+
+        // [2026-08-14] Same separate translation pass as cron-update-news.js - see
+        // translateTitlesToKorean's comment for why this is kept out of screenArticles'
+        // structured JSON schema call.
+        const translatedTitles = await translateTitlesToKorean(shortlist.map(a => a.title), GEMINI_API_KEY);
+        shortlist.forEach((a, i) => { a.titleKr = translatedTitles[i]; });
 
         const supabaseUrlForShortlist = req.headers['x-supabase-url'] || process.env.SUPABASE_URL;
         const supabaseKeyForShortlist = req.headers['x-supabase-key'] || process.env.SUPABASE_KEY;
