@@ -128,7 +128,12 @@
                 </section>
 
                 <!-- News Grid Section: Top 2~10+ Impact News Cards -->
-                <section class="news-list-section">
+                <!-- [2026-08-13] Hidden while deep analysis (news_impacts, Gemini Pro) stays
+                     paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - this section always
+                     shows "0개 분석 완료" / empty-state with nothing to display. Kept in the DOM
+                     (not deleted) since app.js still references its child element IDs
+                     (news-grid, news-count-badge, sort-select, btn-reset-empty, no-results). -->
+                <section class="news-list-section" id="impact-analysis-section" style="display:none;">
                     <div class="news-list-header">
                         <div class="title-with-count">
                             <h2><i class="fa-solid fa-list-check"></i> 글로벌 경제 이슈 영향도 리스트</h2>
