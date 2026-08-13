@@ -570,18 +570,24 @@ export async function fetchWithRetry(url, options, { retries = 3, baseDelayMs = 
     return lastError;
 }
 
-export async function screenArticles(articles, apiKey) {
+// [2026-08-14] Observed directly: Flash occasionally falls into a degenerate repetition
+// loop mid-response (e.g. the "category" value for one item became the token "통화"
+// repeated hundreds of times), burning the entire maxOutputTokens budget on garbage and
+// leaving the JSON truncated/invalid. This broke every cron/manual run that day - nothing
+// got saved because screenArticles threw before saveShortlist was ever reached. Retry once
+// at temperature 0 (the current call already uses 0.1) before giving up, since a repeat
+// call rarely repeats the same degenerate loop.
+async function callScreeningModel(articles, apiKey, temperature) {
     const flashResponse = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${FLASH_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: buildScreeningPrompt(articles) }] }],
-            // [2026-08-14] Explicit ceiling added after screening started truncating mid-
-            // response on some runs - MAX_CANDIDATES 40 + the titleKr translation field
-            // (added 2026-08-13) roughly doubled expected output size versus when this
-            // endpoint was last sized. 8192 gives headroom for a full 20-item response
-            // (each ~150-250 tokens: id, Korean title, category, one-sentence reason).
-            generationConfig: { temperature: 0.1, responseMimeType: "application/json", maxOutputTokens: 8192 }
+            // 8192 gives headroom for a full 20-item response (each ~100-150 tokens: id,
+            // category, one-sentence reason) - well above normal need, so hitting this
+            // ceiling on a clean response is very unlikely; it mainly caps how much a
+            // degenerate repetition loop can burn before the call returns.
+            generationConfig: { temperature, responseMimeType: "application/json", maxOutputTokens: 8192 }
         })
     });
 
@@ -591,8 +597,20 @@ export async function screenArticles(articles, apiKey) {
     }
 
     const flashData = await flashResponse.json();
-    const screeningText = extractGeminiText(flashData, 'Gemini Flash screening');
-    const screenedList = parseGeminiJsonArray(screeningText, 'Gemini Flash screening');
+    return extractGeminiText(flashData, 'Gemini Flash screening');
+}
+
+export async function screenArticles(articles, apiKey) {
+    const screeningText = await callScreeningModel(articles, apiKey, 0.1);
+
+    let screenedList;
+    try {
+        screenedList = parseGeminiJsonArray(screeningText, 'Gemini Flash screening');
+    } catch (parseErr) {
+        console.warn('[Screening Retry] first response was not valid JSON, retrying once at temperature 0');
+        const retryText = await callScreeningModel(articles, apiKey, 0);
+        screenedList = parseGeminiJsonArray(retryText, 'Gemini Flash screening');
+    }
 
     // Gemini echoes back the `id` we gave it in buildScreeningPrompt, which is each
     // candidate's `articleIndex` (its position in the ORIGINAL articles array) - not
