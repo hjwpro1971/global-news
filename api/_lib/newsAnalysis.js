@@ -212,6 +212,35 @@ function jaccardSimilarity(setA, setB) {
     return union === 0 ? 0 : intersection / union;
 }
 
+// [2026-08-13] Plain Jaccard over full-headline tokens badly under-clusters the same
+// event across languages: a Korean headline about US CPI and an English one about the
+// same CPI print share only "cpi" out of ~12-13 tokens each (Jaccard ~0.04, nowhere
+// near SIMILARITY_CLUSTER_THRESHOLD 0.35) because every surrounding word differs by
+// language. Observed directly on 2026-08-13: 22 of 40 candidates were all the same
+// "US CPI cools, AI/semiconductor rally" story in KR/EN, none of which clustered
+// together, so the diversity-capped Gemini screening step only had ~15-18 genuinely
+// distinct stories to choose from despite 40 raw candidates.
+// These are highly specific, low-ambiguity event anchors (acronyms/proper nouns that
+// appear verbatim in Korean text too, e.g. "CPI" inside a Korean headline). Sharing
+// even ONE of these is treated as the same underlying event regardless of language -
+// deliberately excluded are broad theme words (AI, 반도체/semiconductor, 금리/rate)
+// that would over-merge genuinely distinct stories sharing only a topic, not an event.
+const EVENT_ANCHOR_TOKENS = new Set([
+    'cpi', 'fomc', 'nvidia', '엔비디아', 'opec', 'nonfarm', 'ism',
+    'fed', '연준', 'boj', 'ecb',
+    // [2026-08-13] Added after the first anchor pass still left ~15 "same CPI print"
+    // headlines unclustered - many outlets wrote "inflation"/"물가" instead of the
+    // literal acronym "CPI". Still a specific same-day macro release, not a broad topic.
+    'inflation', '물가', '인플레이션'
+]);
+
+function sharesEventAnchor(setA, setB) {
+    for (const t of setA) {
+        if (EVENT_ANCHOR_TOKENS.has(t) && setB.has(t)) return true;
+    }
+    return false;
+}
+
 function sourcePriorityRank(source) {
     const s = (source || '').toLowerCase();
     const idx = SOURCE_PRIORITY.findIndex(p => s.includes(p));
@@ -295,7 +324,9 @@ export function rankByHeadlineFrequency(articles) {
         used[i] = true;
         for (let j = i + 1; j < scored.length; j++) {
             if (used[j]) continue;
-            if (jaccardSimilarity(scored[i].tokens, scored[j].tokens) >= SIMILARITY_CLUSTER_THRESHOLD) {
+            const similar = jaccardSimilarity(scored[i].tokens, scored[j].tokens) >= SIMILARITY_CLUSTER_THRESHOLD
+                || sharesEventAnchor(scored[i].tokens, scored[j].tokens);
+            if (similar) {
                 cluster.push(scored[j]);
                 used[j] = true;
             }
