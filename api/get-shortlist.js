@@ -39,7 +39,13 @@ export default async function handler(req, res) {
         const [startIso, endIso] = kstTodayRangeUtc();
         const todayParams = new URLSearchParams({
             select: '*',
-            order: 'id.desc',
+            // [2026-08-18] Was id.desc (insertion order), which has nothing to do with
+            // how much a story matters to the Korean market - it just reflected whatever
+            // order screenArticles() happened to return items in that run. Sort by the
+            // score screenArticles() already threads through (headline_frequency_score,
+            // computed pre-screening from cross-outlet repetition + source trust weight)
+            // so higher-priority stories surface first.
+            order: 'headline_frequency_score.desc',
             // [2026-08-13] Was hardcoded to 12, silently truncating a full 20-item
             // shortlist (LIST_SIZE) below what screenArticles() actually saved -
             // looked like "screening still isn't reaching 20" when the real cause was
