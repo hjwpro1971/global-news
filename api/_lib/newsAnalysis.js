@@ -386,6 +386,47 @@ export function rankByHeadlineFrequency(articles) {
         }
     }
 
+    // [2026-08-18] Korean-language query groups (_kr suffix) floor: the score formula
+    // rewards cross-outlet repetition, which structurally favors English stories - dozens
+    // of English outlets independently cover the same Fed/CPI print, while only a handful
+    // of Korean outlets exist to repeat any one Korean story. Observed directly: all 4 _kr
+    // groups (fed_rates_kr, semiconductor_kr, macro_kr, foreign_flows_kr) were shut out of
+    // the 40-candidate pool entirely on a day where their raw collection had 114 articles
+    // combined - not because they were less relevant to the Korean market, but because
+    // "many outlets repeated it" penalizes a language with fewer outlets by construction.
+    // This isn't about preferring Korean sources - it's removing an artifact of outlet
+    // count from a score that's supposed to measure market relevance. Backfill one
+    // highest-scoring excluded article per shut-out _kr group, same swap-the-lowest
+    // pattern as the top-tier-source floor above (MAX_CANDIDATES unchanged).
+    // Swap out the CURRENT lowest-scoring slot not already claimed by an earlier backfill
+    // this loop - reusing diverse[0] naively across iterations would let a later group's
+    // backfill evict an earlier group's, since the just-inserted (typically low-scoring)
+    // article becomes the new diverse[0] on the very next iteration.
+    const backfilledIndices = new Set();
+    for (const krGroup of ['fed_rates_kr', 'semiconductor_kr', 'macro_kr', 'foreign_flows_kr']) {
+        if (diverse.some(c => c.article.queryGroup === krGroup)) continue;
+        // Search `scored` (pre-clustering), not `clustered` - a _kr article that lost its
+        // cluster's representative slot to a higher-source-priority non-Korean article
+        // (see sourcePriorityRank sort above) would otherwise be invisible here even
+        // though it was never actually excluded from consideration, just absorbed.
+        const bestExcluded = scored
+            .filter(c => c.article.queryGroup === krGroup)
+            .sort((a, b) => b.score - a.score)[0];
+        if (!bestExcluded || diverse.includes(bestExcluded)) continue;
+
+        let swapAt = -1;
+        let swapScore = Infinity;
+        diverse.forEach((c, i) => {
+            if (backfilledIndices.has(i)) return;
+            if (c.score < swapScore) { swapScore = c.score; swapAt = i; }
+        });
+        if (swapAt === -1) continue; // every slot already claimed by an earlier backfill this pass
+
+        diverse[swapAt] = bestExcluded;
+        backfilledIndices.add(swapAt);
+    }
+    diverse.sort((a, b) => b.score - a.score);
+
     // `articleIndex` preserves the position in the ORIGINAL `articles` array (pre-ranking).
     // screenArticles/deepAnalyzeArticles must echo this back as `originalId` - if a caller
     // uses the candidate list's own position instead, `articles[originalId]` in
