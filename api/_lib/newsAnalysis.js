@@ -486,7 +486,7 @@ of "reason" should be Korean:
   {
     "id": 0,
     "category": "one of the categories listed above, exactly as written",
-    "reason": "1 sentence reason why this is high impact, written in Korean"
+    "reason": "Exactly 2 Korean sentences. First sentence: what actually happened (the concrete fact/event, not a vague paraphrase of the headline). Second sentence: the specific transmission mechanism to the Korean market (which sector/index/currency, and why - not a generic \"영향을 줄 수 있습니다\")."
   }
 ]
 `;
@@ -624,11 +624,12 @@ async function callScreeningModel(articles, apiKey, temperature) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: buildScreeningPrompt(articles) }] }],
-            // 8192 gives headroom for a full 20-item response (each ~100-150 tokens: id,
-            // category, one-sentence reason) - well above normal need, so hitting this
-            // ceiling on a clean response is very unlikely; it mainly caps how much a
-            // degenerate repetition loop can burn before the call returns.
-            generationConfig: { temperature, responseMimeType: "application/json", maxOutputTokens: 8192 }
+            // [2026-08-19] Raised from 8192 to 16384 after reason was expanded from 1
+            // sentence to 2 (fact + specific transmission mechanism) - a clean 20-item
+            // response now runs roughly 200-300 tokens/item. Still mainly a ceiling on how
+            // much a degenerate repetition loop (see comment above) can burn before the
+            // call returns, not an expected normal-case size.
+            generationConfig: { temperature, responseMimeType: "application/json", maxOutputTokens: 16384 }
         })
     });
 
