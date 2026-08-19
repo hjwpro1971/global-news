@@ -1353,6 +1353,17 @@ body {
     overflow: hidden;
 }
 
+/* [2026-08-20] Shortlist cards (fetchAndRenderShortlist in app.js) have no detail modal
+   to expand into unlike news-grid's deep-analysis cards, and reason grew from 1 sentence
+   to 2 (fact + Korean-market transmission) - the shared 2-line clamp above was cutting
+   the second sentence off entirely on mobile, where the card's the only place to read it.
+   Override just for this variant rather than touching the shared class, since news-grid's
+   summary truncation (with its own modal fallback) is still the right behavior there. */
+.card-summary-full {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+
 /* Card Target Stock Badges */
 .card-stocks-row {
     display: flex;

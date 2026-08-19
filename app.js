@@ -1390,7 +1390,7 @@ async function fetchAndRenderShortlist() {
                             ${escapeHtml(item.title)}
                         </a>
                     </h3>
-                    ${item.reason ? `<p class="card-summary" style="margin:0;">${escapeHtml(item.reason)}</p>` : ''}
+                    ${item.reason ? `<p class="card-summary card-summary-full" style="margin:0;">${escapeHtml(item.reason)}</p>` : ''}
                 </div>
             `;
         }).join('');
