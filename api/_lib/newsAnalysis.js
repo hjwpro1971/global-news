@@ -594,7 +594,16 @@ function sleep(ms) {
 
 // Retries only on transient failures (429 rate limit, 5xx server errors). Auth/validation
 // errors (4xx other than 429) fail immediately since retrying won't help and just burns time.
-export async function fetchWithRetry(url, options, { retries = 3, baseDelayMs = 3000 } = {}) {
+// [2026-08-20] Defaults tightened from (retries:3, baseDelayMs:3000) - with 3x exponential
+// backoff that meant up to 3000+9000+27000ms just in retry sleeps, before even counting the
+// fetch calls themselves. The caller of this function sits inside cron-update-news.js, which
+// is invoked by cron-job.org's free tier - hard-capped at a 30s timeout that cannot be raised
+// (Vercel's own maxDuration is 60s and was never the actual constraint). A single degenerate
+// retry sequence could blow past 30s on its own even before the JSON-parse retry in
+// callScreeningModel below (which calls this AGAIN) stacks on top. On a schedule that reruns
+// daily, failing fast and letting tomorrow's cron pick up the window is strictly better than
+// a slow retry that gets killed by the platform timeout with nothing saved either way.
+export async function fetchWithRetry(url, options, { retries = 1, baseDelayMs = 1000 } = {}) {
     let lastError;
     for (let attempt = 0; attempt <= retries; attempt++) {
         const response = await fetch(url, options);
