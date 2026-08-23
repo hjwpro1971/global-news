@@ -286,6 +286,22 @@ const MAX_CANDIDATES = 40;
 // fair share of the now-larger candidate list.
 const MAX_CANDIDATES_PER_QUERY_GROUP = 8;
 
+// [2026-08-24] Observed directly: china's raw daily volume (China is covered by both
+// English "china" and, indirectly, oil/geopolitics/semiconductor queries) let it fill
+// its full 8-slot allowance almost every day, then pick up MORE representation via
+// China-mentioning articles that happened to rank into other groups. Result: China went
+// from 11.5% of the raw 30h collection to 30% of the 40-candidate pool to 40% of the
+// final 20-item shortlist - a 3.5x amplification purely from one group's news volume,
+// not from China actually mattering 3.5x more to KOSPI/KOSDAQ that day. A tighter cap
+// on just this one group (other groups keep the default 8) leaves more slots open for
+// fed_rates/oil/geopolitics/etc. to compete on their own merits instead of losing ties
+// to a group with structurally more daily output.
+const QUERY_GROUP_CANDIDATE_CAPS = { china: 4 };
+
+function candidateCapForGroup(group) {
+    return QUERY_GROUP_CANDIDATE_CAPS[group] ?? MAX_CANDIDATES_PER_QUERY_GROUP;
+}
+
 // [2026-08-04 redesign] The pipeline used to conflate "which articles are worth
 // showing" with "which articles are worth spending Gemini deep-analysis tokens
 // on" - both were capped at the same small number (7), so once deep analysis was
@@ -369,7 +385,7 @@ export function rankByHeadlineFrequency(articles) {
         if (diverse.length >= limit) break;
         const group = c.article.queryGroup ?? `__ungrouped_${c.idx}`;
         const countSoFar = perGroupCount.get(group) || 0;
-        if (countSoFar >= MAX_CANDIDATES_PER_QUERY_GROUP) continue;
+        if (countSoFar >= candidateCapForGroup(group)) continue;
         diverse.push(c);
         perGroupCount.set(group, countSoFar + 1);
     }
