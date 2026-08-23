@@ -64,10 +64,23 @@ function isBlockedSource(source) {
 // of any real semiconductor news, and Gemini deep-analysis then invented a plausible-
 // sounding Samsung/SK hynix impact story around it. Filter the title pattern at parse
 // time rather than trying to catch this downstream.
-const MARKET_RESEARCH_TITLE_PATTERN = /\bmarket\b.{0,40}\b(to reach|to hit|to grow|size|forecast|cagr)\b/i;
+// [2026-08-23] "Growth"/"Growth Driven by" slipped through the original pattern
+// (only matched "to grow", not the noun "growth") - observed directly: "Glove Port
+// Inserts Market Growth Driven by Semiconductor Fab Expansion Through 2035" reached
+// the shortlist by stuffing "Semiconductor" into the title exactly like the fabrics
+// report this filter was built to catch. Added "growth" and "outlook" as additional
+// trigger words alongside the original list.
+const MARKET_RESEARCH_TITLE_PATTERN = /\bmarket\b.{0,40}\b(to reach|to hit|to grow|growth|outlook|size|forecast|cagr)\b/i;
 
-function isMarketResearchTitle(title) {
-    return MARKET_RESEARCH_TITLE_PATTERN.test(title || '');
+// Known market-research/paid-report aggregator domains whose entire output is this kind
+// of listing - a source-level check catches title phrasings the regex above can't
+// anticipate, without needing the title to match a specific pattern at all.
+const MARKET_RESEARCH_SOURCE_DOMAINS = ['indexbox', 'openpr.com', 'marketresearch.com', 'businesswire.com'];
+
+function isMarketResearchTitle(title, source) {
+    if (MARKET_RESEARCH_TITLE_PATTERN.test(title || '')) return true;
+    const normalizedSource = (source || '').toLowerCase();
+    return MARKET_RESEARCH_SOURCE_DOMAINS.some(d => normalizedSource.includes(d));
 }
 
 export function parseRssItems(xmlText, queryGroup = null) {
@@ -94,7 +107,7 @@ export function parseRssItems(xmlText, queryGroup = null) {
             }
         }
 
-        if (rawTitle && link && !isBlockedSource(source) && !isMarketResearchTitle(rawTitle)) {
+        if (rawTitle && link && !isBlockedSource(source) && !isMarketResearchTitle(rawTitle, source)) {
             items.push({ title: rawTitle, link, pubDate, source, queryGroup });
         }
     }
