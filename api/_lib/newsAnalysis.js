@@ -606,16 +606,17 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 // prompt, at a higher per-token cost and faster free-tier quota burn.
 // [2026-08-27] 3.7-flash was returning sustained 503 "high demand" errors - new/preview
 // models see a capacity crunch right after release that per Google's own forum reports
-// can last 1-3 weeks. Tried plain gemini-3.1-flash (non-Lite) first, which 404'd (not
-// available on this account/API version). Briefly ran on 3.1-flash-lite (confirmed
-// working, same model PRO_MODEL uses), then switched to 3.7-flash-lite per user's
-// observation that Lite-tier variants have consistently been available on this account
-// even when the full-size sibling isn't (Lite tiers apparently get separate/larger
-// capacity allocations than preview-stage full models). Verified working via a live
-// /api/analyze-news call before this was committed. Revert to 3.7-flash (non-Lite) once
-// its 503s clear, if the extra instruction-following headroom is ever needed for
-// screening.
-const FLASH_MODEL = 'gemini-3.7-flash-lite';
+// can last 1-3 weeks. Tried, in order, live-verified via /api/analyze-news each time:
+//   - gemini-3.1-flash (non-Lite): 404 "not found for API version v1beta" - not
+//     available on this account/API version at all.
+//   - gemini-3.7-flash-lite: also 404, same error - the 3.7 generation's Lite variant
+//     isn't available on this account either, despite the assumption that Lite tiers
+//     get separate/wider capacity allocations than their full-size preview siblings.
+// Landed on 3.1-flash-lite: the only value actually confirmed reachable on this
+// account (PRO_MODEL below has run on it since 2026-08-04). Revert to 3.7-flash
+// (non-Lite) once its 503s clear, if screening ever needs the extra
+// instruction-following headroom over Lite.
+const FLASH_MODEL = 'gemini-3.1-flash-lite';
 // $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
 // cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
 // account. The deep-analysis task here is rule-following + structured JSON output
