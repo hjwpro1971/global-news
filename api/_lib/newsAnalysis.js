@@ -604,14 +604,19 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 // model, which is exactly how the 2026-08-04 outage above went unnoticed.
 // Note this is a full Flash, not Lite — better instruction-following for the screening
 // prompt, at a higher per-token cost and faster free-tier quota burn.
-// [2026-08-27] Temporarily stepped down 3.7-flash -> 3.1-flash (one Flash generation
-// down, not the Lite tier) after 3.7-flash started returning sustained 503 "high
-// demand" errors - new/preview models see a capacity crunch right after release that
-// per Google's own forum reports can last 1-3 weeks. Deliberately NOT 2.5-flash-lite:
-// that's the exact model already retired for new users on 2026-08-04 (see comment
-// above), so stepping down to it would trade one outage for a worse one. Revert to
-// 3.7-flash once its 503s clear.
-const FLASH_MODEL = 'gemini-3.1-flash';
+// [2026-08-27] Temporarily stepped down 3.7-flash after it started returning sustained
+// 503 "high demand" errors - new/preview models see a capacity crunch right after
+// release that per Google's own forum reports can last 1-3 weeks. First tried plain
+// gemini-3.1-flash (non-Lite) but that returned a 404 "not found for API version
+// v1beta, or is not supported for generateContent" - it isn't actually available on
+// this account/API version despite existing as a model name elsewhere. Fell back to
+// 3.1-flash-lite instead: the one value in this file's history actually confirmed
+// working on this account (PRO_MODEL below has run on it since 2026-08-04, and the
+// original comment there notes it was verified via /api/test-models). Deliberately NOT
+// 2.5-flash-lite: that's the model already retired for new users on 2026-08-04, so
+// stepping down to it would trade one outage for a worse one. Revert to 3.7-flash once
+// its 503s clear.
+const FLASH_MODEL = 'gemini-3.1-flash-lite';
 // $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
 // cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
 // account. The deep-analysis task here is rule-following + structured JSON output
