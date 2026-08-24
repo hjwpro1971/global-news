@@ -598,7 +598,13 @@ Output exactly a JSON array containing the deep analysis for EACH of the provide
 // new users and the API began returning 404 ("no longer available to new users"), which
 // silently broke the daily cron — the failure surfaced only as stale news data.
 // PRO_MODEL was already on 3.1; this constant was the one left behind.
-const FLASH_MODEL = 'gemini-3.1-flash-lite';
+// [2026-08-25] 3.1-flash-lite → 3.7-flash. Verified present in this account's
+// /v1beta/models listing (version 3.7-flash-08-2026). Pinned to an explicit version
+// rather than the `gemini-flash-latest` alias: an alias silently re-points to a new
+// model, which is exactly how the 2026-08-04 outage above went unnoticed.
+// Note this is a full Flash, not Lite — better instruction-following for the screening
+// prompt, at a higher per-token cost and faster free-tier quota burn.
+const FLASH_MODEL = 'gemini-3.7-flash';
 // $0.25/$1.50 per 1M input/output tokens (ai.google.dev/gemini-api/docs/pricing) -
 // cheaper than gemini-2.5-flash and confirmed available via /api/test-models on this
 // account. The deep-analysis task here is rule-following + structured JSON output
