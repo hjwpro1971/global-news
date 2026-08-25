@@ -66,7 +66,12 @@ export default async function handler(req, res) {
             return res.status(200).json({ success: true, hasList: true, isStale: false, data: todayData });
         }
 
-        const fallbackParams = new URLSearchParams({ select: '*', order: 'id.desc', limit: String(LIST_SIZE) });
+        // [2026-08-25] Was id.desc here while the "today" query above had already been
+        // fixed to headline_frequency_score.desc - missed updating this fallback path at
+        // the same time, so any request landing in isStale mode (today's KST window came
+        // back empty) silently reverted to insertion-order sorting. Keep both paths on
+        // the same sort so isStale doesn't also mean "unsorted."
+        const fallbackParams = new URLSearchParams({ select: '*', order: 'headline_frequency_score.desc', limit: String(LIST_SIZE) });
         const fallbackResp = await fetch(`${supabaseUrl}/rest/v1/news_shortlist?${fallbackParams.toString()}`, { headers });
         if (!fallbackResp.ok) {
             const errorText = await fallbackResp.text();
