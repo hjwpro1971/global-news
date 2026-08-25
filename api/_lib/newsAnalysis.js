@@ -501,6 +501,14 @@ differ. Select AT MOST 2 articles per underlying event/theme, prioritizing the o
 clearest direct market impact. Do NOT let a single busy news event (e.g. one day's oil-price
 story) fill most of your selection - actively look for distinct, unrelated stories/sectors so
 the final list reflects a spread of what actually matters today, not one repeated topic.
+This applies to broad ongoing THEMES, not just single news events - e.g. "US Treasury/bond
+market direction is uncertain" is one theme even across separately-timed articles (an
+explainer, an analyst forecast, a commentary on a specific investor's operations) that
+never mention the exact same headline event. If multiple articles are all just restating
+"the bond market is unsettled/uncertain/at a turning point" with different framing, that is
+still ONE theme - pick the single clearest one and use the freed slots for a genuinely
+different subject (a specific company, a specific data release, a specific policy action),
+not another restatement of the same uncertainty.
 
 For each selected article, classify it into EXACTLY ONE of these categories:
 ${JSON.stringify(NEWS_CATEGORIES)}
