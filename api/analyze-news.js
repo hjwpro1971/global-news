@@ -60,11 +60,26 @@ export default async function handler(req, res) {
 
         const supabaseUrlForShortlist = req.headers['x-supabase-url'] || process.env.SUPABASE_URL;
         const supabaseKeyForShortlist = req.headers['x-supabase-key'] || process.env.SUPABASE_KEY;
+        // [2026-08-27] Was previously fire-and-forget: a failed shortlistResp only logged
+        // server-side (console.error, invisible to whoever clicked the button) while the
+        // response body unconditionally said "Shortlist saved" regardless of what actually
+        // happened - observed directly: analyze-news returned success with that message,
+        // but get-shortlist kept showing a multi-day-old batch, meaning the save silently
+        // failed with no way for the caller to tell. Track the real outcome and surface it.
+        let shortlistSaveError = null;
         if (supabaseUrlForShortlist && supabaseKeyForShortlist) {
-            const shortlistResp = await saveShortlist(supabaseUrlForShortlist, supabaseKeyForShortlist, shortlist);
-            if (!shortlistResp.ok) {
-                console.error('[Shortlist Save Error]', await shortlistResp.text());
+            try {
+                const shortlistResp = await saveShortlist(supabaseUrlForShortlist, supabaseKeyForShortlist, shortlist);
+                if (!shortlistResp.ok) {
+                    shortlistSaveError = await shortlistResp.text();
+                    console.error('[Shortlist Save Error]', shortlistSaveError);
+                }
+            } catch (saveErr) {
+                shortlistSaveError = saveErr.message;
+                console.error('[Shortlist Save Error]', saveErr);
             }
+        } else {
+            shortlistSaveError = 'Supabase URL/Key missing';
         }
 
         // [2026-08-12] Deep analysis paused at user request - see cron-update-news.js
@@ -75,7 +90,10 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 success: true,
                 dataset: [],
-                message: 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved.'
+                message: shortlistSaveError
+                    ? `Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist save FAILED: ${shortlistSaveError}`
+                    : 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved.',
+                shortlistSaveError
             });
         }
 

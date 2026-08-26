@@ -92,11 +92,23 @@ export default async function handler(req, res) {
         const translatedTitles = await translateTitlesToKorean(shortlist.map(a => a.title), GEMINI_API_KEY);
         shortlist.forEach((a, i) => { a.titleKr = translatedTitles[i]; });
 
+        // [2026-08-27] Was fire-and-forget (log-only on failure) while the response always
+        // unconditionally said "Shortlist saved" - see analyze-news.js's matching comment
+        // for the direct evidence this silently failed with no visible signal.
+        let shortlistSaveError = null;
         if (supabaseUrl && supabaseKey) {
-            const shortlistResp = await saveShortlist(supabaseUrl, supabaseKey, shortlist);
-            if (!shortlistResp.ok) {
-                console.error('[Shortlist Save Error]', await shortlistResp.text());
+            try {
+                const shortlistResp = await saveShortlist(supabaseUrl, supabaseKey, shortlist);
+                if (!shortlistResp.ok) {
+                    shortlistSaveError = await shortlistResp.text();
+                    console.error('[Shortlist Save Error]', shortlistSaveError);
+                }
+            } catch (saveErr) {
+                shortlistSaveError = saveErr.message;
+                console.error('[Shortlist Save Error]', saveErr);
             }
+        } else {
+            shortlistSaveError = 'Supabase URL/Key missing';
         }
 
         // [2026-08-12] Deep analysis paused at user request while the collection/
@@ -111,8 +123,11 @@ export default async function handler(req, res) {
         if (process.env.DEEP_ANALYSIS_ENABLED !== 'true') {
             return res.status(200).json({
                 success: true,
-                message: 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved, no news_impacts update.',
-                shortlistCount: shortlist.length
+                message: shortlistSaveError
+                    ? `Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist save FAILED: ${shortlistSaveError}`
+                    : 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved, no news_impacts update.',
+                shortlistCount: shortlist.length,
+                shortlistSaveError
             });
         }
 
