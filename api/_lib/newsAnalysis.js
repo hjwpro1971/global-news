@@ -906,42 +906,18 @@ export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays, tabl
 // what happens downstream (see 2026-08-04 pipeline redesign notes above).
 // ==========================================================================
 
-const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
-
-// [2026-08-11] news_shortlist has no unique constraint on url, and this function has
-// always been a plain INSERT. When cron and a manual analyze-news trigger overlap (or
-// resolveCollectionWindowStart's lookback re-covers a time range already processed),
-// the same article passes screening twice and gets inserted twice with different
-// created_at timestamps - observed directly (id 72 and id 83, same url/title/source,
-// 13 minutes apart). get-shortlist.js's small `limit` then lets duplicates crowd out
-// genuinely distinct stories, which is what read as "too few / repetitive news."
-// Fetch today's (KST) already-saved urls and drop anything already present before insert.
-async function fetchTodaysShortlistUrls(supabaseUrl, supabaseKey) {
-    const nowKst = new Date(Date.now() + KST_OFFSET_MS);
-    const y = nowKst.getUTCFullYear();
-    const m = nowKst.getUTCMonth();
-    const d = nowKst.getUTCDate();
-    const startUtc = new Date(Date.UTC(y, m, d, 0, 0, 0) - KST_OFFSET_MS).toISOString();
-
-    const params = new URLSearchParams({ select: 'url', 'created_at': `gte.${startUtc}` });
-    try {
-        const resp = await fetch(`${supabaseUrl}/rest/v1/news_shortlist?${params.toString()}`, {
-            headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
-        });
-        if (!resp.ok) return new Set();
-        const rows = await resp.json();
-        return new Set(rows.map(r => r.url).filter(Boolean));
-    } catch (e) {
-        console.warn('[Shortlist Dedup Warning]', e.message);
-        return new Set();
-    }
-}
-
+// [2026-08-11] Added a same-KST-day dedup here because news_shortlist has no unique
+// constraint on url and overlapping cron/manual runs could insert the same article
+// twice. [2026-08-26] Removed: get-shortlist.js was rewritten (see its own comment) to
+// show only the single most-recently-saved batch instead of blending everything saved
+// "today" - so cross-run duplicates are no longer a display problem, the old run simply
+// isn't shown at all once a new one lands. But this dedup kept filtering against EVERY
+// run saved so far today, so on a day with several runs, each new run had most of its
+// 20 items rejected as "already seen" (observed directly: a fresh 20-item run reduced to
+// 3 saved rows) - the opposite of what get-shortlist.js now needs, which is the full,
+// intact batch to display. Old batches are still bounded by purgeOldNews (14 days) below.
 export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
-    const existingUrls = await fetchTodaysShortlistUrls(supabaseUrl, supabaseKey);
-    const deduped = shortlist.filter(item => !item.url || !existingUrls.has(item.url));
-
-    const payload = deduped.map(item => ({
+    const payload = shortlist.map(item => ({
         title: item.titleKr || item.title,
         original_title: item.originalTitle || item.title,
         source: item.source || '',
