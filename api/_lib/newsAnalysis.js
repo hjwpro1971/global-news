@@ -510,8 +510,30 @@ still ONE theme - pick the single clearest one and use the freed slots for a gen
 different subject (a specific company, a specific data release, a specific policy action),
 not another restatement of the same uncertainty.
 
+**THEME SHARE CAP**: Beyond the per-theme article cap above, no single broad macro theme
+(e.g. "Trump tariffs/geopolitics", "Fed rate hikes/hawkish commentary", "Iran war/Middle
+East tensions") should make up more than 20-25% of the ${LIST_SIZE} selected articles (i.e.
+at most 4-5 of ${LIST_SIZE}). If the candidate pool is dominated by 2-3 themes, select only
+the 1-2 clearest, highest-impact articles from each and actively fill the remaining slots
+with genuinely different sectors/subjects (e.g. batteries, biotech, autos, semiconductors,
+commodities, domestic Korean policy) even if their individual headlineFrequencyScore is
+lower - a lower-frequency but distinct-sector story is more valuable here than a 6th
+restatement of the same macro theme.
+
 For each selected article, classify it into EXACTLY ONE of these categories:
 ${JSON.stringify(NEWS_CATEGORIES)}
+Classification guide for the categories that are easiest to confuse:
+- 거시경제: global/US market-wide valuation, global GDP, broad multi-factor macro outlook
+  (e.g. "US equities' resilience to high rates", "global liquidity conditions") - use this,
+  NOT 국내증시, when the article's subject is the US or global market, not Korea's.
+- 국내증시: KOSPI/KOSDAQ index levels, Korean market flows/supply-demand, policy or data
+  that is specifically about the Korean market - reserve this for articles actually about
+  Korea's own market, not foreign markets that merely "could affect" it eventually.
+- 반도체/IT: specific big-tech earnings (Broadcom, Nvidia, etc.), AI chips, hardware supply
+  chain - use this over 기업/산업 when a named semiconductor/tech company or product is the
+  actual subject, even if a macro data point (e.g. a jobs report) is mentioned alongside it.
+- 통화정책/금리: central bank (Fed, BOK, ECB) rate decisions/commentary, treasury yields,
+  bond market moves specifically tied to policy expectations.
 
 Raw articles:
 ${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
@@ -523,7 +545,7 @@ of "reason" should be Korean:
   {
     "id": 0,
     "category": "one of the categories listed above, exactly as written",
-    "reason": "Exactly 2 Korean sentences. First sentence: what actually happened (the concrete fact/event, not a vague paraphrase of the headline). Second sentence: the specific transmission mechanism to the Korean market (which sector/index/currency, and why - not a generic \"영향을 줄 수 있습니다\")."
+    "reason": "Exactly 2 Korean sentences, in Korean. First sentence: what actually happened (the concrete fact/event, not a vague paraphrase of the headline). Second sentence: the specific transmission mechanism to the Korean market - you MUST name at least one concrete Korean industry/sector (e.g. 정유·화학·해운, 반도체 장비/소부장, 2차전지, 자동차, 바이오, 금융/은행) rather than a generic phrase like '한국 수출 기업' or '국내 기업들'. Bad: '한국 수출 기업들의 대외 리스크를 높이는 요인이 됩니다.' Good: '원유 수송 차질과 유가 변동성 확대로 정유·화학·해운 업종의 원가 부담이 커집니다.'"
   }
 ]
 `;
