@@ -42,6 +42,40 @@ export function buildRssUrls() {
     ]);
 }
 
+// 국내 6대 경제지 - 헤더 "국내뉴스" 카드용, buildRssUrls()의 글로벌 매크로 쿼리와는
+// 별개 소스. site: 필터로 각 언론사 도메인의 24시간 이내 기사만 Google News RSS로
+// 가져온다. 언론사별 자체 RSS 포맷을 각각 파싱하는 대신 기존 parseRssItems()를
+// 그대로 재사용할 수 있어 유지보수 포인트가 하나로 유지된다.
+export const DOMESTIC_ECONOMIC_OUTLETS = [
+    { group: 'hankyung', name: '한국경제', domain: 'hankyung.com' },
+    { group: 'mk', name: '매일경제', domain: 'mk.co.kr' },
+    { group: 'sedaily', name: '서울경제', domain: 'sedaily.com' },
+    { group: 'herald', name: '헤럴드경제', domain: 'heraldcorp.com' },
+    { group: 'hankookilbo', name: '한국일보', domain: 'hankookilbo.com' },
+    { group: 'ajunews', name: '아주경제', domain: 'ajunews.com' }
+];
+
+// Returns [{ url, group }], same shape as buildRssUrls(), so fetchAllRssItems() works
+// unchanged for this source too.
+export function buildDomesticRssUrls() {
+    return DOMESTIC_ECONOMIC_OUTLETS.map(({ group, domain }) => ({
+        url: buildRssUrl(`site:${domain}+when:1d`, 'ko'),
+        group
+    }));
+}
+
+// 6대 경제지는 경제 기사 외에 포토/시상식/연예 섹션도 함께 RSS에 실어 보낸다. 이런
+// 기사는 "[포토]"/"[MK포토]" 같은 대괄호 태그로 시작하는 경우가 대부분이고, 여러
+// 매체가 같은 시상식을 동시 보도하면서 headline-frequency 점수를 진짜 경제뉴스보다
+// 높게 받아 스크리닝 후보 풀(rankByHeadlineFrequency의 MAX_CANDIDATES=40)을 잠식하는
+// 문제가 실측으로 확인됐다(2026-09-02, "올해의 브랜드 대상" 포토뉴스가 헤드라인
+// 빈도 1위). Gemini 스크리닝에 넘기기 전에 로컬에서 걸러낸다.
+const NON_ECONOMIC_TITLE_PATTERN = /\[(포토|MK포토|화보|영상|카드뉴스|만평)\]|시상식|레드카펫|포토콜/;
+
+export function filterDomesticEconomicArticles(articles) {
+    return articles.filter(a => !NON_ECONOMIC_TITLE_PATTERN.test(a.title || ''));
+}
+
 // [2026-08-08] Social-media aggregator feeds (Facebook page RSS syndication is the
 // observed case) put the full post text in <title> instead of a real headline. A post
 // with 2 full sentences tokenizes to 30+ words vs. a normal headline's 5-10, so it shares
@@ -551,6 +585,49 @@ of "reason" should be Korean:
 `;
 }
 
+export const DOMESTIC_NEWS_TOP_N = 10;
+
+// 국내뉴스 카드 전용 스크리닝 프롬프트 - buildScreeningPrompt()와 달리 "한국 시장에
+// 대한 파급력"을 KOSPI/KOSDAQ 전이 경로가 아니라 국내 경제 전반(정책/기업/산업/금융/
+// 부동산 등)에 대한 실질적 영향력 기준으로 판단한다. 별도 프롬프트로 분리한 이유는
+// 카테고리 체계와 선정 기준 자체가 다르기 때문 - 같은 함수에 옵션 분기를 추가하면
+// 두 기준이 뒤섞여 어느 쪽 회귀 테스트도 신뢰할 수 없게 된다.
+export function buildDomesticScreeningPrompt(articles) {
+    return `
+당신은 대한민국 6대 경제지(한국경제/매일경제/서울경제/헤럴드경제/한국일보/아주경제)의
+지난 24시간 기사 중 오늘 가장 파급력이 큰 뉴스를 선별하는 데스크입니다.
+
+아래 기사 목록은 언론사 간 동일 사안 중복 보도 빈도로 1차 정렬되어 있습니다
+(headlineFrequencyScore가 높을수록 여러 매체가 오늘 비중 있게 다뤘다는 뜻).
+
+정확히 ${DOMESTIC_NEWS_TOP_N}개의 기사를 선정하세요. 선정 기준(우선순위 순):
+1. 국내 경제 정책(금리, 세제, 부동산, 규제) 변화 - 파급 범위가 넓고 즉시 시장/가계에 영향
+2. 국내 대기업/주요 산업(반도체, 자동차, 배터리, 금융, 조선 등)의 실적·투자·구조적 변화
+3. 국내 증시(코스피/코스닥) 자금 흐름, 외국인 수급, 지수 변동의 원인이 되는 사건
+4. 고용·물가·무역수지 등 국내 거시지표 발표
+5. 국내 경제에 직접적 파급력이 있는 대외 이슈(환율, 미국/중국 정책의 국내 전이)
+같은 사안을 다룬 여러 매체 기사는 하나로 취급하고 그중 가장 명확한 기사 하나만 선택하세요.
+한 가지 주제(예: 하나의 정책 발표)가 ${DOMESTIC_NEWS_TOP_N}개 중 3개를 초과하지 않도록
+분야를 다양하게 안배하세요. 단순 화제성 기사, 개별 종목 단신, 연예/스포츠 성격 기사는 제외합니다.
+
+각 선정 기사에 대해 다음 카테고리 중 정확히 하나를 지정하세요:
+${JSON.stringify(NEWS_CATEGORIES)}
+
+원본 기사 목록:
+${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
+
+정확히 JSON 배열만 출력하세요. 마크다운 코드블록으로 감싸지 마세요. 아래 3개 키 외에
+다른 키를 추가/번역/변경하지 마세요 ("reason"의 값만 한국어로 작성):
+[
+  {
+    "id": 0,
+    "category": "위 카테고리 중 하나, 표기 그대로",
+    "reason": "정확히 2문장, 한국어. 첫 문장: 실제로 일어난 일(헤드라인의 막연한 재서술이 아닌 구체적 사실/사건). 둘째 문장: 국내 경제/시장에 미치는 구체적 파급 경로 - '국내 기업들', '경제 전반' 같은 막연한 표현 대신 구체적인 업종/주체(예: 반도체 장비, 2차전지, 건설/부동산, 은행/금융지주, 자동차 부품)를 명시할 것."
+  }
+]
+`;
+}
+
 export function buildDeepAnalysisPrompt(selectedArticles) {
     return `
 You are a top-tier Macroeconomics and Stock Market Analyst in South Korea (여의도 애널리스트).
@@ -704,12 +781,12 @@ export async function fetchWithRetry(url, options, { retries = 1, baseDelayMs = 
 // got saved because screenArticles threw before saveShortlist was ever reached. Retry once
 // at temperature 0 (the current call already uses 0.1) before giving up, since a repeat
 // call rarely repeats the same degenerate loop.
-async function callScreeningModel(articles, apiKey, temperature) {
+async function callScreeningModel(articles, apiKey, temperature, promptBuilder = buildScreeningPrompt) {
     const flashResponse = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/${FLASH_MODEL}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            contents: [{ parts: [{ text: buildScreeningPrompt(articles) }] }],
+            contents: [{ parts: [{ text: promptBuilder(articles) }] }],
             // [2026-08-19] Raised from 8192 to 16384 after reason was expanded from 1
             // sentence to 2 (fact + specific transmission mechanism) - a clean 20-item
             // response now runs roughly 200-300 tokens/item. Still mainly a ceiling on how
@@ -822,6 +899,40 @@ export async function screenArticles(articles, apiKey) {
     }).filter(a => a.title);
 
     return enforceThemeShareCap(mapped, articles);
+}
+
+// 국내뉴스 카드 전용 - screenArticles()와 같은 응답 스키마(id/category/reason)를 쓰지만
+// 별도 프롬프트(buildDomesticScreeningPrompt)와 별도 개수(DOMESTIC_NEWS_TOP_N)를 쓰므로
+// enforceThemeShareCap(글로벌 전용 이란/관세/연준 테마 캡)은 적용하지 않는다 - 국내
+// 기사에 그 키워드 매칭 로직을 그대로 씌우면 엉뚱한 주제를 "테마"로 오인해 대체된다.
+export async function screenDomesticArticles(articles, apiKey) {
+    const screeningText = await callScreeningModel(articles, apiKey, 0.1, buildDomesticScreeningPrompt);
+
+    let screenedList;
+    try {
+        screenedList = parseGeminiJsonArray(screeningText, 'Gemini Flash domestic screening');
+    } catch (parseErr) {
+        console.warn('[Domestic Screening Retry] first response was not valid JSON, retrying once at temperature 0');
+        const retryText = await callScreeningModel(articles, apiKey, 0, buildDomesticScreeningPrompt);
+        screenedList = parseGeminiJsonArray(retryText, 'Gemini Flash domestic screening');
+    }
+
+    const byOriginalIndex = new Map(articles.map(a => [a.articleIndex, a]));
+
+    return screenedList.map(item => {
+        const source = byOriginalIndex.get(item.id);
+        return {
+            originalId: item.id,
+            title: source?.title,
+            originalTitle: source?.title,
+            url: source?.link,
+            pubDate: source?.pubDate,
+            source: source?.source,
+            headlineFrequencyScore: source?.headlineFrequencyScore ?? 0,
+            category: NEWS_CATEGORIES.includes(item.category) ? item.category : '기타',
+            reason: item.reason || ''
+        };
+    }).filter(a => a.title);
 }
 
 // [2026-08-14] Deliberately separate from screenArticles(): asking Flash to translate

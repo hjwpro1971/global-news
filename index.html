@@ -58,12 +58,12 @@
                     <div class="clock-time" id="time-seoul">--:--:-- KST</div>
                 </div>
 
-                <div class="clock-card" id="macro-indicator-card" onclick="openTossMacroModal()" style="cursor: pointer;">
+                <div class="clock-card" id="domestic-news-card" onclick="openDomesticNewsModal()" style="cursor: pointer;">
                     <div class="clock-header">
-                        <span class="city-name"><i class="fa-solid fa-globe"></i> 경제지표</span>
+                        <span class="city-name"><i class="fa-solid fa-newspaper"></i> 국내뉴스</span>
                         <span class="market-status status-open" style="background: rgba(0,210,255,0.1); color: #00d2ff; border-color: rgba(0,210,255,0.3);">Live</span>
                     </div>
-                    <div class="clock-time" style="font-size: 0.9rem;">실시간 매크로 지표 보기</div>
+                    <div class="clock-time" style="font-size: 0.9rem;">24시간 파급력 TOP 10</div>
                 </div>
             </div>
 
@@ -312,6 +312,35 @@
             <div class="modal-footer">
                 <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 100% 실시간 주요 글로벌 거시경제 지표 시세입니다.</span>
                 <button id="toss-modal-footer-close" class="btn btn-secondary">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Domestic News Top10 Modal (Independent Container) -->
+    <div id="domestic-news-modal" class="modal-backdrop hidden">
+        <div class="modal-card toss-macro-modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-meta-pills">
+                        <span class="live-beacon"></span>
+                        <span class="badge-category"><i class="fa-solid fa-newspaper text-blue"></i> 국내 6대 경제지 24시간 파급력 TOP 10</span>
+                        <span class="modal-source-time" id="domestic-news-update-time">--시 --분</span>
+                    </div>
+                    <h2 class="modal-main-title">🗞️ 국내뉴스 TOP 10</h2>
+                    <p class="modal-sub-title">한국경제 · 매일경제 · 서울경제 · 헤럴드경제 · 한국일보 · 아주경제 최근 24시간 기사 중 파급력 상위 10건</p>
+                </div>
+                <button id="domestic-news-modal-close" class="modal-close-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="domestic-news-list-container">
+                    <div class="ticker-loading">
+                        <i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> AI가 헤드라인 빈도와 파급력을 기준으로 자동 선별한 결과입니다.</span>
+                <button id="domestic-news-modal-footer-close" class="btn btn-secondary">닫기</button>
             </div>
         </div>
     </div>

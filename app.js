@@ -1050,10 +1050,24 @@ function initEventListeners() {
         });
     }
 
+    // Domestic News Modal Event Listeners
+    const closeDomesticBtn = document.getElementById('domestic-news-modal-close');
+    const closeDomesticFooterBtn = document.getElementById('domestic-news-modal-footer-close');
+    const domesticModal = document.getElementById('domestic-news-modal');
+
+    if (closeDomesticBtn) closeDomesticBtn.addEventListener('click', closeDomesticNewsModal);
+    if (closeDomesticFooterBtn) closeDomesticFooterBtn.addEventListener('click', closeDomesticNewsModal);
+    if (domesticModal) {
+        domesticModal.addEventListener('click', (e) => {
+            if (e.target === domesticModal) closeDomesticNewsModal();
+        });
+    }
+
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
             closeTossMacroModal();
+            closeDomesticNewsModal();
             closeMobileDrawer();
         }
     });
@@ -1243,6 +1257,83 @@ function closeTossMacroModal() {
 // Expose globally for inline onclick handlers
 window.openTossMacroModal = openTossMacroModal;
 window.closeTossMacroModal = closeTossMacroModal;
+
+/**
+ * Opens and closes Domestic News Top10 Modal (헤더 "국내뉴스" 카드)
+ */
+function openDomesticNewsModal() {
+    const modal = document.getElementById('domestic-news-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+    fetchDomesticNewsTop10().catch(err => console.error('[Domestic News Fetch Error]', err));
+}
+
+function closeDomesticNewsModal() {
+    const modal = document.getElementById('domestic-news-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+window.openDomesticNewsModal = openDomesticNewsModal;
+window.closeDomesticNewsModal = closeDomesticNewsModal;
+
+async function fetchDomesticNewsTop10() {
+    const container = document.getElementById('domestic-news-list-container');
+    const updateTimeEl = document.getElementById('domestic-news-update-time');
+    if (!container) return;
+
+    container.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...</div>`;
+
+    try {
+        const resp = await fetch('/api/domestic-news');
+        const data = await resp.json();
+
+        if (!resp.ok || !data.success) {
+            throw new Error(data.error || `HTTP ${resp.status}`);
+        }
+
+        renderDomesticNewsList(data.items || []);
+
+        if (updateTimeEl) {
+            const now = new Date();
+            updateTimeEl.textContent = `${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분`;
+        }
+    } catch (err) {
+        console.error('[Domestic News Fetch Error]', err);
+        container.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-triangle-exclamation text-red"></i> 뉴스를 불러오지 못했습니다: ${err.message}</div>`;
+    }
+}
+
+function renderDomesticNewsList(items) {
+    const container = document.getElementById('domestic-news-list-container');
+    if (!container) return;
+
+    if (items.length === 0) {
+        container.innerHTML = `<div class="ticker-loading">지난 24시간 동안 선별된 뉴스가 없습니다.</div>`;
+        return;
+    }
+
+    container.innerHTML = items.map(item => `
+        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="domestic-news-item">
+            <span class="domestic-news-rank">${item.rank}</span>
+            <div class="domestic-news-body">
+                <div class="domestic-news-title-row">
+                    <span class="badge-category">${item.category || '기타'}</span>
+                    <span class="domestic-news-title">${item.title}</span>
+                </div>
+                <p class="domestic-news-reason">${item.reason || ''}</p>
+                <div class="domestic-news-meta">
+                    <span>${item.source || ''}</span>
+                    <span>${item.pubDate ? new Date(item.pubDate).toLocaleString('ko-KR') : ''}</span>
+                </div>
+            </div>
+        </a>
+    `).join('');
+}
 
 /**
  * Renders macro indicators list to #toss-macro-grid-modal-container & #toss-macro-ticker-container.
