@@ -728,6 +728,63 @@ async function callScreeningModel(articles, apiKey, temperature) {
     return extractGeminiText(flashData, 'Gemini Flash screening');
 }
 
+// [2026-08-27] The prompt's THEME SHARE CAP (see buildScreeningPrompt) asks Gemini to
+// cap any one broad theme at 20-25% of the list, but a Lite-tier model doesn't reliably
+// self-audit that across 20 picks - observed directly: an Iran-war-heavy news day still
+// produced 6/20 (30%) Iran/Hormuz-themed articles despite the explicit instruction and
+// example. Enforce it in code instead of trusting the model: count how many selected
+// articles share a broad-theme keyword, and swap out the lowest-scoring excess ones for
+// the best-scoring not-yet-selected candidates from the original 40-item pool.
+const BROAD_THEME_KEYWORDS = [
+    { theme: 'iran_middle_east', pattern: /이란|호르무즈|중동|hormuz|iran|middle east/i },
+    { theme: 'trump_tariffs', pattern: /트럼프|관세|무역\s*전쟁|tariff|trade war/i },
+    { theme: 'fed_rates', pattern: /연준|금리|fed\b|rate hike|treasury yield|국채\s*금리/i }
+];
+const MAX_PER_BROAD_THEME = 4; // ~20% of LIST_SIZE(20) - matches the prompt's stated cap
+
+function enforceThemeShareCap(selected, allCandidates) {
+    const usedIds = new Set(selected.map(s => s.originalId));
+    const result = [...selected];
+
+    for (const { pattern } of BROAD_THEME_KEYWORDS) {
+        const matching = result
+            .map((item, idx) => ({ item, idx }))
+            .filter(({ item }) => pattern.test(item.title || ''));
+        if (matching.length <= MAX_PER_BROAD_THEME) continue;
+
+        // Keep the highest-scoring MAX_PER_BROAD_THEME, replace the rest.
+        matching.sort((a, b) => (b.item.headlineFrequencyScore ?? 0) - (a.item.headlineFrequencyScore ?? 0));
+        const toReplace = matching.slice(MAX_PER_BROAD_THEME);
+
+        for (const { idx } of toReplace) {
+            const replacement = allCandidates
+                .filter(c => !usedIds.has(c.articleIndex) && !pattern.test(c.title || ''))
+                .sort((a, b) => (b.headlineFrequencyScore ?? 0) - (a.headlineFrequencyScore ?? 0))[0];
+            if (!replacement) continue; // no non-theme candidate left; leave as-is rather than drop a slot
+
+            usedIds.delete(result[idx].originalId);
+            usedIds.add(replacement.articleIndex);
+            // This swap-in never went through Gemini, so it has no real category/reason -
+            // reusing the article it's replacing would attach a completely wrong reason
+            // to the new headline. '기타' + a neutral marker are honest placeholders; the
+            // downstream UI shows the reason as-is, so this must never look like an AI
+            // judgment about the replacement article.
+            result[idx] = {
+                originalId: replacement.articleIndex,
+                title: replacement.title,
+                originalTitle: replacement.title,
+                url: replacement.link,
+                pubDate: replacement.pubDate,
+                source: replacement.source,
+                headlineFrequencyScore: replacement.headlineFrequencyScore ?? 0,
+                category: '기타',
+                reason: '테마 편중 완화를 위해 자동 대체된 기사입니다.'
+            };
+        }
+    }
+    return result;
+}
+
 export async function screenArticles(articles, apiKey) {
     const screeningText = await callScreeningModel(articles, apiKey, 0.1);
 
@@ -746,7 +803,7 @@ export async function screenArticles(articles, apiKey) {
     // original index so `originalId` stays valid once it reaches deepAnalyzeArticles.
     const byOriginalIndex = new Map(articles.map(a => [a.articleIndex, a]));
 
-    return screenedList.map(item => {
+    const mapped = screenedList.map(item => {
         const source = byOriginalIndex.get(item.id);
         return {
             originalId: item.id,
@@ -763,6 +820,8 @@ export async function screenArticles(articles, apiKey) {
             reason: item.reason || ''
         };
     }).filter(a => a.title);
+
+    return enforceThemeShareCap(mapped, articles);
 }
 
 // [2026-08-14] Deliberately separate from screenArticles(): asking Flash to translate
