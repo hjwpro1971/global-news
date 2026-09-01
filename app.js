@@ -246,8 +246,6 @@ function updateMetricsUI(filteredData) {
 
     const metricEl = document.getElementById('metric-total-news');
     if (metricEl) metricEl.textContent = `총 수집 뉴스 ${totalCount}건 | 호재 ${bullCount}건 | 악재 ${bearCount}건`;
-    const totalNewsCardEl = document.getElementById('total-news-count');
-    if (totalNewsCardEl) totalNewsCardEl.textContent = `총 수집 뉴스 ${totalCount}건`;
     document.getElementById('news-count-badge').textContent = `${filteredData.length}개 분석 완료`;
 }
 
