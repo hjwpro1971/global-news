@@ -713,7 +713,7 @@ async function fetchLiveRssNews(forceRefresh = false, autoTriggerPipeline = true
             // but we must NOT start the paid Gemini pipeline on our own - only the
             // "뉴스분석" button click may do that.
             appState.isSimulating = false;
-            updateConsoleProgress(0, "[알림] 오늘자 분석 데이터가 없습니다. '뉴스분석' 버튼을 눌러 새로 생성하세요.");
+            updateConsoleProgress(0, "[알림] 오늘자 분석 데이터가 없습니다. '해외뉴스' 버튼을 눌러 새로 생성하세요.");
             try { renderApp(); } catch (err) { console.error("Render error:", err); }
             return;
         }
@@ -806,7 +806,7 @@ function runPipelineSimulation() {
         stopRunBtnProgress();
         if (runBtn) {
             runBtn.disabled = false;
-            runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">뉴스분석</span>`;
+            runBtn.innerHTML = `<i class="fa-solid fa-arrows-rotate"></i> <span class="btn-text" style="font-weight: bold;">해외뉴스</span>`;
         }
         setDataActionsDisabled(false);
         appState.isSimulating = false;
