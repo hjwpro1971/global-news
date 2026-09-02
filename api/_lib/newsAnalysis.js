@@ -55,11 +55,18 @@ export const DOMESTIC_ECONOMIC_OUTLETS = [
     { group: 'ajunews', name: '아주경제', domain: 'ajunews.com' }
 ];
 
+// [2026-09-02] site:도메인 단독 검색은 그 언론사의 전 섹션(정치/사회/연예/스포츠 포함)을
+// 다 가져온다 - 실측 확인: 국내뉴스 후보 40건 중 절반 가까이가 연예(mk.co.kr 드라마
+// 기사 다수)/사건사고/지자체 미담이었음. 검색어 자체에 경제 키워드를 OR로 추가해
+// 수집 단계에서부터 경제 관련어가 있는 기사만 가져오도록 좁힘 - filterDomesticEconomicArticles
+// (포토/시상식 패턴만 거름)만으로는 이 정도 비중을 감당 못 함이 실측으로 확인됨.
+const DOMESTIC_ECONOMIC_KEYWORDS = '경제+OR+증시+OR+코스피+OR+코스닥+OR+기업+OR+금리+OR+산업+OR+투자+OR+수출';
+
 // Returns [{ url, group }], same shape as buildRssUrls(), so fetchAllRssItems() works
 // unchanged for this source too.
 export function buildDomesticRssUrls() {
     return DOMESTIC_ECONOMIC_OUTLETS.map(({ group, domain }) => ({
-        url: buildRssUrl(`site:${domain}+when:1d`, 'ko'),
+        url: buildRssUrl(`site:${domain}+(${DOMESTIC_ECONOMIC_KEYWORDS})+when:1d`, 'ko'),
         group
     }));
 }
