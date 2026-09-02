@@ -38,37 +38,6 @@
                 </div>
             </div>
 
-            <!-- Macro Trend Chart -->
-            <!-- [2026-08-14] Hidden while deep analysis (news_impacts, Gemini Pro) stays
-                 paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - get-trend-data.js
-                 sources this from news_impacts.impact_score, which has stopped updating,
-                 so the chart only ever shows stale pre-pause data or an empty state. Kept
-                 in the DOM (not deleted) since app.js still calls document.getElementById
-                 ('trendChart') on it; that call is a no-op when the canvas is hidden. -->
-            <div class="trend-chart-container" style="display:none;">
-                <div class="trend-chart-header">
-                    <h3><i class="fa-solid fa-chart-area text-blue" style="margin-right: 8px;"></i> 글로벌 증시 온도 (최근 7일)</h3>
-                    <span style="font-size: 0.75rem; color: #8892b0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;">+ 호재 / - 악재</span>
-                </div>
-                <div style="height: 180px; width: 100%;">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Header Quick Control Actions -->
-            <div class="header-actions" style="display: flex; gap: 10px; width: 100%;">
-                <button id="btn-open-toss-macro-modal" class="btn btn-secondary glow-btn" style="padding: 10px; border-radius: 8px; border: 1px solid #00d2ff; background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openTossMacroModal()">
-                    <span class="live-beacon"></span>
-                    <i class="fa-solid fa-globe"></i>
-                    <span class="btn-text" style="font-weight: bold;">경제 지표</span>
-
-                </button>
-                <button id="btn-run-simulation" class="btn btn-primary glow-btn" style="padding: 10px; border-radius: 8px; border: none; background: #00d2ff; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                    <span class="btn-text" style="font-weight: bold;">뉴스분석</span>
-                </button>
-            </div>
-
             <!-- Real-time Global Market Clocks -->
             <div class="market-clocks-bar">
                 <div class="clock-card" id="clock-ny">
@@ -96,6 +65,37 @@
                     </div>
                     <div class="clock-time" style="font-size: 0.9rem;">24시간 파급력 TOP 10</div>
                 </div>
+            </div>
+
+            <!-- Macro Trend Chart -->
+            <!-- [2026-08-14] Hidden while deep analysis (news_impacts, Gemini Pro) stays
+                 paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - get-trend-data.js
+                 sources this from news_impacts.impact_score, which has stopped updating,
+                 so the chart only ever shows stale pre-pause data or an empty state. Kept
+                 in the DOM (not deleted) since app.js still calls document.getElementById
+                 ('trendChart') on it; that call is a no-op when the canvas is hidden. -->
+            <div class="trend-chart-container" style="display:none;">
+                <div class="trend-chart-header">
+                    <h3><i class="fa-solid fa-chart-area text-blue" style="margin-right: 8px;"></i> 글로벌 증시 온도 (최근 7일)</h3>
+                    <span style="font-size: 0.75rem; color: #8892b0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;">+ 호재 / - 악재</span>
+                </div>
+                <div style="height: 180px; width: 100%;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Header Quick Control Actions -->
+            <div class="header-actions" style="display: flex; gap: 10px; width: 100%;">
+                <button id="btn-open-toss-macro-modal" class="btn btn-secondary glow-btn" style="padding: 10px; border-radius: 8px; border: 1px solid #00d2ff; background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openTossMacroModal()">
+                    <span class="live-beacon"></span>
+                    <i class="fa-solid fa-globe"></i>
+                    <span class="btn-text" style="font-weight: bold;">경제 지표</span>
+                    
+                </button>
+                <button id="btn-run-simulation" class="btn btn-primary glow-btn" style="padding: 10px; border-radius: 8px; border: none; background: #00d2ff; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span class="btn-text" style="font-weight: bold;">뉴스분석</span>
+                </button>
             </div>
         </div>
     </header>
