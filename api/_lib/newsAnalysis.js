@@ -585,7 +585,11 @@ of "reason" should be Korean:
 `;
 }
 
-export const DOMESTIC_NEWS_TOP_N = 10;
+// [2026-09-02] 10 -> 20 (사용자 요청) - 아래 프롬프트의 "정확히 N개 선정" 및
+// "한 주제가 N개 중 M개를 초과하지 않도록"가 이 상수를 그대로 참조하므로 함께 반영됨.
+export const DOMESTIC_NEWS_TOP_N = 20;
+// 10건 기준 "3개 초과 금지"였던 테마 다양성 상한(30%)을 20건에도 동일 비율로 유지.
+const DOMESTIC_THEME_MAX = 6;
 
 // 국내뉴스 카드 전용 스크리닝 프롬프트 - buildScreeningPrompt()와 달리 "한국 시장에
 // 대한 파급력"을 KOSPI/KOSDAQ 전이 경로가 아니라 국내 경제 전반(정책/기업/산업/금융/
@@ -607,7 +611,7 @@ export function buildDomesticScreeningPrompt(articles) {
 4. 고용·물가·무역수지 등 국내 거시지표 발표
 5. 국내 경제에 직접적 파급력이 있는 대외 이슈(환율, 미국/중국 정책의 국내 전이)
 같은 사안을 다룬 여러 매체 기사는 하나로 취급하고 그중 가장 명확한 기사 하나만 선택하세요.
-한 가지 주제(예: 하나의 정책 발표)가 ${DOMESTIC_NEWS_TOP_N}개 중 3개를 초과하지 않도록
+한 가지 주제(예: 하나의 정책 발표)가 ${DOMESTIC_NEWS_TOP_N}개 중 ${DOMESTIC_THEME_MAX}개를 초과하지 않도록
 분야를 다양하게 안배하세요. 단순 화제성 기사, 개별 종목 단신, 연예/스포츠 성격 기사는 제외합니다.
 
 각 선정 기사에 대해 다음 카테고리 중 정확히 하나를 지정하세요:
