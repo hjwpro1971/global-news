@@ -799,9 +799,22 @@ function runPipelineSimulation() {
     if (appState.isSimulating) return;
 
     // [2026-09-02] Gated behind the logo-icon toggle (appState.collectMode) - clicking
-    // 해외뉴스 while blue (read-only) just re-renders whatever's already saved, no API
-    // call. Only red (collectMode true) actually re-collects. See toggleCollectMode().
+    // 해외뉴스 while blue (read-only) just re-reads whatever's already saved via
+    // /api/get-shortlist, no paid pipeline call. Only red (collectMode true) actually
+    // re-collects. See toggleCollectMode().
+    //
+    // [2026-09-02 fix] fetchAndRenderShortlist() has an early-return guard for when
+    // appState.shortlistPanelMode is 'domestic' (so pipeline runs/page loads don't
+    // clobber a domestic-news view the user explicitly switched to) - but that guard
+    // also silently swallowed an explicit 해외뉴스 click while viewing domestic news,
+    // which read as "the button does nothing." Force the panel back to 'shortlist'
+    // first so a manual click always actually shows something.
     if (!appState.collectMode) {
+        appState.shortlistPanelMode = 'shortlist';
+        const domesticBtn = document.getElementById('btn-domestic-news');
+        if (domesticBtn) domesticBtn.classList.remove('active-toggle');
+        const titleEl = document.getElementById('shortlist-section-title');
+        if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스';
         fetchAndRenderShortlist();
         return;
     }
@@ -1479,6 +1492,12 @@ async function fetchAndRenderShortlist() {
     const noResultsEl = document.getElementById('shortlist-no-results');
     const countBadge = document.getElementById('shortlist-count-badge');
     if (!gridEl) return;
+
+    // [2026-09-02] Visual feedback so a manual (blue-mode) 해외뉴스 click doesn't look
+    // like a no-op while the fetch is in flight - this call always hits the network even
+    // in read-only mode, it just skips the paid pipeline, so a spinner is warranted.
+    gridEl.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 저장된 뉴스 불러오는 중...</div>`;
+    if (noResultsEl) noResultsEl.classList.add('hidden');
 
     try {
         const dbHeaders = {};
