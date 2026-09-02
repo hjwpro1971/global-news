@@ -182,7 +182,14 @@ const appState = {
     // [2026-09-02] Tracks which content currently occupies #shortlist-section - 'shortlist'
     // (default, news_shortlist via get-shortlist.js) or 'domestic' (국내뉴스 TOP 10 via
     // /api/domestic-news). See toggleDomesticNewsPanel().
-    shortlistPanelMode: 'shortlist'
+    shortlistPanelMode: 'shortlist',
+    // [2026-09-02] Manual toggle via the logo icon (GLOBAL MACRO News 앞 아이콘) - user
+    // request: clicking 국내뉴스/해외뉴스 every time was burning through Gemini API calls,
+    // so collection is now gated behind an explicit switch instead of firing on every
+    // button click. false (blue) = read-only, buttons just show the last saved DB result.
+    // true (red) = the next button click actually re-collects and saves. No auto-timeout -
+    // stays in whichever state the user last set it to, persisted across reloads.
+    collectMode: localStorage.getItem('collect_mode') === 'true'
 };
 
 function getFilteredDataset() {
@@ -791,6 +798,14 @@ function setDataActionsDisabled(disabled) {
 function runPipelineSimulation() {
     if (appState.isSimulating) return;
 
+    // [2026-09-02] Gated behind the logo-icon toggle (appState.collectMode) - clicking
+    // 해외뉴스 while blue (read-only) just re-renders whatever's already saved, no API
+    // call. Only red (collectMode true) actually re-collects. See toggleCollectMode().
+    if (!appState.collectMode) {
+        fetchAndRenderShortlist();
+        return;
+    }
+
     appState.isSimulating = true;
     const runBtn = document.getElementById('btn-run-simulation');
 
@@ -1291,11 +1306,17 @@ async function fetchAndRenderDomesticNews() {
     const countBadge = document.getElementById('shortlist-count-badge');
     if (!gridEl) return;
 
-    gridEl.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...</div>`;
+    // [2026-09-02] Gated behind the logo-icon toggle (appState.collectMode) - red re-runs
+    // the live pipeline (/api/domestic-news, spends Gemini calls); blue just reads back
+    // whatever was last saved (/api/get-domestic-news, no API cost). See toggleCollectMode().
+    const endpoint = appState.collectMode ? '/api/domestic-news' : '/api/get-domestic-news';
+    gridEl.innerHTML = appState.collectMode
+        ? `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...</div>`
+        : `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 저장된 국내뉴스 불러오는 중...</div>`;
     if (noResultsEl) noResultsEl.classList.add('hidden');
 
     try {
-        const resp = await fetch('/api/domestic-news');
+        const resp = await fetch(endpoint);
         const data = await resp.json();
         if (!resp.ok || !data.success) throw new Error(data.error || `HTTP ${resp.status}`);
 
@@ -1308,7 +1329,9 @@ async function fetchAndRenderDomesticNews() {
         if (items.length === 0) {
             gridEl.innerHTML = '';
             if (noResultsEl) {
-                noResultsEl.querySelector('p').textContent = '지난 24시간 동안 선별된 국내 뉴스가 없습니다.';
+                noResultsEl.querySelector('p').textContent = appState.collectMode
+                    ? '지난 24시간 동안 선별된 국내 뉴스가 없습니다.'
+                    : '아직 저장된 국내뉴스가 없습니다. 로고 아이콘을 눌러 수집 모드로 전환한 뒤 다시 시도해주세요.';
                 noResultsEl.classList.remove('hidden');
             }
             return;
@@ -1424,6 +1447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    applyCollectModeUI();
     fetchTossMacroIndicators();
     startGlobalMarketClocks();
     initEventListeners();
@@ -1505,16 +1529,33 @@ async function fetchAndRenderShortlist() {
     }
 }
 
-// Cache clearing function
-window.clearCacheAndReload = function() {
+// [2026-09-02] Replaces the old "clear cache" click handler. Toggling INTO collect mode
+// (blue -> red) also clears localStorage - turning the switch on means "I want fresh
+// data next", so folding the old cache-clear behavior into that transition keeps it
+// available without a separate confirm() dialog. Toggling OFF (red -> blue) doesn't
+// touch the cache - the user is just going back to read-only viewing.
+function applyCollectModeUI() {
+    const icon = document.getElementById('logo-icon');
+    if (!icon) return;
+    icon.classList.toggle('collect-mode-on', appState.collectMode);
+    icon.title = appState.collectMode
+        ? '빨간색: 클릭 시 새로 수집 (다시 누르면 저장된 뉴스 보기로 전환)'
+        : '파란색: 저장된 뉴스 보기 (클릭하면 새로 수집하는 모드로 전환)';
+}
+
+window.toggleCollectMode = function() {
     if (appState.isSimulating) {
         alert('뉴스 수집/분석이 진행 중입니다. 완료된 후 다시 시도해주세요.');
         return;
     }
-    if (confirm('로컬 캐시를 초기화하고 데이터를 새로 불러오시겠습니까?')) {
+    appState.collectMode = !appState.collectMode;
+    localStorage.setItem('collect_mode', String(appState.collectMode));
+    if (appState.collectMode) {
+        const savedMode = localStorage.getItem('collect_mode');
         localStorage.clear();
-        location.reload();
+        localStorage.setItem('collect_mode', savedMode);
     }
+    applyCollectModeUI();
 };
 
 // ==========================================================================

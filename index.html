@@ -30,7 +30,11 @@
     <header class="app-header">
         <div class="header-container">
             <div class="brand-section">
-                <div class="logo-icon" onclick="clearCacheAndReload()" style="cursor: pointer;" title="캐시 초기화">
+                <!-- [2026-09-02] Was a "clear cache" button - now a manual collect/read-only
+                     mode toggle (see toggleCollectMode in app.js). Red = 국내뉴스/해외뉴스
+                     button clicks will re-collect via the paid API; blue = read-only,
+                     buttons just show the last saved DB result. -->
+                <div id="logo-icon" class="logo-icon" onclick="toggleCollectMode()" style="cursor: pointer;" title="파란색: 저장된 뉴스 보기 / 빨간색: 클릭 시 새로 수집">
                     <i class="fa-solid fa-chart-line-up"></i>
                 </div>
                 <div class="brand-text">
