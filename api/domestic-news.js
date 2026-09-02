@@ -1,15 +1,18 @@
 import {
     buildDomesticRssUrls, fetchAllRssItems, rankByHeadlineFrequency,
-    screenDomesticArticles, DOMESTIC_NEWS_TOP_N, filterDomesticEconomicArticles
+    screenDomesticArticles, DOMESTIC_NEWS_TOP_N, filterDomesticEconomicArticles,
+    saveShortlist
 } from './_lib/newsAnalysis.js';
 
 export const maxDuration = 30;
 
-// 헤더 "국내뉴스" 카드 전용, 온디맨드(클릭 시점) 엔드포인트. 글로벌 파이프라인
-// (analyze-news.js / cron-update-news.js)과 달리 Supabase에 저장하지 않고, fetch_state
-// 워터마크/락도 건드리지 않는다 - 그 두 상태는 글로벌 매크로 수집 전용이라 공유하면
-// 서로의 증분수집 기준시각과 동시실행 락을 오염시킨다. 매 클릭마다 최근 24시간을
-// 다시 스크리닝하는 단순한 요청-응답 구조로 충분하다(딥분석 없음, 스크리닝만).
+// 헤더 "국내뉴스" 버튼 클릭 시 호출되는 엔드포인트. [2026-09-02] 이전에는 매번
+// 재수집만 하고 저장은 안 하는 순수 요청-응답 구조였는데, 사용자 요청으로 이제
+// domestic_news_shortlist 테이블에 저장까지 함 - get-domestic-news.js가 이
+// 테이블에서 "가장 최근 저장된 배치"만 조회해 버튼을 다시 누르기 전까지는 그
+// 결과를 그대로 보여줌(news_shortlist/get-shortlist.js와 동일한 저장->조회 패턴).
+// fetch_state 워터마크/락은 여전히 건드리지 않는다 - 그건 글로벌 파이프라인
+// 전용이라 공유하면 서로의 증분수집 기준시각과 동시실행 락을 오염시킨다.
 export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -66,7 +69,23 @@ export default async function handler(req, res) {
                 reason: item.reason
             }));
 
-        return res.status(200).json({ success: true, items: top10 });
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_KEY;
+        let saveError = null;
+        if (supabaseUrl && supabaseKey && top10.length > 0) {
+            try {
+                const saveResp = await saveShortlist(supabaseUrl, supabaseKey, top10, 'domestic_news_shortlist');
+                if (!saveResp.ok) {
+                    saveError = await saveResp.text();
+                    console.error('[Domestic News Save Error]', saveError);
+                }
+            } catch (saveErr) {
+                saveError = saveErr.message;
+                console.error('[Domestic News Save Error]', saveErr);
+            }
+        }
+
+        return res.status(200).json({ success: true, items: top10, saveError });
     } catch (error) {
         console.error('[Domestic News Error]', error);
         return res.status(500).json({ error: error.message });

@@ -1108,7 +1108,11 @@ export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays, tabl
 // 20 items rejected as "already seen" (observed directly: a fresh 20-item run reduced to
 // 3 saved rows) - the opposite of what get-shortlist.js now needs, which is the full,
 // intact batch to display. Old batches are still bounded by purgeOldNews (14 days) below.
-export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
+// [2026-09-02] `table` parameterized so domestic-news.js can reuse this for
+// domestic_news_shortlist instead of duplicating the insert logic. Deliberately a
+// separate table from news_shortlist, not a shared one with a type column - see
+// supabase-domestic-news.sql for why (different trigger/lock semantics per source).
+export async function saveShortlist(supabaseUrl, supabaseKey, shortlist, table = 'news_shortlist') {
     const payload = shortlist.map(item => ({
         title: item.titleKr || item.title,
         original_title: item.originalTitle || item.title,
@@ -1125,16 +1129,17 @@ export async function saveShortlist(supabaseUrl, supabaseKey, shortlist) {
         // downstream kept working because it never touches this table, so the failure was
         // invisible outside news_shortlist going stale. Round here so this can never
         // recur even if another float-producing scoring tweak lands later.
-        headline_frequency_score: Math.round(item.headlineFrequencyScore ?? 0)
+        headline_frequency_score: Math.round(item.headlineFrequencyScore ?? 0),
+        ...(item.rank != null ? { rank: item.rank } : {})
     }));
 
-    await purgeOldNews(supabaseUrl, supabaseKey, 14, 'news_shortlist');
+    await purgeOldNews(supabaseUrl, supabaseKey, 14, table);
 
     if (payload.length === 0) {
         return { ok: true, status: 200, text: async () => '[]' };
     }
 
-    return fetch(`${supabaseUrl}/rest/v1/news_shortlist`, {
+    return fetch(`${supabaseUrl}/rest/v1/${table}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
