@@ -295,6 +295,37 @@ function sharesEventAnchor(setA, setB) {
     return false;
 }
 
+// [2026-09-03] Same cross-language clustering gap as EVENT_ANCHOR_TOKENS above, but for
+// domestic index-move stories: "코스피" is too generic to add as a fixed anchor (it
+// appears in unrelated KOSPI stories every single day, e.g. a record high next week
+// would wrongly cluster with today's crash). Instead, treat two headlines as the same
+// event only when they share BOTH "코스피"/"코스닥"/"kospi"/"kosdaq" AND a specific
+// number (an index level like "6500" or a percentage like "3.99") - that combination is
+// unique to one day's specific move, not the topic in general. Observed directly
+// 2026-09-03: 5 of 40 candidates were all today's "코스피 3.99%/4% 급락" headline in
+// different phrasing, none of which clustered, wasting slots that could have surfaced
+// more genuinely distinct stories.
+const INDEX_WORDS = new Set(['코스피', '코스닥', 'kospi', 'kosdaq']);
+
+function sharesIndexMoveNumber(setA, setB) {
+    const hasIndexWordA = [...setA].some(t => INDEX_WORDS.has(t));
+    const hasIndexWordB = [...setB].some(t => INDEX_WORDS.has(t));
+    if (!hasIndexWordA || !hasIndexWordB) return false;
+
+    // /^\d+$/ tokens only - tokenize() already split "3.99%" into "3"/"99" and "6500대"
+    // into "6500대" (조사 stripped down to "6500" if "대" were a particle, but it isn't,
+    // so match the leading digits explicitly instead of requiring an exact numeric token).
+    const numbersOf = (set) => new Set(
+        [...set].flatMap(t => (t.match(/\d{2,}/g) || []))
+    );
+    const numsA = numbersOf(setA);
+    const numsB = numbersOf(setB);
+    for (const n of numsA) {
+        if (numsB.has(n)) return true;
+    }
+    return false;
+}
+
 function sourcePriorityRank(source) {
     const s = (source || '').toLowerCase();
     const idx = SOURCE_PRIORITY.findIndex(p => s.includes(p));
@@ -395,7 +426,8 @@ export function rankByHeadlineFrequency(articles) {
         for (let j = i + 1; j < scored.length; j++) {
             if (used[j]) continue;
             const similar = jaccardSimilarity(scored[i].tokens, scored[j].tokens) >= SIMILARITY_CLUSTER_THRESHOLD
-                || sharesEventAnchor(scored[i].tokens, scored[j].tokens);
+                || sharesEventAnchor(scored[i].tokens, scored[j].tokens)
+                || sharesIndexMoveNumber(scored[i].tokens, scored[j].tokens);
             if (similar) {
                 cluster.push(scored[j]);
                 used[j] = true;
