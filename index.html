@@ -58,12 +58,15 @@
                     <div class="clock-time" id="time-seoul">--:--:-- KST</div>
                 </div>
 
-                <div class="clock-card" id="domestic-news-card" onclick="openDomesticNewsModal()" style="cursor: pointer;">
+                <!-- [2026-09-02] Moved here from header-actions (was btn-open-toss-macro-modal
+                     in the button row) - now styled as a clock-card to sit next to Seoul,
+                     per user request. Click behavior (openTossMacroModal) unchanged. -->
+                <div class="clock-card" id="clock-macro" onclick="openTossMacroModal()" style="cursor: pointer;">
                     <div class="clock-header">
-                        <span class="city-name"><i class="fa-solid fa-newspaper"></i> 국내뉴스</span>
+                        <span class="city-name"><i class="fa-solid fa-globe"></i> 경제 지표</span>
                         <span class="market-status status-open" style="background: rgba(0,210,255,0.1); color: #00d2ff; border-color: rgba(0,210,255,0.3);">Live</span>
                     </div>
-                    <div class="clock-time" style="font-size: 0.9rem;">24시간 파급력 TOP 10</div>
+                    <div class="clock-time" style="font-size: 0.9rem;">실시간 거시지표 보기</div>
                 </div>
             </div>
 
@@ -85,12 +88,16 @@
             </div>
 
             <!-- Header Quick Control Actions -->
+            <!-- [2026-09-02] btn-open-toss-macro-modal moved out (now clock-macro above).
+                 btn-domestic-news moved in from the market-clocks-bar (was domestic-news-card,
+                 opened a modal) - now styled like btn-run-simulation and, on click, replaces
+                 the #shortlist-section content with domestic news instead of opening a modal
+                 (see toggleDomesticNewsPanel in app.js). -->
             <div class="header-actions" style="display: flex; gap: 10px; width: 100%;">
-                <button id="btn-open-toss-macro-modal" class="btn btn-secondary glow-btn" style="padding: 10px; border-radius: 8px; border: 1px solid #00d2ff; background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openTossMacroModal()">
+                <button id="btn-domestic-news" class="btn btn-secondary glow-btn" style="padding: 10px; border-radius: 8px; border: 1px solid #00d2ff; background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="국내 6대 경제지 24시간 파급력 TOP 10">
                     <span class="live-beacon"></span>
-                    <i class="fa-solid fa-globe"></i>
-                    <span class="btn-text" style="font-weight: bold;">경제 지표</span>
-                    
+                    <i class="fa-solid fa-newspaper"></i>
+                    <span class="btn-text" style="font-weight: bold;">국내뉴스</span>
                 </button>
                 <button id="btn-run-simulation" class="btn btn-primary glow-btn" style="padding: 10px; border-radius: 8px; border: none; background: #00d2ff; color: #111; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;" title="실시간 파이프라인 데이터 재수집 및 파이프라인 재실행">
                     <i class="fa-solid fa-arrows-rotate"></i>
@@ -121,7 +128,7 @@
                 <section class="news-list-section" id="shortlist-section">
                     <div class="news-list-header">
                         <div class="title-with-count">
-                            <h2><i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스</h2>
+                            <h2 id="shortlist-section-title"><i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스</h2>
                             <span class="badge-count" id="shortlist-count-badge">0개</span>
                         </div>
                     </div>
@@ -312,35 +319,6 @@
             <div class="modal-footer">
                 <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 100% 실시간 주요 글로벌 거시경제 지표 시세입니다.</span>
                 <button id="toss-modal-footer-close" class="btn btn-secondary">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Domestic News Top10 Modal (Independent Container) -->
-    <div id="domestic-news-modal" class="modal-backdrop hidden">
-        <div class="modal-card toss-macro-modal-card">
-            <div class="modal-header">
-                <div class="modal-title-group">
-                    <div class="modal-meta-pills">
-                        <span class="live-beacon"></span>
-                        <span class="badge-category"><i class="fa-solid fa-newspaper text-blue"></i> 국내 6대 경제지 24시간 파급력 TOP 10</span>
-                        <span class="modal-source-time" id="domestic-news-update-time">--시 --분</span>
-                    </div>
-                    <h2 class="modal-main-title">🗞️ 국내뉴스 TOP 10</h2>
-                    <p class="modal-sub-title">한국경제 · 매일경제 · 서울경제 · 헤럴드경제 · 한국일보 · 아주경제 최근 24시간 기사 중 파급력 상위 10건</p>
-                </div>
-                <button id="domestic-news-modal-close" class="modal-close-btn" aria-label="Close modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="domestic-news-list-container">
-                    <div class="ticker-loading">
-                        <i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> AI가 헤드라인 빈도와 파급력을 기준으로 자동 선별한 결과입니다.</span>
-                <button id="domestic-news-modal-footer-close" class="btn btn-secondary">닫기</button>
             </div>
         </div>
     </div>

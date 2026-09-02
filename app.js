@@ -178,7 +178,11 @@ const appState = {
     selectedStock: null,
     sortBy: "impact-desc",
     currentModalNewsId: null,
-    isSimulating: false
+    isSimulating: false,
+    // [2026-09-02] Tracks which content currently occupies #shortlist-section - 'shortlist'
+    // (default, news_shortlist via get-shortlist.js) or 'domestic' (국내뉴스 TOP 10 via
+    // /api/domestic-news). See toggleDomesticNewsPanel().
+    shortlistPanelMode: 'shortlist'
 };
 
 function getFilteredDataset() {
@@ -1023,6 +1027,11 @@ function initEventListeners() {
         runSimBtn.addEventListener('click', runPipelineSimulation);
     }
 
+    const domesticNewsBtn = document.getElementById('btn-domestic-news');
+    if (domesticNewsBtn) {
+        domesticNewsBtn.addEventListener('click', toggleDomesticNewsPanel);
+    }
+
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const modalFooterClose = document.getElementById('modal-footer-close');
     const modalBackdrop = document.getElementById('modal-backdrop');
@@ -1036,6 +1045,9 @@ function initEventListeners() {
     }
 
     // Toss Macro Modal Event Listeners
+    // [2026-09-02] btn-open-toss-macro-modal was renamed/moved to clock-macro (now a
+    // clock-card in market-clocks-bar with an inline onclick="openTossMacroModal()" in
+    // index.html) - this lookup is now a harmless no-op kept for the close handlers below.
     const openTossBtn = document.getElementById('btn-open-toss-macro-modal');
     const closeTossBtn = document.getElementById('toss-modal-close');
     const closeTossFooterBtn = document.getElementById('toss-modal-footer-close');
@@ -1050,24 +1062,10 @@ function initEventListeners() {
         });
     }
 
-    // Domestic News Modal Event Listeners
-    const closeDomesticBtn = document.getElementById('domestic-news-modal-close');
-    const closeDomesticFooterBtn = document.getElementById('domestic-news-modal-footer-close');
-    const domesticModal = document.getElementById('domestic-news-modal');
-
-    if (closeDomesticBtn) closeDomesticBtn.addEventListener('click', closeDomesticNewsModal);
-    if (closeDomesticFooterBtn) closeDomesticFooterBtn.addEventListener('click', closeDomesticNewsModal);
-    if (domesticModal) {
-        domesticModal.addEventListener('click', (e) => {
-            if (e.target === domesticModal) closeDomesticNewsModal();
-        });
-    }
-
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeModal();
             closeTossMacroModal();
-            closeDomesticNewsModal();
             closeMobileDrawer();
         }
     });
@@ -1259,80 +1257,94 @@ window.openTossMacroModal = openTossMacroModal;
 window.closeTossMacroModal = closeTossMacroModal;
 
 /**
- * Opens and closes Domestic News Top10 Modal (헤더 "국내뉴스" 카드)
+ * [2026-09-02] Reworked from a modal (openDomesticNewsModal) into an in-place toggle on
+ * the #shortlist-section panel, per user request - "국내뉴스" now behaves like "뉴스분석":
+ * clicking it replaces the panel's content instead of opening a separate overlay.
+ * appState.shortlistPanelMode tracks which content currently owns the panel so
+ * fetchAndRenderShortlist() (called after a pipeline run, or on page load) doesn't
+ * clobber a domestic-news view the user explicitly switched to, and vice versa.
  */
-function openDomesticNewsModal() {
-    const modal = document.getElementById('domestic-news-modal');
-    if (modal) {
-        modal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
+async function toggleDomesticNewsPanel() {
+    const btn = document.getElementById('btn-domestic-news');
+    const titleEl = document.getElementById('shortlist-section-title');
+
+    if (appState.shortlistPanelMode === 'domestic') {
+        // Switch back to the regular shortlist view.
+        appState.shortlistPanelMode = 'shortlist';
+        if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스';
+        if (btn) btn.classList.remove('active-toggle');
+        fetchAndRenderShortlist();
+        return;
     }
-    fetchDomesticNewsTop10().catch(err => console.error('[Domestic News Fetch Error]', err));
+
+    appState.shortlistPanelMode = 'domestic';
+    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 국내뉴스 TOP 10 (24시간 파급력)';
+    if (btn) btn.classList.add('active-toggle');
+    await fetchAndRenderDomesticNews();
 }
 
-function closeDomesticNewsModal() {
-    const modal = document.getElementById('domestic-news-modal');
-    if (modal) {
-        modal.classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-}
+window.toggleDomesticNewsPanel = toggleDomesticNewsPanel;
 
-window.openDomesticNewsModal = openDomesticNewsModal;
-window.closeDomesticNewsModal = closeDomesticNewsModal;
+async function fetchAndRenderDomesticNews() {
+    const gridEl = document.getElementById('shortlist-grid');
+    const noResultsEl = document.getElementById('shortlist-no-results');
+    const countBadge = document.getElementById('shortlist-count-badge');
+    if (!gridEl) return;
 
-async function fetchDomesticNewsTop10() {
-    const container = document.getElementById('domestic-news-list-container');
-    const updateTimeEl = document.getElementById('domestic-news-update-time');
-    if (!container) return;
-
-    container.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...</div>`;
+    gridEl.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-spinner fa-spin text-blue"></i> 국내 경제지 24시간 뉴스 분석 중...</div>`;
+    if (noResultsEl) noResultsEl.classList.add('hidden');
 
     try {
         const resp = await fetch('/api/domestic-news');
         const data = await resp.json();
+        if (!resp.ok || !data.success) throw new Error(data.error || `HTTP ${resp.status}`);
 
-        if (!resp.ok || !data.success) {
-            throw new Error(data.error || `HTTP ${resp.status}`);
+        // Bail out if the user switched back to the shortlist view while this was loading.
+        if (appState.shortlistPanelMode !== 'domestic') return;
+
+        const items = data.items || [];
+        if (countBadge) countBadge.textContent = items.length + '개';
+
+        if (items.length === 0) {
+            gridEl.innerHTML = '';
+            if (noResultsEl) {
+                noResultsEl.querySelector('p').textContent = '지난 24시간 동안 선별된 국내 뉴스가 없습니다.';
+                noResultsEl.classList.remove('hidden');
+            }
+            return;
         }
 
-        renderDomesticNewsList(data.items || []);
-
-        if (updateTimeEl) {
-            const now = new Date();
-            updateTimeEl.textContent = `${String(now.getHours()).padStart(2, '0')}시 ${String(now.getMinutes()).padStart(2, '0')}분`;
-        }
+        // Same news-card markup as fetchAndRenderShortlist(), so the two views look
+        // consistent when toggled - only the field names differ (domestic-news.js uses
+        // pubDate/rank, get-shortlist.js uses published_at).
+        gridEl.innerHTML = items.map(item => {
+            const url = escapeHtml(getNewsUrl({ url: item.url, source: item.source }));
+            const pubDateStr = item.pubDate ? new Date(item.pubDate).toLocaleString('ko-KR') : '';
+            return `
+                <div class="news-card" style="padding:14px 16px;">
+                    <div class="card-top-meta">
+                        <span class="badge-category">${escapeHtml(item.category || '기타')}</span>
+                        <span class="card-source-time">
+                            <a href="${url}" target="_blank" rel="noopener noreferrer" class="news-source-link" title="원문 보기">
+                                ${escapeHtml(item.source || '')} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a> • ${escapeHtml(pubDateStr)}
+                        </span>
+                    </div>
+                    <h3 class="card-title-kr" style="margin:6px 0 4px;">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="news-title-link" title="원문 보기">
+                            ${item.rank ? `<span class="domestic-news-rank" style="display:inline-flex; vertical-align:middle; margin-right:6px;">${escapeHtml(String(item.rank))}</span>` : ''}${escapeHtml(item.title)}
+                        </a>
+                    </h3>
+                    ${item.reason ? `<p class="card-summary card-summary-full" style="margin:0;">${escapeHtml(item.reason)}</p>` : ''}
+                </div>
+            `;
+        }).join('');
     } catch (err) {
         console.error('[Domestic News Fetch Error]', err);
-        container.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-triangle-exclamation text-red"></i> 뉴스를 불러오지 못했습니다: ${err.message}</div>`;
+        if (appState.shortlistPanelMode === 'domestic') {
+            gridEl.innerHTML = `<div class="ticker-loading"><i class="fa-solid fa-triangle-exclamation text-red"></i> 뉴스를 불러오지 못했습니다: ${escapeHtml(err.message)}</div>`;
+        }
     }
-}
-
-function renderDomesticNewsList(items) {
-    const container = document.getElementById('domestic-news-list-container');
-    if (!container) return;
-
-    if (items.length === 0) {
-        container.innerHTML = `<div class="ticker-loading">지난 24시간 동안 선별된 뉴스가 없습니다.</div>`;
-        return;
-    }
-
-    container.innerHTML = items.map(item => `
-        <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="domestic-news-item">
-            <span class="domestic-news-rank">${item.rank}</span>
-            <div class="domestic-news-body">
-                <div class="domestic-news-title-row">
-                    <span class="badge-category">${item.category || '기타'}</span>
-                    <span class="domestic-news-title">${item.title}</span>
-                </div>
-                <p class="domestic-news-reason">${item.reason || ''}</p>
-                <div class="domestic-news-meta">
-                    <span>${item.source || ''}</span>
-                    <span>${item.pubDate ? new Date(item.pubDate).toLocaleString('ko-KR') : ''}</span>
-                </div>
-            </div>
-        </a>
-    `).join('');
 }
 
 /**
@@ -1434,6 +1446,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================================================
 
 async function fetchAndRenderShortlist() {
+    // [2026-09-02] Don't clobber the panel if the user has switched it to domestic news -
+    // this function is also called after every pipeline run and on page load, and neither
+    // should silently switch the view back out from under an explicit user toggle.
+    if (appState.shortlistPanelMode === 'domestic') return;
+
     const gridEl = document.getElementById('shortlist-grid');
     const noResultsEl = document.getElementById('shortlist-no-results');
     const countBadge = document.getElementById('shortlist-count-badge');
