@@ -1004,6 +1004,66 @@ export async function screenDomesticArticles(articles, apiKey) {
     }).filter(a => a.title);
 }
 
+// [2026-09-03] Extracted from api/domestic-news.js so both the on-demand button endpoint
+// and the cron endpoint (api/cron-update-domestic-news.js) share one implementation
+// instead of duplicating the collect->filter->rank->screen->save pipeline. Returns the
+// same shape domestic-news.js's HTTP handler used to build inline.
+export async function collectAndSaveDomesticNews(geminiApiKey, supabaseUrl, supabaseKey) {
+    const rssUrls = buildDomesticRssUrls();
+    const allItems = await fetchAllRssItems(rssUrls);
+
+    const uniqueMap = new Map();
+    allItems.forEach(item => {
+        if (item.title && item.link && !uniqueMap.has(item.link)) {
+            uniqueMap.set(item.link, item);
+        }
+    });
+
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const articles = filterDomesticEconomicArticles(
+        Array.from(uniqueMap.values())
+            .filter(item => new Date(item.pubDate).getTime() > twentyFourHoursAgo)
+            .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
+            .slice(0, 400)
+    );
+
+    if (articles.length === 0) {
+        return { items: [], saveError: null };
+    }
+
+    const candidates = rankByHeadlineFrequency(articles);
+    const shortlist = await screenDomesticArticles(candidates, geminiApiKey);
+
+    const top10 = shortlist
+        .sort((a, b) => (b.headlineFrequencyScore ?? 0) - (a.headlineFrequencyScore ?? 0))
+        .slice(0, DOMESTIC_NEWS_TOP_N)
+        .map((item, idx) => ({
+            rank: idx + 1,
+            title: item.title,
+            url: item.url,
+            source: item.source,
+            pubDate: item.pubDate,
+            category: item.category,
+            reason: item.reason
+        }));
+
+    let saveError = null;
+    if (supabaseUrl && supabaseKey && top10.length > 0) {
+        try {
+            const saveResp = await saveShortlist(supabaseUrl, supabaseKey, top10, 'domestic_news_shortlist');
+            if (!saveResp.ok) {
+                saveError = await saveResp.text();
+                console.error('[Domestic News Save Error]', saveError);
+            }
+        } catch (saveErr) {
+            saveError = saveErr.message;
+            console.error('[Domestic News Save Error]', saveErr);
+        }
+    }
+
+    return { items: top10, saveError };
+}
+
 // [2026-08-14] Deliberately separate from screenArticles(): asking Flash to translate
 // titles AS PART OF the screening/categorization JSON schema (tried and reverted the
 // same day) made the whole structured response unstable - Gemini started renaming JSON
