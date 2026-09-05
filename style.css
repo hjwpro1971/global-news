@@ -2674,7 +2674,8 @@ body {
 /* [2026-09-02] Marks whichever of 국내뉴스/뉴스분석 currently owns #shortlist-section's
    content (see toggleDomesticNewsPanel in app.js) - a plain visual "this view is active"
    cue, not a functional toggle by itself. */
-#btn-domestic-news.active-toggle {
+#btn-domestic-news.active-toggle,
+#btn-run-simulation.active-toggle {
     background: #00d2ff !important;
     color: #111 !important;
 }

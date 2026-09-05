@@ -809,12 +809,17 @@ function runPipelineSimulation() {
     // also silently swallowed an explicit 해외뉴스 click while viewing domestic news,
     // which read as "the button does nothing." Force the panel back to 'shortlist'
     // first so a manual click always actually shows something.
+    // Clicking 해외뉴스 always means "show the shortlist panel" - reflect that in both
+    // buttons' active-toggle state regardless of collectMode, same as toggleDomesticNewsPanel().
+    appState.shortlistPanelMode = 'shortlist';
+    const domesticBtn = document.getElementById('btn-domestic-news');
+    if (domesticBtn) domesticBtn.classList.remove('active-toggle');
+    const overseasBtn = document.getElementById('btn-run-simulation');
+    if (overseasBtn) overseasBtn.classList.add('active-toggle');
+    const titleEl = document.getElementById('shortlist-section-title');
+    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스';
+
     if (!appState.collectMode) {
-        appState.shortlistPanelMode = 'shortlist';
-        const domesticBtn = document.getElementById('btn-domestic-news');
-        if (domesticBtn) domesticBtn.classList.remove('active-toggle');
-        const titleEl = document.getElementById('shortlist-section-title');
-        if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스';
         fetchAndRenderShortlist();
         return;
     }
@@ -1292,22 +1297,29 @@ window.closeTossMacroModal = closeTossMacroModal;
  * fetchAndRenderShortlist() (called after a pipeline run, or on page load) doesn't
  * clobber a domestic-news view the user explicitly switched to, and vice versa.
  */
+// [2026-09-04] active-toggle now also applied to btn-run-simulation (해외뉴스) so exactly
+// one of the two buttons is always visually highlighted as "this is what the panel is
+// showing" - previously only btn-domestic-news ever got the class, so 해외뉴스 looked
+// identical whether or not its content was on screen.
 async function toggleDomesticNewsPanel() {
-    const btn = document.getElementById('btn-domestic-news');
+    const domesticBtn = document.getElementById('btn-domestic-news');
+    const overseasBtn = document.getElementById('btn-run-simulation');
     const titleEl = document.getElementById('shortlist-section-title');
 
     if (appState.shortlistPanelMode === 'domestic') {
         // Switch back to the regular shortlist view.
         appState.shortlistPanelMode = 'shortlist';
         if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 오늘의 선별 뉴스';
-        if (btn) btn.classList.remove('active-toggle');
+        if (domesticBtn) domesticBtn.classList.remove('active-toggle');
+        if (overseasBtn) overseasBtn.classList.add('active-toggle');
         fetchAndRenderShortlist();
         return;
     }
 
     appState.shortlistPanelMode = 'domestic';
     if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-newspaper"></i> 국내뉴스 TOP 10 (24시간 파급력)';
-    if (btn) btn.classList.add('active-toggle');
+    if (domesticBtn) domesticBtn.classList.add('active-toggle');
+    if (overseasBtn) overseasBtn.classList.remove('active-toggle');
     await fetchAndRenderDomesticNews();
 }
 
@@ -1461,6 +1473,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     applyCollectModeUI();
+    // 초기 패널은 항상 선별 뉴스(해외)이므로 그 버튼을 처음부터 활성 상태로 표시.
+    const overseasBtnInit = document.getElementById('btn-run-simulation');
+    if (overseasBtnInit) overseasBtnInit.classList.add('active-toggle');
     fetchTossMacroIndicators();
     startGlobalMarketClocks();
     initEventListeners();
