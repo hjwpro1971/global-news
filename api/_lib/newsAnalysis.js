@@ -397,7 +397,10 @@ function candidateCapForGroup(group) {
 // 8 items because the screening prompt only ever said "MAXIMUM N", so Gemini's
 // theme-diversity filtering had no floor to respect. Requirement is now a hard
 // minimum of 20 distinct (non-duplicate) stories, enforced in the prompt below.
-export const LIST_SIZE = 20; // how many articles the screening step selects into the shortlist
+// [2026-09-08] 20 -> 10 (사용자 요청: "20건은 너무 많다", 국내뉴스 DOMESTIC_NEWS_TOP_N과
+// 동일한 축소를 해외뉴스에도 함께 적용) - buildScreeningPrompt()의 "정확히 N개 선정"이
+// 이 상수를 그대로 참조하므로 함께 반영됨.
+export const LIST_SIZE = 10; // how many articles the screening step selects into the shortlist
 const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
 const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 
@@ -597,7 +600,7 @@ not another restatement of the same uncertainty.
 **THEME SHARE CAP**: Beyond the per-theme article cap above, no single broad macro theme
 (e.g. "Trump tariffs/geopolitics", "Fed rate hikes/hawkish commentary", "Iran war/Middle
 East tensions") should make up more than 20-25% of the ${LIST_SIZE} selected articles (i.e.
-at most 4-5 of ${LIST_SIZE}). If the candidate pool is dominated by 2-3 themes, select only
+at most 2 of ${LIST_SIZE}). If the candidate pool is dominated by 2-3 themes, select only
 the 1-2 clearest, highest-impact articles from each and actively fill the remaining slots
 with genuinely different sectors/subjects (e.g. batteries, biotech, autos, semiconductors,
 commodities, domestic Korean policy) even if their individual headlineFrequencyScore is
@@ -635,11 +638,12 @@ of "reason" should be Korean:
 `;
 }
 
-// [2026-09-02] 10 -> 20 (사용자 요청) - 아래 프롬프트의 "정확히 N개 선정" 및
-// "한 주제가 N개 중 M개를 초과하지 않도록"가 이 상수를 그대로 참조하므로 함께 반영됨.
-export const DOMESTIC_NEWS_TOP_N = 20;
-// 10건 기준 "3개 초과 금지"였던 테마 다양성 상한(30%)을 20건에도 동일 비율로 유지.
-const DOMESTIC_THEME_MAX = 6;
+// [2026-09-08] 20 -> 10 (사용자 요청: "20건은 너무 많다") - 아래 프롬프트의
+// "정확히 N개 선정" 및 "한 주제가 N개 중 M개를 초과하지 않도록"가 이 상수를 그대로
+// 참조하므로 함께 반영됨.
+export const DOMESTIC_NEWS_TOP_N = 10;
+// 30% 비율(20건 중 6건)을 10건에도 동일하게 유지.
+const DOMESTIC_THEME_MAX = 3;
 
 // 국내뉴스 카드 전용 스크리닝 프롬프트 - buildScreeningPrompt()와 달리 "한국 시장에
 // 대한 파급력"을 KOSPI/KOSDAQ 전이 경로가 아니라 국내 경제 전반(정책/기업/산업/금융/
@@ -897,7 +901,7 @@ const BROAD_THEME_KEYWORDS = [
     { theme: 'trump_tariffs', pattern: /트럼프|관세|무역\s*전쟁|tariff|trade war/i },
     { theme: 'fed_rates', pattern: /연준|금리|fed\b|rate hike|treasury yield|국채\s*금리/i }
 ];
-const MAX_PER_BROAD_THEME = 4; // ~20% of LIST_SIZE(20) - matches the prompt's stated cap
+const MAX_PER_BROAD_THEME = 2; // ~20% of LIST_SIZE(10) - matches the prompt's stated cap
 
 function enforceThemeShareCap(selected, allCandidates) {
     const usedIds = new Set(selected.map(s => s.originalId));
