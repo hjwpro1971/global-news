@@ -253,6 +253,17 @@ function stripParticle(token) {
 function tokenize(title) {
     return (title || '')
         .toLowerCase()
+        // [2026-09-08] Strip thousands-separator commas between digits BEFORE splitting on
+        // punctuation, e.g. "7,000선" -> "7000선". Without this, the split regex below treats
+        // the comma as a token boundary and "7,000" becomes two tokens ("7" / "000선") that
+        // don't match a same-story headline written as plain "7000선" - same root cause as
+        // the EVENT_ANCHOR_TOKENS/sharesIndexMoveNumber gaps documented below (a formatting
+        // difference silently defeating same-event clustering), just at the digit level.
+        // Observed directly 2026-09-08: 4 of 40 domestic candidates were all "코스피 7000선
+        // 턱밑" in different outlets' number formatting ("7000선" / "7,000선" / "7천피" /
+        // "6,995.39"), none of which clustered together, wasting slots Gemini needed to find
+        // genuinely distinct stories.
+        .replace(/(\d),(?=\d)/g, '$1')
         .split(/[^\p{L}\p{N}]+/u)
         .map(stripParticle)
         .filter(t => t.length >= 2 && !STOPWORDS.has(t));
