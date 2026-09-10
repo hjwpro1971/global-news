@@ -1256,6 +1256,14 @@ export async function purgeOldNews(supabaseUrl, supabaseKey, olderThanDays, tabl
 // domestic_news_shortlist instead of duplicating the insert logic. Deliberately a
 // separate table from news_shortlist, not a shared one with a type column - see
 // supabase-domestic-news.sql for why (different trigger/lock semantics per source).
+//
+// [2026-09-10] Returns a plain object ({ ok, status, text(), rows }) instead of the raw
+// fetch Response - callers that only care about success/failure keep using .ok/.text()
+// unchanged, but the new body-enrichment polling flow (news_enricher on NAS) needs the
+// inserted rows' `id`s to know which row to PATCH later, which requires
+// `Prefer: return=representation` instead of the previous `return=minimal`. A Response
+// body can only be consumed once (.text() XOR .json()), so this reads it here and hands
+// back both forms rather than making every caller choose up front.
 export async function saveShortlist(supabaseUrl, supabaseKey, shortlist, table = 'news_shortlist') {
     const payload = shortlist.map(item => ({
         title: item.titleKr || item.title,
@@ -1274,25 +1282,41 @@ export async function saveShortlist(supabaseUrl, supabaseKey, shortlist, table =
         // invisible outside news_shortlist going stale. Round here so this can never
         // recur even if another float-producing scoring tweak lands later.
         headline_frequency_score: Math.round(item.headlineFrequencyScore ?? 0),
-        ...(item.rank != null ? { rank: item.rank } : {})
+        ...(item.rank != null ? { rank: item.rank } : {}),
+        // [2026-09-10] Body-enrichment pipeline marker - NAS polls for 'pending' rows via
+        // get-pending-summaries.js, fetches the article body, and PATCHes a richer summary
+        // back in. Explicit here (not relying on the column default) so any future insert
+        // path can't accidentally skip it.
+        summary_status: 'pending'
     }));
 
     await purgeOldNews(supabaseUrl, supabaseKey, 14, table);
 
     if (payload.length === 0) {
-        return { ok: true, status: 200, text: async () => '[]' };
+        return { ok: true, status: 200, text: async () => '[]', rows: [] };
     }
 
-    return fetch(`${supabaseUrl}/rest/v1/${table}`, {
+    const resp = await fetch(`${supabaseUrl}/rest/v1/${table}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'apikey': supabaseKey,
             'Authorization': `Bearer ${supabaseKey}`,
-            'Prefer': 'return=minimal'
+            'Prefer': 'return=representation'
         },
         body: JSON.stringify(payload)
     });
+
+    const bodyText = await resp.text();
+    let rows = [];
+    if (resp.ok) {
+        try {
+            rows = JSON.parse(bodyText);
+        } catch {
+            rows = [];
+        }
+    }
+    return { ok: resp.ok, status: resp.status, text: async () => bodyText, rows };
 }
 
 // From the shortlist, pick the top N for the expensive deep-analysis call, capping
@@ -1411,4 +1435,72 @@ export function resolveCollectionWindowStart(lastFetchedAt) {
     if (!lastFetchedAt) return ceiling;
     const since = new Date(lastFetchedAt).getTime();
     return Math.max(since, ceiling);
+}
+
+// ==========================================================================
+// Body-enrichment pipeline: NAS polls get-pending-summaries.js every 5 minutes for rows
+// still summary_status='pending' (title-only reason from screening), fetches each
+// article's actual body off-platform (no 30s limit there), and PATCHes a richer,
+// body-grounded summary back via update-summary.js. Both endpoints are guarded by
+// requireBatchAuth() the same way the cron endpoints are. See plan doc / CLAUDE.md
+// project_my_news_repo memory for the full design.
+// ==========================================================================
+
+export const SUMMARY_TABLES = ['news_shortlist', 'domestic_news_shortlist'];
+
+// Returns [{ table, id, url, title }] across both shortlist tables. Small (<=10 rows per
+// table per run) so no pagination - matches LIST_SIZE/DOMESTIC_NEWS_TOP_N ceilings.
+export async function getPendingSummaries(supabaseUrl, supabaseKey) {
+    const results = [];
+    for (const table of SUMMARY_TABLES) {
+        const params = new URLSearchParams({
+            select: 'id,url,title',
+            summary_status: 'eq.pending'
+        });
+        const resp = await fetch(`${supabaseUrl}/rest/v1/${table}?${params.toString()}`, {
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
+        if (!resp.ok) {
+            console.warn(`[getPendingSummaries] ${table} query failed:`, resp.status, await resp.text());
+            continue;
+        }
+        const rows = await resp.json();
+        rows.forEach(row => results.push({ table, id: row.id, url: row.url, title: row.title }));
+    }
+    return results;
+}
+
+// updates: [{ id, reason, status }] where status is 'done' | 'failed'. Supabase REST has
+// no way to PATCH different values into different rows in one call, so this issues one
+// PATCH per row (bounded by SUMMARY_TABLES row counts above - at most ~20 per poll cycle,
+// well within a single request's time budget).
+export async function patchArticleSummaries(supabaseUrl, supabaseKey, table, updates) {
+    let updatedCount = 0;
+    const errors = [];
+    for (const { id, reason, status } of updates) {
+        // status === 'failed' means NAS couldn't fetch/summarize the body - the existing
+        // title-only reason (screening-stage fallback) must survive untouched, so `reason`
+        // is deliberately omitted from the patch body rather than sent as ''. Only a
+        // successful ('done') enrichment overwrites it.
+        const patchBody = status === 'failed' ? { summary_status: status } : { reason, summary_status: status };
+        const resp = await fetch(`${supabaseUrl}/rest/v1/${table}?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`,
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(patchBody)
+        });
+        if (resp.ok) {
+            updatedCount++;
+        } else {
+            errors.push({ id, error: await resp.text() });
+        }
+    }
+    return { updatedCount, errors };
 }
