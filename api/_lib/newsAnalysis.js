@@ -46,13 +46,26 @@ export function buildRssUrls() {
 // 별개 소스. site: 필터로 각 언론사 도메인의 24시간 이내 기사만 Google News RSS로
 // 가져온다. 언론사별 자체 RSS 포맷을 각각 파싱하는 대신 기존 parseRssItems()를
 // 그대로 재사용할 수 있어 유지보수 포인트가 하나로 유지된다.
+// [2026-09-10] directFeed 추가 - 본문 기반 요약(news_enricher.py, NAS)을 붙이면서
+// news.google.com/rss/... 링크가 HTTP 리다이렉트가 아니라 JS 기반 인터스티셜 페이지라
+// urllib로는 실제 언론사 URL을 절대 못 얻는다는 게 실측으로 드러났다(569건 전부 본문
+// fetch 실패, 2026-09-10). 언론사가 자체 economy/finance 섹션 RSS를 제공하면 <link>에
+// 처음부터 실제 기사 URL이 그대로 들어있어 이 문제가 원천적으로 없다 - 직접 확인된
+// 5개 매체는 directFeed로 전환. 한국일보(hankookilbo.com)는 Next.js SPA로 전면
+// 리뉴얼되며 RSS 자체를 더 이상 제공하지 않는 것으로 확인돼(정적 HTML에 RSS 링크
+// 없음, /rss·/rss/economy 전부 404) directFeed 없이 site: 검색을 그대로 유지 -
+// 이 매체만 본문 요약은 계속 실패(기존 제목 기반 reason 유지)하지만 수집 자체는
+// 막히지 않는다.
 export const DOMESTIC_ECONOMIC_OUTLETS = [
-    { group: 'hankyung', name: '한국경제', domain: 'hankyung.com' },
-    { group: 'mk', name: '매일경제', domain: 'mk.co.kr' },
-    { group: 'sedaily', name: '서울경제', domain: 'sedaily.com' },
-    { group: 'herald', name: '헤럴드경제', domain: 'heraldcorp.com' },
-    { group: 'hankookilbo', name: '한국일보', domain: 'hankookilbo.com' },
-    { group: 'ajunews', name: '아주경제', domain: 'ajunews.com' }
+    { group: 'hankyung', name: '한국경제', domain: 'hankyung.com', directFeed: 'https://www.hankyung.com/feed/economy' },
+    { group: 'mk', name: '매일경제', domain: 'mk.co.kr', directFeed: 'https://www.mk.co.kr/rss/50200011/' },
+    { group: 'sedaily', name: '서울경제', domain: 'sedaily.com', directFeed: 'https://www.sedaily.com/RSS/Finance' },
+    // [2026-09-10] /rss/google/newsAll은 이름과 달리 정치/사회 등 전 섹션이 섞여 나와
+    // (실측: 40개 후보 중 299건이 이 그룹, 대부분 비경제) economy+stock 두 섹션 피드로
+    // 교체 - directFeed를 배열로 주면 buildDomesticRssUrls()가 각각 별도 URL로 펼친다.
+    { group: 'herald', name: '헤럴드경제', domain: 'heraldcorp.com', directFeed: ['https://biz.heraldcorp.com/rss/google/economy', 'https://biz.heraldcorp.com/rss/google/stock'] },
+    { group: 'hankookilbo', name: '한국일보', domain: 'hankookilbo.com', directFeed: null },
+    { group: 'ajunews', name: '아주경제', domain: 'ajunews.com', directFeed: 'https://www.ajunews.com/rss/economy.xml' }
 ];
 
 // [2026-09-02] site:도메인 단독 검색은 그 언론사의 전 섹션(정치/사회/연예/스포츠 포함)을
@@ -60,15 +73,17 @@ export const DOMESTIC_ECONOMIC_OUTLETS = [
 // 기사 다수)/사건사고/지자체 미담이었음. 검색어 자체에 경제 키워드를 OR로 추가해
 // 수집 단계에서부터 경제 관련어가 있는 기사만 가져오도록 좁힘 - filterDomesticEconomicArticles
 // (포토/시상식 패턴만 거름)만으로는 이 정도 비중을 감당 못 함이 실측으로 확인됨.
+// directFeed로 전환한 매체는 애초에 경제 섹션 RSS라 이 검색어 보강이 필요 없다 -
+// 한국일보(fallback 대상, directFeed 없음)에만 여전히 적용된다.
 const DOMESTIC_ECONOMIC_KEYWORDS = '경제+OR+증시+OR+코스피+OR+코스닥+OR+기업+OR+금리+OR+산업+OR+투자+OR+수출';
 
 // Returns [{ url, group }], same shape as buildRssUrls(), so fetchAllRssItems() works
 // unchanged for this source too.
 export function buildDomesticRssUrls() {
-    return DOMESTIC_ECONOMIC_OUTLETS.map(({ group, domain }) => ({
-        url: buildRssUrl(`site:${domain}+(${DOMESTIC_ECONOMIC_KEYWORDS})+when:1d`, 'ko'),
-        group
-    }));
+    return DOMESTIC_ECONOMIC_OUTLETS.flatMap(({ group, domain, directFeed }) => {
+        if (Array.isArray(directFeed)) return directFeed.map(url => ({ url, group }));
+        return [{ url: directFeed || buildRssUrl(`site:${domain}+(${DOMESTIC_ECONOMIC_KEYWORDS})+when:1d`, 'ko'), group }];
+    });
 }
 
 // 6대 경제지는 경제 기사 외에 포토/시상식/연예 섹션도 함께 RSS에 실어 보낸다. 이런
@@ -124,6 +139,23 @@ function isMarketResearchTitle(title, source) {
     return MARKET_RESEARCH_SOURCE_DOMAINS.some(d => normalizedSource.includes(d));
 }
 
+// [2026-09-10] Google News RSS titles rarely contain raw entities, so this was never
+// needed until switching domestic feeds to outlets' own RSS (see DOMESTIC_ECONOMIC_OUTLETS
+// directFeed). Observed directly: ajunews.com's feed double-escapes entities in its XML
+// (e.g. "&middot;" is itself encoded as "&amp;middot;", so a naive single unescape leaves
+// "&quot;" literally in the title instead of a real quote). Applying the basic entity map
+// twice fixes both single- and double-escaped feeds without needing a full HTML entity
+// library - CDATA sections (which is what carries the actual text) don't contain further
+// nested tags that a real unescape pass could misinterpret.
+const HTML_ENTITIES = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'", '&apos;': "'" };
+function unescapeHtmlEntities(text) {
+    let result = text;
+    for (let i = 0; i < 2; i++) {
+        result = result.replace(/&amp;|&lt;|&gt;|&quot;|&#39;|&apos;/g, m => HTML_ENTITIES[m]);
+    }
+    return result;
+}
+
 export function parseRssItems(xmlText, queryGroup = null) {
     const items = [];
     const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
@@ -135,7 +167,7 @@ export function parseRssItems(xmlText, queryGroup = null) {
         const pubDateMatch = /<pubDate>([\s\S]*?)<\/pubDate>/i.exec(itemContent);
         const sourceMatch = /<source[^>]*>([\s\S]*?)<\/source>/i.exec(itemContent);
 
-        let rawTitle = titleMatch ? titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : '';
+        let rawTitle = titleMatch ? unescapeHtmlEntities(titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim()) : '';
         let link = linkMatch ? linkMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : '';
         let pubDate = pubDateMatch ? pubDateMatch[1].trim() : new Date().toUTCString();
         let source = sourceMatch ? sourceMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim() : 'Google News';
@@ -1026,6 +1058,17 @@ export async function screenDomesticArticles(articles, apiKey) {
 export async function collectAndSaveDomesticNews(geminiApiKey, supabaseUrl, supabaseKey) {
     const rssUrls = buildDomesticRssUrls();
     const allItems = await fetchAllRssItems(rssUrls);
+
+    // [2026-09-10] directFeed 매체(한국경제/매일경제/서울경제/헤럴드경제/아주경제)의 RSS는
+    // <source> 태그가 없어 parseRssItems()가 기본값 'Google News'로 채운다 - 실제 매체명은
+    // 어차피 알고 있으므로(어느 그룹에서 수집됐는지) 여기서 보정한다. site: 검색으로 남은
+    // 한국일보(hankookilbo)는 기존처럼 Google이 넣어준 실제 매체명을 그대로 쓴다.
+    const groupToName = new Map(DOMESTIC_ECONOMIC_OUTLETS.map(o => [o.group, o.name]));
+    allItems.forEach(item => {
+        if (item.source === 'Google News' && groupToName.has(item.queryGroup)) {
+            item.source = groupToName.get(item.queryGroup);
+        }
+    });
 
     const uniqueMap = new Map();
     allItems.forEach(item => {
