@@ -432,7 +432,8 @@ function candidateCapForGroup(group) {
 // [2026-09-08] 20 -> 10 (사용자 요청: "20건은 너무 많다", 국내뉴스 DOMESTIC_NEWS_TOP_N과
 // 동일한 축소를 해외뉴스에도 함께 적용) - buildScreeningPrompt()의 "정확히 N개 선정"이
 // 이 상수를 그대로 참조하므로 함께 반영됨.
-export const LIST_SIZE = 10; // how many articles the screening step selects into the shortlist
+export const LIST_SIZE = 10; // max articles the screening step selects into the shortlist (ceiling, not a quota)
+const MIN_IMPACT_SCORE = 5; // screening drops articles the model rates below this Korean-market impact (1-10)
 const DEEP_ANALYSIS_TOP_N = 5; // how many of the shortlist get full Gemini deep analysis
 const DEEP_ANALYSIS_MAX_PER_CATEGORY = 2; // even within top-N, cap one category from crowding out others
 
@@ -603,41 +604,32 @@ Rank articles by how directly they move KOSPI/KOSDAQ, prioritizing in this order
 5. Geopolitical events with a clear transmission path to Korean exports, energy costs, or risk sentiment
 6. US macro data (CPI, jobs, PMI) that shifts Fed rate expectations
 Deprioritize news with no plausible transmission mechanism to Korean markets (e.g. a single
-foreign company's unrelated product launch, local politics with no trade/rate/supply-chain link).
+foreign company's unrelated product launch, local politics with no trade/rate/supply-chain link,
+another emerging market's CPI print, luxury/consumer-brand earnings with no Korean read-through).
 
-Your task is to select EXACTLY ${LIST_SIZE} articles - this is a REQUIRED COUNT, not a ceiling.
-Only merge two articles into one selection when they cover the literal same event (see
-THEME DIVERSITY RULE below); do not drop articles just because they feel lower-impact once
-you already have a handful - keep going down the list by score until you reach ${LIST_SIZE}
-distinct stories. If, and only if, the provided articles genuinely do not contain ${LIST_SIZE}
-distinct underlying stories (e.g. an unusually quiet news day), select as many distinct stories
-as actually exist and no more - never pad with true duplicates just to hit the count.
+Your task is to select UP TO ${LIST_SIZE} articles, ranked by how strongly each one moves the
+Korean stock market. ${LIST_SIZE} is a CEILING, not a quota. Do NOT pad the list: if only 7
+articles have a clear, material transmission path to KOSPI/KOSDAQ, return 7. Never include a
+weak article just to fill a slot.
 
-**THEME DIVERSITY RULE**: Several articles below may describe the SAME underlying macro
-event from different angles (e.g. one is a fact-check, one is a political reaction, one is
-the market's price move) - these count as ONE story even if their headlines and wording
-differ. Select AT MOST 2 articles per underlying event/theme, prioritizing the one with the
-clearest direct market impact. Do NOT let a single busy news event (e.g. one day's oil-price
-story) fill most of your selection - actively look for distinct, unrelated stories/sectors so
-the final list reflects a spread of what actually matters today, not one repeated topic.
-This applies to broad ongoing THEMES, not just single news events - e.g. "US Treasury/bond
-market direction is uncertain" is one theme even across separately-timed articles (an
-explainer, an analyst forecast, a commentary on a specific investor's operations) that
-never mention the exact same headline event. If multiple articles are all just restating
-"the bond market is unsettled/uncertain/at a turning point" with different framing, that is
-still ONE theme - pick the single clearest one and use the freed slots for a genuinely
-different subject (a specific company, a specific data release, a specific policy action),
-not another restatement of the same uncertainty.
+Give every selected article an "impactScore" from 1 to 10 for its expected impact on the Korean
+stock market (10 = moves the KOSPI index or a core export sector today, 5 = a moderate, clearly
+nameable effect on one Korean sector, below 5 = speculative or indirect). Only select articles
+with impactScore >= 5. Judge impact by the transmission path (US rates/yields, USD/KRW, oil and
+commodities, semiconductor/AI demand, China exposure and export controls, Korea-relevant
+geopolitics) - NOT by how many outlets covered the story. headlineFrequencyScore is only a weak
+hint: a story with a low score but a direct Korean transmission path outranks a widely covered
+story with none.
 
-**THEME SHARE CAP**: Beyond the per-theme article cap above, no single broad macro theme
-(e.g. "Trump tariffs/geopolitics", "Fed rate hikes/hawkish commentary", "Iran war/Middle
-East tensions") should make up more than 20-25% of the ${LIST_SIZE} selected articles (i.e.
-at most 2 of ${LIST_SIZE}). If the candidate pool is dominated by 2-3 themes, select only
-the 1-2 clearest, highest-impact articles from each and actively fill the remaining slots
-with genuinely different sectors/subjects (e.g. batteries, biotech, autos, semiconductors,
-commodities, domestic Korean policy) even if their individual headlineFrequencyScore is
-lower - a lower-frequency but distinct-sector story is more valuable here than a 6th
-restatement of the same macro theme.
+SCOPE: this list is a digest of FOREIGN financial press (Bloomberg, Reuters, WSJ, Yahoo Finance,
+AP, etc.) explaining what moves the Korean market. Exclude articles from Korean domestic outlets
+that merely report Korean market results (e.g. "KOSPI fell X% today") - those are consequences,
+not the foreign-sourced cause or background this digest is for.
+
+DUPLICATES ONLY: if several articles cover the literal same underlying event, keep only the single
+clearest one. Do NOT limit how many articles may share a broad theme and do NOT promote a
+lower-impact article for the sake of sector variety: if the day is dominated by Middle East oil
+shocks and rate moves, the list may legitimately be dominated by them.
 
 For each selected article, classify it into EXACTLY ONE of these categories:
 ${JSON.stringify(NEWS_CATEGORIES)}
@@ -657,13 +649,14 @@ Classification guide for the categories that are easiest to confuse:
 Raw articles:
 ${JSON.stringify(articles.map(a => ({ id: a.articleIndex, title: a.title, source: a.source, headlineFrequencyScore: a.headlineFrequencyScore ?? 0 })), null, 2)}
 
-Output exactly a JSON array. Do NOT wrap in markdown blocks, just raw JSON. Do NOT
-translate, rename, or add any JSON keys beyond exactly these three - only the VALUES
-of "reason" should be Korean:
+Output exactly a JSON array, sorted by impactScore descending. Do NOT wrap in markdown blocks,
+just raw JSON. Do NOT translate, rename, or add any JSON keys beyond exactly these four - only
+the VALUES of "reason" should be Korean:
 [
   {
     "id": 0,
     "category": "one of the categories listed above, exactly as written",
+    "impactScore": 7,
     "reason": "Exactly 2 Korean sentences, in Korean. First sentence: what actually happened (the concrete fact/event, not a vague paraphrase of the headline). Second sentence: the specific transmission mechanism to the Korean market - you MUST name at least one concrete Korean industry/sector (e.g. 정유·화학·해운, 반도체 장비/소부장, 2차전지, 자동차, 바이오, 금융/은행) rather than a generic phrase like '한국 수출 기업' or '국내 기업들'. Bad: '한국 수출 기업들의 대외 리스크를 높이는 요인이 됩니다.' Good: '원유 수송 차질과 유가 변동성 확대로 정유·화학·해운 업종의 원가 부담이 커집니다.'"
   }
 ]
@@ -921,63 +914,6 @@ async function callScreeningModel(articles, apiKey, temperature, promptBuilder =
     return extractGeminiText(flashData, 'Gemini Flash screening');
 }
 
-// [2026-08-27] The prompt's THEME SHARE CAP (see buildScreeningPrompt) asks Gemini to
-// cap any one broad theme at 20-25% of the list, but a Lite-tier model doesn't reliably
-// self-audit that across 20 picks - observed directly: an Iran-war-heavy news day still
-// produced 6/20 (30%) Iran/Hormuz-themed articles despite the explicit instruction and
-// example. Enforce it in code instead of trusting the model: count how many selected
-// articles share a broad-theme keyword, and swap out the lowest-scoring excess ones for
-// the best-scoring not-yet-selected candidates from the original 40-item pool.
-const BROAD_THEME_KEYWORDS = [
-    { theme: 'iran_middle_east', pattern: /이란|호르무즈|중동|hormuz|iran|middle east/i },
-    { theme: 'trump_tariffs', pattern: /트럼프|관세|무역\s*전쟁|tariff|trade war/i },
-    { theme: 'fed_rates', pattern: /연준|금리|fed\b|rate hike|treasury yield|국채\s*금리/i }
-];
-const MAX_PER_BROAD_THEME = 2; // ~20% of LIST_SIZE(10) - matches the prompt's stated cap
-
-function enforceThemeShareCap(selected, allCandidates) {
-    const usedIds = new Set(selected.map(s => s.originalId));
-    const result = [...selected];
-
-    for (const { pattern } of BROAD_THEME_KEYWORDS) {
-        const matching = result
-            .map((item, idx) => ({ item, idx }))
-            .filter(({ item }) => pattern.test(item.title || ''));
-        if (matching.length <= MAX_PER_BROAD_THEME) continue;
-
-        // Keep the highest-scoring MAX_PER_BROAD_THEME, replace the rest.
-        matching.sort((a, b) => (b.item.headlineFrequencyScore ?? 0) - (a.item.headlineFrequencyScore ?? 0));
-        const toReplace = matching.slice(MAX_PER_BROAD_THEME);
-
-        for (const { idx } of toReplace) {
-            const replacement = allCandidates
-                .filter(c => !usedIds.has(c.articleIndex) && !pattern.test(c.title || ''))
-                .sort((a, b) => (b.headlineFrequencyScore ?? 0) - (a.headlineFrequencyScore ?? 0))[0];
-            if (!replacement) continue; // no non-theme candidate left; leave as-is rather than drop a slot
-
-            usedIds.delete(result[idx].originalId);
-            usedIds.add(replacement.articleIndex);
-            // This swap-in never went through Gemini, so it has no real category/reason -
-            // reusing the article it's replacing would attach a completely wrong reason
-            // to the new headline. '기타' + a neutral marker are honest placeholders; the
-            // downstream UI shows the reason as-is, so this must never look like an AI
-            // judgment about the replacement article.
-            result[idx] = {
-                originalId: replacement.articleIndex,
-                title: replacement.title,
-                originalTitle: replacement.title,
-                url: replacement.link,
-                pubDate: replacement.pubDate,
-                source: replacement.source,
-                headlineFrequencyScore: replacement.headlineFrequencyScore ?? 0,
-                category: '기타',
-                reason: '테마 편중 완화를 위해 자동 대체된 기사입니다.'
-            };
-        }
-    }
-    return result;
-}
-
 export async function screenArticles(articles, apiKey) {
     const screeningText = await callScreeningModel(articles, apiKey, 0.1);
 
@@ -1010,16 +946,24 @@ export async function screenArticles(articles, apiKey) {
             // day - fall back to '기타' rather than let an unexpected value break
             // anything downstream that groups/counts by category.
             category: NEWS_CATEGORIES.includes(item.category) ? item.category : '기타',
+            impactScore: Number(item.impactScore) || 0,
             reason: item.reason || ''
         };
     }).filter(a => a.title);
 
-    return enforceThemeShareCap(mapped, articles);
+    // [2026-10-24] LIST_SIZE is a ceiling, not a quota: drop anything the model itself rated
+    // below MIN_IMPACT_SCORE and rank by Korean-market impact. The former enforceThemeShareCap
+    // (swapping excess iran/tariff/fed picks for unscreened filler) was removed - it pushed
+    // weak, never-reviewed articles into the list, the opposite of "top impact only".
+    return mapped
+        .filter(a => a.impactScore >= MIN_IMPACT_SCORE)
+        .sort((a, b) => b.impactScore - a.impactScore)
+        .slice(0, LIST_SIZE);
 }
 
 // 국내뉴스 카드 전용 - screenArticles()와 같은 응답 스키마(id/category/reason)를 쓰지만
 // 별도 프롬프트(buildDomesticScreeningPrompt)와 별도 개수(DOMESTIC_NEWS_TOP_N)를 쓰므로
-// enforceThemeShareCap(글로벌 전용 이란/관세/연준 테마 캡)은 적용하지 않는다 - 국내
+// 글로벌 전용 임팩트 필터(MIN_IMPACT_SCORE)와 이란/관세/연준 키워드 로직은 적용하지 않는다 - 국내
 // 기사에 그 키워드 매칭 로직을 그대로 씌우면 엉뚱한 주제를 "테마"로 오인해 대체된다.
 export async function screenDomesticArticles(articles, apiKey) {
     const screeningText = await callScreeningModel(articles, apiKey, 0.1, buildDomesticScreeningPrompt);
