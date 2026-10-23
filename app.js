@@ -1555,6 +1555,7 @@ async function fetchAndRenderShortlist() {
                         </a>
                     </h3>
                     ${item.reason ? `<p class="card-summary card-summary-full" style="margin:0;">${escapeHtml(item.reason)}</p>` : ''}
+                    ${item.summary_status === 'failed' ? `<p style="margin:6px 0 0; font-size:0.75rem; opacity:0.6;" title="언론사가 자동 접속을 막아 본문을 읽지 못했습니다"><i class="fa-solid fa-circle-info"></i> 제목 기반 요약 (본문 미확인)</p>` : ''}
                 </div>
             `;
         }).join('');
