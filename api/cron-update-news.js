@@ -1,8 +1,6 @@
 import {
     buildRssUrls, fetchAllRssItems, rankByHeadlineFrequency,
-    screenArticles, translateTitlesToKorean, saveShortlist, selectTopForDeepAnalysis,
-    deepAnalyzeArticles, reconcileSentiment,
-    purgeOldNews, insertNews,
+    screenArticles, translateTitlesToKorean, saveShortlist,
     acquireAnalysisLock, releaseAnalysisLock, markFetchedNow,
     getFetchState, resolveCollectionWindowStart
 } from './_lib/newsAnalysis.js';
@@ -93,8 +91,7 @@ export default async function handler(req, res) {
         shortlist.forEach((a, i) => { a.titleKr = translatedTitles[i]; });
 
         // [2026-08-27] Was fire-and-forget (log-only on failure) while the response always
-        // unconditionally said "Shortlist saved" - see analyze-news.js's matching comment
-        // for the direct evidence this silently failed with no visible signal.
+        // unconditionally said "Shortlist saved" - track the real outcome and surface it.
         let shortlistSaveError = null;
         if (supabaseUrl && supabaseKey) {
             try {
@@ -107,90 +104,23 @@ export default async function handler(req, res) {
                 shortlistSaveError = saveErr.message;
                 console.error('[Shortlist Save Error]', saveErr);
             }
+
+            // Only the scheduled cron advances the incremental-collection watermark.
+            await markFetchedNow(supabaseUrl, supabaseKey);
         } else {
             shortlistSaveError = 'Supabase URL/Key missing';
         }
 
-        // [2026-08-12] Deep analysis paused at user request while the collection/
-        // screening quality (volume, duplicates) is under review - news_shortlist keeps
-        // filling in normally so that work isn't blocked, but no Gemini Pro deep-analysis
-        // cost is spent and news_impacts stops updating. Flipped from opt-out
-        // (=== 'false') to opt-in (!== 'true') because the opt-out form silently did
-        // nothing when the Vercel dashboard env var was never actually added - deep
-        // analysis kept running against the user's explicit instruction. This way the
-        // pause is the default with zero Vercel configuration required; set
-        // DEEP_ANALYSIS_ENABLED=true to resume.
-        if (process.env.DEEP_ANALYSIS_ENABLED !== 'true') {
-            return res.status(200).json({
-                success: true,
-                message: shortlistSaveError
-                    ? `Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist save FAILED: ${shortlistSaveError}`
-                    : 'Deep analysis is paused (set DEEP_ANALYSIS_ENABLED=true to resume). Shortlist saved, no news_impacts update.',
-                shortlistCount: shortlist.length,
-                shortlistSaveError
-            });
-        }
-
-        // STEP 2: Deep analysis - only the top N of the shortlist, capped per category
-        // so one dominant event (e.g. today's oil/Iran story) can't consume the whole
-        // deep-analysis budget even if it dominates the shortlist itself.
-        const selectedArticles = selectTopForDeepAnalysis(shortlist);
-        // Screening-stage category by originalId, so it can be re-applied after deep
-        // analysis regardless of what Gemini echoes back there (belt-and-suspenders on
-        // top of the prompt instruction below - the two stages must not disagree, since
-        // the per-category cap above was computed using THIS category).
-        const screeningCategoryById = new Map(selectedArticles.map(a => [a.originalId, a.category]));
-        const analyzedData = await deepAnalyzeArticles(selectedArticles, GEMINI_API_KEY);
-
-        // 3. Save to Supabase
-        if (supabaseUrl && supabaseKey) {
-            const supabasePayload = analyzedData.map(item => {
-                const orig = articles[item.originalId] || {};
-                const timestamp = orig.pubDate || new Date().toISOString();
-                const sentiment = reconcileSentiment(item.sentiment, item.phase2DeepAnalysis?.targetStocks);
-
-                return {
-                    title: item.titleKr,
-                    original_title: orig.title || '',
-                    summary: item.summary,
-                    source: orig.source || 'Global News',
-                    published_at: timestamp,
-                    sector: screeningCategoryById.get(item.originalId) || item.category,
-                    theme: item.phase2DeepAnalysis?.articleContext || '',
-                    impact_score: (sentiment === "BEARISH" ? -1 : 1) * Math.abs(item.impactScore || 50),
-                    score_reason: item.scoreReason || '',
-                    target_stocks: item.phase2DeepAnalysis?.targetStocks || [],
-                    transmission_mechanism: item.phase2DeepAnalysis?.transmissionMechanism || '',
-                    url: orig.link || '',
-                    article_context: item.phase2DeepAnalysis?.articleContext || '',
-                    step_by_step_path: item.phase2DeepAnalysis?.stepByStepPath || [],
-                    short_term_outlook: item.phase2DeepAnalysis?.shortTermOutlook || '',
-                    long_term_outlook: item.phase2DeepAnalysis?.longTermOutlook || ''
-                };
-            });
-
-            // Delete old records older than 14 days to preserve history while maintaining clean DB
-            await purgeOldNews(supabaseUrl, supabaseKey, 14);
-
-            const dbResp = await insertNews(supabaseUrl, supabaseKey, supabasePayload);
-
-            if (!dbResp.ok) {
-                console.error('[Supabase Error]', await dbResp.text());
-                throw new Error('Failed to save to Supabase');
-            }
-
-            // Only the scheduled cron advances the incremental-collection watermark.
-            // A manual /api/analyze-news trigger must not, or the next cron could
-            // skip articles published between the manual run and the real schedule.
-            await markFetchedNow(supabaseUrl, supabaseKey);
-        }
-
+        // 🔒 [2026-11-05] 딥분석(news_impacts, Gemini Pro 단가 호출) 단계를 완전히 제거했다 -
+        // 사용자 요청: "딥분석이 필요없어, 광범위 수집 + 중요도 선별"만 유지. 스크리닝
+        // 숏리스트(news_shortlist, 저렴한 Gemini 호출 1회)가 이제 유일한 출력이다.
         return res.status(200).json({
             success: true,
-            message: 'Cron Job Completed Successfully',
+            message: shortlistSaveError
+                ? `Shortlist save FAILED: ${shortlistSaveError}`
+                : 'Shortlist saved.',
             shortlistCount: shortlist.length,
-            deepAnalyzedCount: analyzedData.length,
-            count: analyzedData.length // kept for backward compatibility with any existing log parsing
+            shortlistSaveError
         });
     } catch (error) {
         console.error('[Cron Job Error]', error);

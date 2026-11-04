@@ -1,5 +1,10 @@
-// Shared pipeline logic for analyze-news.js (user-triggered) and cron-update-news.js (scheduled).
-// Keeping this in one place avoids the two routes drifting apart when prompts/models change.
+// Shared pipeline logic, used by cron-update-news.js (scheduled) and
+// cron-update-domestic-news.js. [2026-11-05] analyze-news.js (the manual-trigger deep
+// analysis endpoint) was removed along with news_impacts - deep per-article analysis
+// is no longer part of this pipeline, only broad collection + cheap screening.
+// deepAnalyzeArticles/selectTopForDeepAnalysis/reconcileSentiment/insertNews below are
+// now unused by any route but kept (not deleted) in case deep analysis is reintroduced -
+// they are self-contained and cost nothing while dormant.
 
 // Category-grouped Google News RSS search queries. Kept as search queries (not per-outlet
 // feeds) because per-outlet RSS formats vary enough to need their own parsers - out of scope

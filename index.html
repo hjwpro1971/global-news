@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="글로벌 거시경제 및 지정학적 이슈가 한국 증시(KOSPI/KOSDAQ)와 주요 종목에 미치는 영향도를 실시간 AI 2단계 파이프라인으로 분석 및 모니터링합니다.">
-    <meta name="keywords" content="글로벌 경제, 한국 증시, 주식 영향 분석, KOSPI, KOSDAQ, 삼성전자, SK하이닉스, 주식 모니터링, 파이낸셜 터미널">
+    <meta name="description" content="국내외 경제 뉴스를 광범위하게 수집하고 AI로 중요도를 선별해 보여주는 뉴스 모니터링 서비스입니다.">
+    <meta name="keywords" content="글로벌 경제, 국내 경제, 뉴스 수집, 뉴스 선별, KOSPI, KOSDAQ, 파이낸셜 터미널">
     <meta property="og:title" content="Economics News">
-    <meta property="og:description" content="글로벌 주요 뉴스 기반 국내 증시 연관 영향도 및 종목 수혜/피해 심층 분석 시스템">
+    <meta property="og:description" content="국내외 경제 뉴스 광범위 수집 및 중요도 선별 모니터링">
     <meta property="og:type" content="website">
     <title>Economics News</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
@@ -74,23 +74,6 @@
                 </div>
             </div>
 
-            <!-- Macro Trend Chart -->
-            <!-- [2026-08-14] Hidden while deep analysis (news_impacts, Gemini Pro) stays
-                 paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - get-trend-data.js
-                 sources this from news_impacts.impact_score, which has stopped updating,
-                 so the chart only ever shows stale pre-pause data or an empty state. Kept
-                 in the DOM (not deleted) since app.js still calls document.getElementById
-                 ('trendChart') on it; that call is a no-op when the canvas is hidden. -->
-            <div class="trend-chart-container" style="display:none;">
-                <div class="trend-chart-header">
-                    <h3><i class="fa-solid fa-chart-area text-blue" style="margin-right: 8px;"></i> 글로벌 증시 온도 (최근 7일)</h3>
-                    <span style="font-size: 0.75rem; color: #8892b0; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px;">+ 호재 / - 악재</span>
-                </div>
-                <div style="height: 180px; width: 100%;">
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
-
             <!-- Header Quick Control Actions -->
             <!-- [2026-09-02] btn-open-toss-macro-modal moved out (now clock-macro above).
                  btn-domestic-news moved in from the market-clocks-bar (was domestic-news-card,
@@ -144,157 +127,7 @@
                     </div>
                 </section>
 
-                <!-- News Grid Section: Top 2~10+ Impact News Cards -->
-                <!-- [2026-08-13] Hidden while deep analysis (news_impacts, Gemini Pro) stays
-                     paused (DEEP_ANALYSIS_ENABLED opt-in, off by default) - this section always
-                     shows "0개 분석 완료" / empty-state with nothing to display. Kept in the DOM
-                     (not deleted) since app.js still references its child element IDs
-                     (news-grid, news-count-badge, sort-select, btn-reset-empty, no-results). -->
-                <section class="news-list-section" id="impact-analysis-section" style="display:none;">
-                    <div class="news-list-header">
-                        <div class="title-with-count">
-                            <h2><i class="fa-solid fa-list-check"></i> 글로벌 경제 이슈 영향도 리스트</h2>
-                            <span class="badge-count" id="news-count-badge">10개 분석 완료</span>
-                        </div>
-
-                        <!-- Sorting controls -->
-                        <div class="sort-controls">
-                            <label for="sort-select"><i class="fa-solid fa-arrow-down-short-wide"></i> 정렬:</label>
-                            <select id="sort-select" class="custom-select-sm">
-                                <option value="impact-desc">영향도 절대값 순 (높은순)</option>
-                                <option value="score-desc">긍정 영향도 순 (호재순)</option>
-                                <option value="score-asc">부정 영향도 순 (악재순)</option>
-                                <option value="latest">최신 수집 순</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Card Grid -->
-                    <div class="news-grid" id="news-grid">
-                        <!-- News cards dynamically injected by app.js -->
-                    </div>
-
-                    <!-- No Results Placeholder -->
-                    <div class="no-results hidden" id="no-results">
-                        <i class="fa-solid fa-folder-open no-results-icon"></i>
-                        <h3>조건에 부합하는 분석 뉴스가 없습니다.</h3>
-                        <p>검색어나 필터 조건을 변경하거나 [초기화] 버튼을 눌러주세요.</p>
-                        <button id="btn-reset-empty" class="btn btn-secondary mt-12">필터 전체 초기화</button>
-                    </div>
-                </section>
-
             </main>
-        </div>
-    </div>
-
-    <!-- Detailed Impact Analysis Modal -->
-    <div id="modal-backdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal-card">
-            <!-- Modal Header -->
-            <div class="modal-header">
-                <div class="modal-title-group">
-                    <div class="modal-meta-pills">
-                        <span class="badge-category" id="modal-category">반도체/AI</span>
-                        <span class="modal-source-time" id="modal-source-time">Bloomberg • 2026-07-31 16:30</span>
-                    </div>
-                    <h2 id="modal-title" class="modal-main-title">뉴스 제목이 여기에 표시됩니다</h2>
-                    <div id="modal-original-title" class="modal-sub-title">Original English Title</div>
-                </div>
-                <button id="modal-close-btn" class="modal-close-btn" aria-label="닫기">&times;</button>
-            </div>
-
-            <!-- Modal Content Body -->
-            <div class="modal-body">
-                
-                <!-- Score Indicator Banner -->
-                <div class="modal-impact-banner" id="modal-impact-banner">
-                    <div class="banner-score-box">
-                        <span class="score-label">종합 영향도 점수</span>
-                        <span class="score-number" id="modal-score-number">+85</span>
-                    </div>
-                    <div class="banner-sentiment-box">
-                        <span class="sentiment-badge" id="modal-sentiment-badge">강한 호재 (STRONG BULLISH)</span>
-                        <p class="sentiment-desc" id="modal-sentiment-desc">국내 관련 핵심 주식 상승 모멘텀 제공 예상</p>
-                    </div>
-                </div>
-
-                <!-- AI Deep Analysis Section -->
-                <div class="modal-section pipeline-breakdown">
-                    <h3><i class="fa-solid fa-layer-group text-blue"></i> AI 심층 분석 보고서</h3>
-                    <div class="pipeline-grid">
-                        <div class="pipeline-card stage-2" style="grid-column: span 2;">
-                            <div class="stage-tag"><i class="fa-solid fa-brain"></i> LLM 파급 메커니즘 & 핵심 맥락 분석</div>
-                            
-                            <div class="analysis-sub-card">
-                                <h4><i class="fa-solid fa-newspaper text-blue"></i> 기사 핵심 배경 및 파급 심층 맥락</h4>
-                                <div class="article-context-text" id="modal-article-context">
-                                    <!-- Article context content -->
-                                </div>
-                            </div>
-
-                            <div class="analysis-sub-card">
-                                <h4><i class="fa-solid fa-diagram-next text-gold"></i> 단계별 증시 전달 경로 (Transmission Mechanism)</h4>
-                                <div class="step-path-container" id="modal-step-path">
-                                    <!-- Step path items -->
-                                </div>
-                            </div>
-
-                            <div class="analysis-sub-card">
-                                <h4><i class="fa-solid fa-square-poll-vertical text-green"></i> 주요 파급 영향 섹터</h4>
-                                <div class="impacted-sectors-tags" id="modal-impacted-sectors">
-                                    <!-- Sector tags -->
-                                </div>
-                            </div>
-
-                            <div class="analysis-sub-card summary-card">
-                                <h4><i class="fa-solid fa-align-left text-blue"></i> 파급 메커니즘 종합 요약</h4>
-                                <p class="transmission-text" id="modal-transmission-text">
-                                    파급 메커니즘 내용이 여기에 출력됩니다.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Target Stock Impact Section (Without Chart) -->
-                <div class="modal-section stock-impact-section">
-                    <h3><i class="fa-solid fa-chart-line text-green"></i> 국내 수혜/피해 주요 종목 심층 분석 (Target Stock Impact Analysis)</h3>
-                    
-                    <!-- Stock Detail Cards Grid -->
-                    <div class="stock-impact-grid" id="modal-stock-list">
-                        <!-- Injected stock cards -->
-                    </div>
-                </div>
-
-                <!-- Outlook & Risks Section -->
-                <div class="modal-section outlook-section">
-                    <div class="outlook-grid">
-                        <div class="outlook-card short-term">
-                            <h4><i class="fa-solid fa-clock-rotate-left"></i> 단기 전망 (Short-term Outlook: 1 ~ 5일)</h4>
-                            <p id="modal-short-term">단기 전망 내용...</p>
-                        </div>
-                        <div class="outlook-card long-term">
-                            <h4><i class="fa-solid fa-chart-line"></i> 중장기 전망 (Long-term Outlook: 1~3개월)</h4>
-                            <p id="modal-long-term">중장기 전망 내용...</p>
-                        </div>
-                    </div>
-
-                    <!-- Risk Factors -->
-                    <div class="risk-card">
-                        <h4><i class="fa-solid fa-triangle-exclamation text-gold"></i> 주요 체크포인트 및 리스크 요인 (Risk Factors)</h4>
-                        <ul id="modal-risk-list">
-                            <!-- Risk items -->
-                        </ul>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer">
-                <span class="disclaimer-text"><i class="fa-solid fa-circle-info"></i> 매매 결정 전 반드시 공시 및 실적을 확인하세요.</span>
-                <button id="modal-footer-close" class="btn btn-secondary">닫기</button>
-            </div>
         </div>
     </div>
 
