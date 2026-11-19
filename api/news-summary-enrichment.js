@@ -1,3 +1,4 @@
+import { PIPELINE_PAUSED } from './_lib/pipelinePause.js';
 import { getPendingSummaries, patchArticleSummaries, SUMMARY_TABLES } from './_lib/newsAnalysis.js';
 import { requireBatchAuth } from './_lib/batchAuth.js';
 
@@ -22,6 +23,8 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+        // 정지 중에는 NAS 요약기에 대기 목록을 비워 돌려준다(에러를 내면 NAS 로그가 반복 실패로 찬다).
+        if (PIPELINE_PAUSED) return res.status(200).json({ success: true, paused: true, pending: [] });
         try {
             const pending = await getPendingSummaries(supabaseUrl, supabaseKey);
             return res.status(200).json({ success: true, pending });

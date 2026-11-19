@@ -1,3 +1,4 @@
+import { respondIfPaused } from './_lib/pipelinePause.js';
 import {
     buildRssUrls, fetchAllRssItems, rankByHeadlineFrequency,
     screenArticles, translateTitlesToKorean, saveShortlist,
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
     }
     // 🔒 실행마다 Gemini 비용이 발생하므로 무인 호출은 사전 공유 키를 요구한다.
     if (requireBatchAuth(req, res)) return;
+    if (respondIfPaused(res)) return;
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_KEY;

@@ -1,3 +1,4 @@
+import { respondIfPaused } from './_lib/pipelinePause.js';
 import { collectAndSaveDomesticNews } from './_lib/newsAnalysis.js';
 import { requireBatchAuth } from './_lib/batchAuth.js';
 
@@ -14,6 +15,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
     if (requireBatchAuth(req, res)) return;
+    if (respondIfPaused(res)) return;
 
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_API_KEY) {
